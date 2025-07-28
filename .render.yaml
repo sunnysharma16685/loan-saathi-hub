@@ -1,0 +1,6 @@
+services:
+  - type: web
+    name: loan-saathi-hub
+    env: python
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "gunicorn app:app"

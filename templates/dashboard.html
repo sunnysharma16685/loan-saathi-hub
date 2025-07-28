@@ -2,10 +2,22 @@
 <html>
 <head>
   <title>Dashboard</title>
-  <meta http-equiv="refresh" content="3;url=/home" />
+  <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
-  <h1>Welcome to Loan Saathi Dashboard!</h1>
-  <p>Redirecting to home page...</p>
+  <div class="sidebar">
+    <h2>Loan Saathi</h2>
+    <a href="/dashboard">Dashboard</a>
+    <a href="/apply-loan">Apply Loan</a>
+    <a href="#">Uploaded Docs</a>
+    <a href="#">Loan Status</a>
+    <a href="#">Support</a>
+    <a href="/logout">Logout</a>
+  </div>
+
+  <div class="main-content">
+    <h1>Welcome, {{ user }}</h1>
+    <p>This is your personal dashboard.</p>
+  </div>
 </body>
 </html>

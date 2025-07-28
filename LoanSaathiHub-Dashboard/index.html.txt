@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>LoanSaathiHub</title>
+  <link rel="stylesheet" href="style/main.css"/>
+</head>
+<body>
+  <header>
+    <div class="logo">LoanSaathiHub</div>
+    <nav>
+      <ul>
+        <li><a href="login.html">Login</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <section class="hero">
+    <h1>Instant Loans Made Simple</h1>
+    <p>Apply online. Track status. Get support – All in one place.</p>
+    <a href="login.html" class="cta-btn">Get Started</a>
+  </section>
+
+  <footer>© 2025 LoanSaathiHub. All rights reserved.</footer>
+</body>
+</html>

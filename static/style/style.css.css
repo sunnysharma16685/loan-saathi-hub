@@ -1,31 +1,54 @@
 body {
-  font-family: Arial, sans-serif;
-  background-color: #f0f4f8;
-  padding: 20px;
+    font-family: 'Segoe UI', sans-serif;
+    margin: 0;
+    padding: 0;
+    background: #f0f2f5;
 }
-
-.container {
-  background: white;
-  padding: 20px;
-  max-width: 600px;
-  margin: auto;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+header {
+    display: flex;
+    flex-direction: column;
+    background: linear-gradient(to right, #0077b6, #43cea2);
+    color: white;
+    padding: 20px 40px;
 }
-
-input, select, textarea {
-  width: 100%;
-  padding: 10px;
-  margin: 8px 0;
-  border-radius: 4px;
-  border: 1px solid #ccc;
+.logo {
+    font-size: 32px;
+    font-weight: bold;
 }
-
-button {
-  padding: 10px 20px;
-  background: #0077b6;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
+.tagline {
+    font-size: 16px;
+    margin-top: 5px;
+}
+.container.home-layout {
+    display: flex;
+    justify-content: flex-end;
+    padding: 50px 100px;
+}
+.signup-form {
+    background: white;
+    padding: 30px;
+    border-radius: 10px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    width: 300px;
+}
+.signup-form h2 {
+    color: #0077b6;
+    margin-bottom: 20px;
+}
+.signup-form form {
+    display: flex;
+    flex-direction: column;
+}
+.signup-form button {
+    margin-top: 10px;
+    padding: 10px;
+    background: #0077b6;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+.signup-form p {
+    margin-top: 20px;
+    font-size: 14px;
 }

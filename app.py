@@ -10,7 +10,7 @@ loan_counter = 19870000
 
 @app.route('/')
 def home():
-    return redirect('/login')
+    return render_template('home.html')
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():

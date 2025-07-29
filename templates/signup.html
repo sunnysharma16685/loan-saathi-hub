@@ -1,47 +1,60 @@
+
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Sign Up - LoanSaathiHub</title>
+  <meta charset="UTF-8">
+  <title>Signup - LoanSaathiHub</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style/style.css') }}">
 </head>
 <body>
-  <h2>Create Your Profile</h2>
-  <form method="POST" action="/signup">
-    <input type="text" name="first_name" placeholder="First Name" required>
-    <input type="text" name="last_name" placeholder="Last Name">
-    <input type="date" name="dob" placeholder="Date of Birth">
-    <input type="text" name="city" placeholder="City">
-    <input type="text" name="state" placeholder="State">
-    <input type="tel" name="mobile" placeholder="Mobile Number" required>
-    <input type="email" name="email" placeholder="Email ID" required>
-    <input type="text" name="pan" placeholder="PAN Number" required>
-    <input type="text" name="aadhaar" placeholder="Aadhaar Number">
-    <select name="education">
-      <option value="">Select Education</option>
-      <option value="10th">10th</option>
-      <option value="12th">12th</option>
-      <option value="Graduate">Graduate</option>
-      <option value="Post Graduate">Post Graduate</option>
-    </select>
-    <select name="job">
-      <option value="">Job Type</option>
-      <option value="Pvt">Private</option>
-      <option value="Govt">Government</option>
-      <option value="PSU">PSU</option>
-      <option value="Advocate">Advocate</option>
-      <option value="Builder">Builder</option>
-      <option value="Defence">Defence</option>
-      <option value="Police">Police</option>
-    </select>
-    <input type="text" name="salary" placeholder="Monthly Salary">
-    <select name="salary_type">
-      <option value="Bank">Bank Account</option>
-      <option value="Cheque">Cheque</option>
-      <option value="Cash">Cash</option>
-    </select>
-    <input type="text" name="other_income" placeholder="Other Income">
-    <textarea name="address" placeholder="Full Address"></textarea>
-    <input type="text" name="cibil" placeholder="CIBIL Score">
-    <button type="submit">Next</button>
-  </form>
+  <header>
+    <div class="logo">LoanSaathiHub</div>
+    <div class="tagline">Your Trusted Loan Partner</div>
+  </header>
+  <div class="container home-layout">
+    <div class="signup-form">
+      <h2>Create Profile</h2>
+      <form method="POST" action="/signup">
+        <input type="text" name="first_name" placeholder="First Name" required />
+        <input type="text" name="last_name" placeholder="Last Name" />
+        <input type="date" name="dob" placeholder="Date of Birth" />
+        <input type="text" name="city" placeholder="City" />
+        <input type="text" name="state" placeholder="State" />
+        <input type="tel" name="mobile" placeholder="Mobile Number" required />
+        <input type="email" name="email" placeholder="Email ID" required />
+        <input type="text" name="pan" placeholder="PAN Number" required />
+        <input type="text" name="aadhaar" placeholder="Aadhaar Number" />
+        <select name="education">
+          <option value="">Select Education</option>
+          <option value="10th">10th</option>
+          <option value="12th">12th</option>
+          <option value="Graduate">Graduate</option>
+          <option value="Post-Graduate">Post-Graduate</option>
+        </select>
+        <select name="job">
+          <option value="">Select Job Type</option>
+          <option value="Pvt">Pvt</option>
+          <option value="Govt">Govt</option>
+          <option value="PSU">PSU</option>
+          <option value="Advocate">Advocate</option>
+          <option value="Builder">Builder</option>
+          <option value="Defence">Defence</option>
+          <option value="Police">Police</option>
+        </select>
+        <select name="salary_mode">
+          <option value="">Salary Mode</option>
+          <option value="Bank Account">Bank Account</option>
+          <option value="Cheque">Cheque</option>
+          <option value="Cash">Cash</option>
+        </select>
+        <input type="number" name="monthly_salary" placeholder="Monthly Salary" />
+        <input type="text" name="other_income" placeholder="Other Income" />
+        <textarea name="address" placeholder="Full Address"></textarea>
+        <input type="text" name="cibil_score" placeholder="CIBIL Score" />
+        <button type="submit">Next</button>
+      </form>
+      <p>Already Registered? <a href="/login">Login</a></p>
+    </div>
+  </div>
 </body>
 </html>

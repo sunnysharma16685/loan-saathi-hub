@@ -1,28 +1,27 @@
 body {
-    font-family: 'Segoe UI', sans-serif;
-    margin: 0;
-    padding: 0;
-    background: #f0f2f5;
+  font-family: 'Segoe UI', sans-serif;
+  background: #f0f2f5;
+  margin: 0;
+  padding: 0;
 }
 header {
-    display: flex;
-    flex-direction: column;
-    background: linear-gradient(to right, #0077b6, #43cea2);
-    color: white;
-    padding: 20px 40px;
+  background: linear-gradient(to right, #0077b6, #43cea2);
+  color: white;
+  padding: 20px 40px;
 }
+
 .logo {
-    font-size: 32px;
-    font-weight: bold;
+  font-size: 28px;
+  font-weight: bold;
 }
 .tagline {
     font-size: 16px;
     margin-top: 5px;
 }
 .container.home-layout {
-    display: flex;
-    justify-content: flex-end;
-    padding: 50px 100px;
+  display: flex;
+  justify-content: flex-end;
+  padding: 60px;
 }
 .signup-form {
     background: white;
@@ -35,9 +34,12 @@ header {
     color: #0077b6;
     margin-bottom: 20px;
 }
-.signup-form form {
-    display: flex;
-    flex-direction: column;
+.signup-form {
+  background: white;
+  padding: 30px;
+  border-radius: 10px;
+  box-shadow: 0 0 10px rgba(0,0,0,0.1);
+  width: 300px;
 }
 .signup-form input, .signup-form select, .signup-form textarea {
     margin-bottom: 10px;

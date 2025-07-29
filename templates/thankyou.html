@@ -1,7 +1,9 @@
 
 <!DOCTYPE html>
-<html><body>
-  <h2>Thank you! Your loan application has been received.</h2>
-  <p>Your Loan Request ID: {{ loan_id }}</p>
-  <a href="/dashboard">Go to Dashboard</a>
-</body></html>
+<html><head><link rel="stylesheet" href="{{ url_for('static', filename='style/style.css') }}"></head>
+<body><div class="container">
+<h2>Thank You!</h2>
+<p>Your loan application was submitted successfully.</p>
+<p><strong>Loan Request ID:</strong> {{ loan_id }}</p>
+<a href="/dashboard">Go to Dashboard</a>
+</div></body></html>

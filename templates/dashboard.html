@@ -1,12 +1,13 @@
 
 <!DOCTYPE html>
-<html><body>
-  <h2>Welcome, {{ user }}</h2>
-  <a href="/apply-loan">Apply New Loan</a>
-  <h3>Your Loan Requests</h3>
-  <table border="1"><tr><th>Loan ID</th><th>Type</th><th>Status</th><th>Remarks</th></tr>
-  {% for loan in loans %}
-  <tr><td>{{ loan['loan_id'] }}</td><td>{{ loan['type'] }}</td><td>{{ loan['status'] }}</td><td>{{ loan['remarks'] }}</td></tr>
-  {% endfor %}
-  </table>
-</body></html>
+<html><head><link rel="stylesheet" href="{{ url_for('static', filename='style/style.css') }}"></head>
+<body><div class="container">
+<h2>Welcome, {{ user }}</h2>
+<a href="/apply-loan">Apply New Loan</a>
+<h3>Your Loan Requests</h3>
+<table border="1"><tr><th>Loan ID</th><th>Type</th><th>Status</th><th>Remarks</th></tr>
+{% for loan in loans %}
+<tr><td>{{ loan['loan_id'] }}</td><td>{{ loan['type'] }}</td><td>{{ loan['status'] }}</td><td>{{ loan['remarks'] }}</td></tr>
+{% endfor %}
+</table>
+</div></body></html>

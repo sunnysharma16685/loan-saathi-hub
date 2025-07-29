@@ -1,9 +1,10 @@
+
 from flask import Flask, render_template, request, redirect, session, url_for
 
 app = Flask(__name__)
 app.secret_key = "secure_key"
 
-users = {}  # temporary in-memory store
+users = {}
 loans = []
 loan_counter = 19870000
 
@@ -20,7 +21,6 @@ def register():
             'email': email,
             'first_name': request.form['first_name'],
             'last_name': request.form['last_name'],
-            # add rest fields
         }
         session['user'] = mobile
         return redirect('/apply-loan')

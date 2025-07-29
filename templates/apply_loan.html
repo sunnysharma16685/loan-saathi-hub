@@ -1,20 +1,16 @@
 
 <!DOCTYPE html>
-<html lang="en">
-<head><meta charset="UTF-8"><title>Loan Application</title></head>
-<body>
-  <div class="container">
-    <h2>Apply for a Loan</h2>
-    <form method="POST">
-      <select name="loan_type" required>
-        <option value="">-- Select Loan Type --</option>
-        <option>Mudra Loan</option><option>Personal Loan</option><option>Home Loan</option>
-        <option>Business Loan</option><option>Vehicle Loan</option><option>Gold Loan</option>
-      </select>
-      <input name="amount" type="number" placeholder="Amount Required" required>
-      <input name="duration" type="number" placeholder="Duration (in months)" required>
-      <button type="submit">Submit</button>
-    </form>
-  </div>
-</body>
-</html>
+<html><head><link rel="stylesheet" href="{{ url_for('static', filename='style/style.css') }}"></head>
+<body><div class="container">
+<h2>Apply Loan</h2>
+<form method="POST">
+  <select name="loan_type" required>
+    <option value="">Select Loan Type</option>
+    <option>Mudra Loan</option><option>Personal Loan</option><option>Home Loan</option>
+    <option>Business Loan</option><option>Gold Loan</option><option>Education Loan</option>
+  </select>
+  <input type="number" name="amount" placeholder="Amount Required" required>
+  <input type="number" name="duration" placeholder="Duration (months)" required>
+  <button type="submit">Submit</button>
+</form>
+</div></body></html>

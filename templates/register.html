@@ -1,40 +1,14 @@
 
 <!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Register - LoanSaathiHub</title>
-  <link rel="stylesheet" href="{{ url_for('static', filename='style/style.css') }}">
-</head>
-<body>
-  <div class="container">
-    <h2>Sign Up</h2>
-    <form method="POST">
-      <input name="first_name" placeholder="First Name" required>
-      <input name="last_name" placeholder="Last Name" required>
-      <input type="date" name="dob" required>
-      <input name="city" placeholder="City" required>
-      <input name="state" placeholder="State" required>
-      <input type="tel" name="mobile" placeholder="Mobile Number" required>
-      <input type="email" name="email" placeholder="Email" required>
-      <input name="pan" placeholder="PAN Number" required>
-      <input name="aadhaar" placeholder="Aadhaar Number">
-      <select name="education" required>
-        <option value="">Education</option><option>12th</option><option>Graduate</option><option>Post-Graduate</option>
-      </select>
-      <select name="job_type" required>
-        <option value="">Job Type</option><option>Pvt</option><option>Govt</option><option>PSU</option><option>Advocate</option><option>Builder</option><option>Defence</option><option>Police</option>
-      </select>
-      <select name="salary_mode" required>
-        <option value="">Salary Mode</option><option>Bank</option><option>Cheque</option><option>Cash</option>
-      </select>
-      <input name="other_income" placeholder="Other Income">
-      <textarea name="address" placeholder="Full Address" required></textarea>
-      <input name="cibil" placeholder="CIBIL Score">
-      <button type="submit">Next</button>
-    </form>
-    <p>Already Registered? <a href="/login">Login here</a></p>
-  </div>
-</body>
-</html>
+<html><head><link rel="stylesheet" href="{{ url_for('static', filename='style/style.css') }}"></head>
+<body><div class="container">
+<h2>Register</h2>
+<form method="POST">
+  <input name="first_name" placeholder="First Name" required>
+  <input name="last_name" placeholder="Last Name" required>
+  <input name="mobile" placeholder="Mobile Number" required>
+  <input name="email" placeholder="Email" required>
+  <button type="submit">Next</button>
+</form>
+<p>Already registered? <a href="/login">Login</a></p>
+</div></body></html>

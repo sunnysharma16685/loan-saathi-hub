@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Create Profile – LoanSaathiHub</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style/style.css') }}">
+</head>
+<body>
+  <header>
+    <div class="logo">LoanSaathiHub</div>
+    <div class="tagline">आपके सपनों का साथी</div>
+  </header>
+
+  <div class="container home-layout">
+    <div class="signup-form">
+      <h2>Create Profile</h2>
+      <form method="POST">
+        <input type="text" name="first_name" placeholder="First Name" required>
+        <input type="text" name="last_name" placeholder="Last Name">
+        <input type="date" name="dob" placeholder="Date of Birth" required>
+        <input type="text" name="city" placeholder="City">
+        <input type="text" name="state" placeholder="State">
+        <input type="tel" name="mobile" placeholder="Mobile Number" required>
+        <input type="email" name="email" placeholder="Email ID" required>
+        <input type="text" name="pan" placeholder="PAN Number" required>
+        <input type="text" name="aadhaar" placeholder="Aadhaar Number">
+        
+        <select name="education" required>
+          <option value="">Select Education</option>
+          <option value="10th">10th</option>
+          <option value="12th">12th</option>
+          <option value="Graduate">Graduate</option>
+          <option value="Post-Graduate">Post-Graduate</option>
+          <option value="Other">Other</option>
+        </select>
+
+        <select name="job" required>
+          <option value="">Select Job Type</option>
+          <option value="Private">Private</option>
+          <option value="Government">Government</option>
+          <option value="PSU">PSU</option>
+          <option value="Advocate">Advocate</option>
+          <option value="Builder">Builder</option>
+          <option value="Defence">Defence</option>
+          <option value="Police">Police</option>
+        </select>
+
+        <select name="salary_mode" required>
+          <option value="">Salary Mode</option>
+          <option value="Bank Account">Bank Account</option>
+          <option value="Cheque">Cheque</option>
+          <option value="Cash">Cash</option>
+        </select>
+
+        <input type="text" name="other_income" placeholder="Other Income (if any)">
+        <textarea name="address" placeholder="Full Address"></textarea>
+        <input type="text" name="cibil" placeholder="CIBIL Score">
+
+        <button type="submit">Next: Apply for Loan</button>
+      </form>
+      <p><a href="{{ url_for('logout') }}">Logout</a></p>
+    </div>
+  </div>
+
+  <footer>© 2025 LoanSaathiHub</footer>
+</body>
+</html>

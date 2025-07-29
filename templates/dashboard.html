@@ -1,10 +1,45 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Dashboard</title>
+  <meta charset="UTF-8" />
+  <title>Dashboard – LoanSaathiHub</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style/style.css') }}">
 </head>
 <body>
-  <h2>Welcome, {{ user }}</h2>
-  <p><a href="/logout">Logout</a></p>
+  <header>
+    <div class="logo">LoanSaathiHub</div>
+    <div class="tagline">आपके सपनों का साथी</div>
+  </header>
+
+  <div class="container">
+    <h2>Welcome, {{ user_profile.first_name }}!</h2>
+
+    <div style="margin: 20px 0;">
+      <a href="{{ url_for('apply_loan') }}" class="cta-btn">Apply for New Loan</a>
+      <a href="{{ url_for('logout') }}" class="login-btn" style="margin-left: 20px;">Logout</a>
+    </div>
+
+    <h3>Your Loan Requests</h3>
+    <table border="1" cellspacing="0" cellpadding="10" style="width:100%; background:white; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+      <tr style="background-color:#0077b6; color:white;">
+        <th>Loan Request ID</th>
+        <th>Loan Type</th>
+        <th>Amount</th>
+        <th>Status</th>
+        <th>Remarks</th>
+      </tr>
+      {% for loan in loans %}
+      <tr>
+        <td>{{ loan.loan_id }}</td>
+        <td>{{ loan.loan_type }}</td>
+        <td>₹{{ loan.amount }}</td>
+        <td>{{ loan.status }}</td>
+        <td>{{ loan.remarks or '-' }}</td>
+      </tr>
+      {% endfor %}
+    </table>
+  </div>
+
+  <footer>© 2025 LoanSaathiHub</footer>
 </body>
 </html>

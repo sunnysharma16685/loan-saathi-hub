@@ -1,11 +1,43 @@
+<!-- templates/loan_request.html -->
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+  <meta charset="UTF-8">
   <title>Loan Request</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style/style.css') }}">
 </head>
 <body>
-  <h2>Loan Request Page Coming Soon</h2>
-  <p>Thank you for creating your profile!</p>
-  <a href="/dashboard">Go to Dashboard</a>
+  <header>
+    <div class="logo">LoanSaathiHub</div>
+    <div class="tagline">Your Trusted Loan Partner</div>
+  </header>
+
+  <div class="container home-layout">
+    <div class="signup-form">
+      <h2>Loan Request</h2>
+      <form method="POST">
+        <label for="loan_type">Loan Type</label>
+        <select name="loan_type" required>
+          <option value="">Select</option>
+          <option value="Personal Loan">Personal Loan</option>
+          <option value="Business Loan">Business Loan</option>
+          <option value="Home Loan">Home Loan</option>
+          <option value="Education Loan">Education Loan</option>
+        </select>
+
+        <label for="amount">Amount Required</label>
+        <input type="number" name="amount" placeholder="Amount in ₹" required>
+
+        <label for="duration">Duration (in months)</label>
+        <input type="number" name="duration" placeholder="e.g. 12" required>
+
+        <button type="submit">Submit Loan Request</button>
+      </form>
+    </div>
+  </div>
+
+  <footer>
+    © 2025 LoanSaathiHub. All rights reserved.
+  </footer>
 </body>
 </html>

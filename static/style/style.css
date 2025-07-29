@@ -4,6 +4,7 @@ body {
   margin: 0;
   padding: 0;
 }
+
 header {
   background: linear-gradient(to right, #0077b6, #43cea2);
   color: white;
@@ -14,56 +15,59 @@ header {
   font-size: 28px;
   font-weight: bold;
 }
+
 .tagline {
-    font-size: 16px;
-    margin-top: 5px;
+  font-size: 16px;
+  margin-top: 5px;
 }
+
 .container.home-layout {
   display: flex;
   justify-content: flex-end;
   padding: 60px;
 }
-.signup-form {
-    background: white;
-    padding: 30px;
-    border-radius: 10px;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-    width: 300px;
-}
-.signup-form h2 {
-    color: #0077b6;
-    margin-bottom: 20px;
-}
+
 .signup-form {
   background: white;
   padding: 30px;
   border-radius: 10px;
-  box-shadow: 0 0 10px rgba(0,0,0,0.1);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
   width: 300px;
 }
-.signup-form input, .signup-form select, .signup-form textarea {
-    margin-bottom: 10px;
-    padding: 10px;
-    border-radius: 5px;
-    border: 1px solid #ccc;
+
+.signup-form h2 {
+  color: #0077b6;
+  margin-bottom: 20px;
 }
+
+.signup-form input,
+.signup-form select,
+.signup-form textarea {
+  margin-bottom: 10px;
+  padding: 10px;
+  border-radius: 5px;
+  border: 1px solid #ccc;
+}
+
 .signup-form button {
-    margin-top: 10px;
-    padding: 10px;
-    background: #0077b6;
-    color: white;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
+  margin-top: 10px;
+  padding: 10px;
+  background: #0077b6;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
 }
+
 .signup-form p {
-    margin-top: 20px;
-    font-size: 14px;
+  margin-top: 20px;
+  font-size: 14px;
 }
+
 footer {
-    margin-top: 40px;
-    background: #0077b6;
-    color: white;
-    text-align: center;
-    padding: 20px;
+  margin-top: 40px;
+  background: #0077b6;
+  color: white;
+  text-align: center;
+  padding: 20px;
 }

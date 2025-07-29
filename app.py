@@ -1,41 +1,66 @@
-from flask import Flask, render_template, redirect, request, session, url_for
+from flask import Flask, render_template, request, redirect, session, url_for
 
 app = Flask(__name__)
 app.secret_key = "secure_key"
 
-# Home Page
-@app.route('/')
-def index():
-    return render_template('index.html')
+users = {}  # temporary in-memory store
+loans = []
+loan_counter = 19870000
 
-# Login Page
+@app.route('/')
+def home():
+    return redirect('/login')
+
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    if request.method == 'POST':
+        mobile = request.form['mobile']
+        email = request.form['email']
+        users[mobile] = {
+            'email': email,
+            'first_name': request.form['first_name'],
+            'last_name': request.form['last_name'],
+            # add rest fields
+        }
+        session['user'] = mobile
+        return redirect('/apply-loan')
+    return render_template('register.html')
+
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
-        session['user'] = request.form['email']
-        return redirect('/dashboard')
+        identifier = request.form['identifier']
+        if identifier in users or any(u['email'] == identifier for u in users.values()):
+            session['user'] = identifier
+            return redirect('/dashboard')
+        return "User not found"
     return render_template('login.html')
 
-# Dashboard Page
+@app.route('/apply-loan', methods=['GET', 'POST'])
+def apply_loan():
+    global loan_counter
+    if 'user' not in session:
+        return redirect('/login')
+    if request.method == 'POST':
+        loan_counter += 1
+        loans.append({
+            'loan_id': loan_counter,
+            'user': session['user'],
+            'type': request.form['loan_type'],
+            'amount': request.form['amount'],
+            'status': 'In Process',
+            'remarks': ''
+        })
+        return render_template('thankyou.html', loan_id=loan_counter)
+    return render_template('apply_loan.html')
+
 @app.route('/dashboard')
 def dashboard():
     if 'user' not in session:
         return redirect('/login')
-    return render_template('dashboard.html', user=session['user'])
+    user_loans = [loan for loan in loans if loan['user'] == session['user']]
+    return render_template('dashboard.html', user=session['user'], loans=user_loans)
 
-# Apply Loan Page
-@app.route('/apply-loan', methods=['GET', 'POST'])
-def apply_loan():
-    if 'user' not in session:
-        return redirect('/login')
-    if request.method == 'POST':
-        amount = request.form['amount']
-        tenure = request.form['tenure']
-        print(f"User {session['user']} applied for ₹{amount} loan for {tenure} months.")
-        return redirect('/dashboard')
-    return render_template('apply_loan.html')
-
-# Logout
 @app.route('/logout')
 def logout():
     session.clear()

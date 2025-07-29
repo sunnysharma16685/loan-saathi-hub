@@ -1,0 +1,16 @@
+<h2>Welcome Admin</h2>
+<a href="/admin-logout">Logout</a>
+<h3>Total Users: {{ users|length }}</h3>
+<h3>Total Loans: {{ loans|length }}</h3>
+
+<table border="1">
+  <tr><th>User</th><th>Loan Type</th><th>Status</th><th>Remarks</th></tr>
+  {% for loan in loans %}
+  <tr>
+    <td>{{ loan.user }}</td>
+    <td>{{ loan.loan_type }}</td>
+    <td>{{ loan.status }}</td>
+    <td>{{ loan.remarks or '-' }}</td>
+  </tr>
+  {% endfor %}
+</table>

@@ -2,26 +2,48 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>LoanSaathiHub - Welcome</title>
+    <title>LoanSaathiHub - Home</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style/style.css') }}">
 </head>
 <body>
-    <header>
-        <div class="logo">LoanSaathiHub</div>
-        <div class="tagline">Your Trusted Loan Partner</div>
-    </header>
-
-    <div class="container home-layout">
-        <div class="signup-form">
-            <h2>Sign Up</h2>
-            <form action="/register" method="get">
-                <button type="submit">Create Profile</button>
-            </form>
-            <p>Already registered?</p>
-            <form action="/login" method="get">
-                <button type="submit">Login</button>
-            </form>
-        </div>
+<header>
+    <div class="logo">LoanSaathiHub</div>
+    <div class="tagline">Your trusted loan partner</div>
+</header>
+<div class="container home-layout">
+    <div class="signup-form">
+        <h2>Create Your Profile</h2>
+        <form action="/create-profile" method="post">
+            <input type="text" name="fname" placeholder="First Name" required>
+            <input type="text" name="lname" placeholder="Last Name">
+            <input type="date" name="dob" placeholder="Date of Birth">
+            <input type="text" name="city" placeholder="City">
+            <input type="text" name="state" placeholder="State">
+            <input type="tel" name="mobile" placeholder="Mobile Number" required>
+            <input type="email" name="email" placeholder="Email ID" required>
+            <input type="text" name="pan" placeholder="PAN Number" required>
+            <input type="text" name="aadhaar" placeholder="Aadhaar Number">
+            <select name="education">
+                <option value="">Select Education</option>
+                <option>10th</option><option>12th</option><option>Graduate</option><option>Postgraduate</option>
+            </select>
+            <select name="job">
+                <option value="">Select Job</option>
+                <option>Pvt</option><option>Govt</option><option>PSU</option><option>Advocate</option>
+                <option>Builder</option><option>Defence</option><option>Police</option>
+            </select>
+            <input type="text" name="salary" placeholder="Monthly Salary">
+            <input type="text" name="salary_mode" placeholder="Salary Mode (Bank/Cheque/Cash)">
+            <input type="text" name="other_income" placeholder="Other Income">
+            <textarea name="address" placeholder="Full Address"></textarea>
+            <input type="text" name="cibil" placeholder="CIBIL Score">
+            <button type="submit">Next: Loan Request</button>
+        </form>
+        <p>Already registered? <a href="/login"><button>Login</button></a></p>
     </div>
+</div>
+<footer>
+    <p>Paid Advertisement Space</p>
+</footer>
 </body>
 </html>

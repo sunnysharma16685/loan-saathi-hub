@@ -1,19 +1,49 @@
-
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+  <meta charset="UTF-8">
   <title>Apply for Loan - LoanSaathiHub</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="stylesheet" href="{{ url_for('static', filename='style/style.css') }}">
 </head>
 <body>
+  <header>
+    <div class="logo">
+      <img src="{{ url_for('static', filename='logo.png') }}" alt="LoanSaathiHub" style="height:50px;">
+    </div>
+    <nav>
+      <ul>
+        <li><a href="/dashboard">Dashboard</a></li>
+        <li><a href="/logout">Logout</a></li>
+      </ul>
+    </nav>
+  </header>
+
   <div class="container">
     <h2>Apply for a Loan</h2>
     <form method="POST">
-      <input type="number" name="amount" placeholder="Loan Amount" required>
-      <input type="number" name="tenure" placeholder="Tenure in Months" required>
+      <input type="number" name="amount" placeholder="Loan Amount (₹)" required>
+      <input type="number" name="tenure" placeholder="Tenure (in months)" required>
+
+      <select name="loanType" required>
+        <option value="">-- Select Loan Type --</option>
+        <option value="Mudra Loan">Mudra Loan</option>
+        <option value="Personal Loan">Personal Loan</option>
+        <option value="Home Loan">Home Loan</option>
+        <option value="Business Loan">Business Loan</option>
+        <option value="Vehicle Loan">Vehicle Loan</option>
+        <option value="Education Loan">Education Loan</option>
+        <option value="Gold Loan">Gold Loan</option>
+        <option value="Medical Emergency Loan">Medical Emergency Loan</option>
+      </select>
+
       <button type="submit">Submit Application</button>
     </form>
     <p><a href="/dashboard">Back to Dashboard</a></p>
   </div>
+
+  <footer>
+    <p>© 2025 LoanSaathiHub</p>
+  </footer>
 </body>
 </html>

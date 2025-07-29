@@ -1,23 +1,14 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Dashboard</title>
-  <link rel="stylesheet" href="/static/style.css">
+  <title>Dashboard - LoanSaathiHub</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style/style.css') }}">
 </head>
 <body>
-  <div class="sidebar">
-    <h2>Loan Saathi</h2>
-    <a href="/dashboard">Dashboard</a>
-    <a href="/apply-loan">Apply Loan</a>
-    <a href="#">Uploaded Docs</a>
-    <a href="#">Loan Status</a>
-    <a href="#">Support</a>
-    <a href="/logout">Logout</a>
-  </div>
-
-  <div class="main-content">
-    <h1>Welcome, {{ user }}</h1>
-    <p>This is your personal dashboard.</p>
+  <div class="container">
+    <h2>Welcome, {{ user }}</h2>
+    <p><a href="/apply-loan">Apply for a Loan</a></p>
+    <p><a href="/logout">Logout</a></p>
   </div>
 </body>
 </html>

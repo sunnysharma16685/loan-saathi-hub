@@ -1,16 +1,18 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Apply Loan</title>
+  <title>Apply for Loan - LoanSaathiHub</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style/style.css') }}">
 </head>
 <body>
-  <h2>Apply for a Loan</h2>
-  <form>
-    <label>Loan Amount:</label><br>
-    <input type="number" name="amount"><br><br>
-    <label>Tenure (in months):</label><br>
-    <input type="number" name="tenure"><br><br>
-    <button type="submit">Submit</button>
-  </form>
+  <div class="container">
+    <h2>Apply for a Loan</h2>
+    <form method="POST">
+      <input type="number" name="amount" placeholder="Loan Amount" required>
+      <input type="number" name="tenure" placeholder="Tenure in Months" required>
+      <button type="submit">Submit Application</button>
+    </form>
+    <p><a href="/dashboard">Back to Dashboard</a></p>
+  </div>
 </body>
 </html>

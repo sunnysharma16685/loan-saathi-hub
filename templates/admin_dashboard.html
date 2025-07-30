@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Admin Dashboard - LoanSaathiHub</title>
+  <link rel="stylesheet" href="/static/style/style.css" />
+</head>
+<body>
+  <header>
+    <div class="logo">LoanSaathiHub</div>
+    <div class="tagline">Admin Dashboard</div>
+  </header>
+
+  <div class="container">
+    <h2>All Loan Applications</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Loan ID</th>
+          <th>Name</th>
+          <th>Email</th>
+          <th>Amount</th>
+          <th>Tenure</th>
+          <th>Status</th>
+          <th>Remarks</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for loan in loan_requests %}
+        <tr>
+          <td>{{ loan.loan_id }}</td>
+          <td>{{ loan.name }}</td>
+          <td>{{ loan.email }}</td>
+          <td>₹{{ loan.amount }}</td>
+          <td>{{ loan.tenure }} months</td>
+          <td>{{ loan.status }}</td>
+          <td>{{ loan.remark or '-' }}</td>
+          <td>
+            <form method="POST" action="/admin/approve/{{ loan.loan_id }}" style="display:inline;">
+              <button type="submit">Approve</button>
+            </form>
+            <form method="POST" action="/admin/reject/{{ loan.loan_id }}" style="display:inline;">
+              <input type="text" name="reason" placeholder="Reason" required>
+              <button type="submit">Reject</button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <footer>
+    &copy; 2025 LoanSaathiHub Admin Panel
+  </footer>
+</body>
+</html>

@@ -1,0 +1,42 @@
+<!-- File: templates/loan_request.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Loan Request</title>
+  <link rel="stylesheet" href="/static/style/style.css">
+</head>
+<body>
+  <header>
+    <div class="logo">LoanSaathiHub</div>
+    <div class="tagline">Apply for Loan Easily</div>
+  </header>
+
+  <div class="container">
+    <div class="signup-form">
+      <h2>Loan Request</h2>
+      <form method="POST" action="/loan-request">
+        <label>Loan Type</label>
+        <select name="loan_type" required>
+          <option value="Personal">Personal</option>
+          <option value="Home">Home</option>
+          <option value="Business">Business</option>
+          <option value="Vehicle">Vehicle</option>
+        </select>
+
+        <label>Amount Required (₹)</label>
+        <input type="number" name="amount" required>
+
+        <label>Duration (Months)</label>
+        <input type="number" name="duration" required>
+
+        <button type="submit">Submit Request</button>
+      </form>
+    </div>
+  </div>
+
+  <footer>
+    &copy; 2025 LoanSaathiHub
+  </footer>
+</body>
+</html>

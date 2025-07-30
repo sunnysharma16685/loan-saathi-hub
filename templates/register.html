@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Register - LoanSaathiHub</title>
+  <link rel="stylesheet" href="/static/style/style.css" />
+</head>
+<body>
+  <header>
+    <div class="logo">LoanSaathiHub</div>
+    <div class="tagline">Create Your Account</div>
+  </header>
+
+  <div class="container home-layout">
+    <div class="signup-form">
+      <h2>Register</h2>
+      <form method="POST" action="/register">
+        <input type="text" name="first_name" placeholder="First Name" required />
+        <input type="text" name="last_name" placeholder="Last Name" />
+        <input type="email" name="email" placeholder="Email ID" required />
+        <input type="tel" name="mobile" placeholder="Mobile Number" required />
+        <input type="password" name="password" placeholder="Create Password" required />
+        <button type="submit">Register</button>
+      </form>
+      <p>Already registered? <a href="/login">Login</a></p>
+    </div>
+  </div>
+
+  <footer>
+    &copy; 2025 LoanSaathiHub
+  </footer>
+</body>
+</html>

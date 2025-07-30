@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Dashboard - LoanSaathiHub</title>
+  <link rel="stylesheet" href="/static/style/style.css" />
+</head>
+<body>
+  <header>
+    <div class="logo">LoanSaathiHub</div>
+    <div class="tagline">Welcome, {{ user }}</div>
+  </header>
+
+  <div class="container">
+    <h2>Your Dashboard</h2>
+    
+    <a href="/create-profile"><button>Create Profile</button></a>
+    <a href="/apply-loan"><button>Apply for New Loan</button></a>
+    
+    <h3>Your Loan Requests</h3>
+    {% if loans %}
+      <table>
+        <thead>
+          <tr>
+            <th>Request ID</th>
+            <th>Loan Type</th>
+            <th>Amount</th>
+            <th>Duration</th>
+            <th>Status</th>
+            <th>Remarks</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for loan in loans %}
+          <tr>
+            <td>{{ loan.id }}</td>
+            <td>{{ loan.loan_type }}</td>
+            <td>₹{{ loan.amount }}</td>
+            <td>{{ loan.duration }} months</td>
+            <td>{{ loan.status }}</td>
+            <td>{{ loan.remarks }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% else %}
+      <p>No loan requests yet.</p>
+    {% endif %}
+
+    <a href="/logout"><button>Logout</button></a>
+  </div>
+
+  <footer>
+    &copy; 2025 LoanSaathiHub
+  </footer>
+</body>
+</html>

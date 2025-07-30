@@ -1,0 +1,35 @@
+<!-- File: templates/home.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>LoanSaathiHub - Sign Up</title>
+  <link rel="stylesheet" href="/static/style/style.css" />
+</head>
+<body>
+  <header>
+    <div class="logo">LoanSaathiHub</div>
+    <div class="tagline">Your Trusted Loan Assistant</div>
+  </header>
+
+  <div class="container home-layout">
+    <div class="signup-form">
+      <h2>Sign Up</h2>
+      <form method="POST" action="/register">
+        <input type="text" name="first_name" placeholder="First Name" required />
+        <input type="text" name="last_name" placeholder="Last Name" required />
+        <input type="text" name="mobile" placeholder="Mobile Number" required />
+        <input type="email" name="email" placeholder="Email Address" required />
+        <!-- OTP Verification Placeholder -->
+        <button type="submit">Submit</button>
+      </form>
+      <p><a href="/login">Already have an account? Login</a></p>
+      <p><a href="/forgot">Forgot Password?</a></p>
+    </div>
+  </div>
+
+  <footer>
+    &copy; 2025 LoanSaathiHub
+  </footer>
+</body>
+</html>

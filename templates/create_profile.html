@@ -1,0 +1,103 @@
+<!-- File: templates/home.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>LoanSaathiHub - Sign Up</title>
+  <link rel="stylesheet" href="/static/style/style.css" />
+</head>
+<body>
+  <header>
+    <div class="logo">LoanSaathiHub</div>
+    <div class="tagline">Your Trusted Loan Assistant</div>
+  </header>
+
+  <div class="container home-layout">
+    <div class="signup-form">
+      <h2>Sign Up</h2>
+      <form method="POST" action="/register">
+        <input type="text" name="first_name" placeholder="First Name" required />
+        <input type="text" name="last_name" placeholder="Last Name" required />
+        <input type="text" name="mobile" placeholder="Mobile Number" required />
+        <input type="email" name="email" placeholder="Email Address" required />
+        <!-- OTP Verification Placeholder -->
+        <button type="submit">Submit</button>
+      </form>
+      <p><a href="/login">Already have an account? Login</a></p>
+      <p><a href="/forgot">Forgot Password?</a></p>
+    </div>
+  </div>
+
+  <footer>
+    &copy; 2025 LoanSaathiHub
+  </footer>
+</body>
+</html>
+
+
+<!-- File: templates/create_profile.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Create Your Profile - LoanSaathiHub</title>
+  <link rel="stylesheet" href="/static/style/style.css">
+</head>
+<body>
+  <header>
+    <div class="logo">LoanSaathiHub</div>
+  </header>
+
+  <div class="container">
+    <div class="signup-form">
+      <h2>Complete Your Profile</h2>
+      <form method="POST" action="/create-profile">
+        <input type="text" name="pan" placeholder="PAN Number" required />
+        <input type="text" name="aadhar" placeholder="Aadhaar Number" />
+        <input type="date" name="dob" placeholder="Date of Birth" required />
+        <select name="gender" required>
+          <option value="">Select Gender</option>
+          <option value="Male">Male</option>
+          <option value="Female">Female</option>
+          <option value="Other">Other</option>
+        </select>
+        <input type="text" name="city" placeholder="City" required />
+        <input type="text" name="state" placeholder="State" required />
+        <textarea name="address" placeholder="Full Address" rows="3" required></textarea>
+        <select name="education">
+          <option value="">Select Education</option>
+          <option>10th</option>
+          <option>12th</option>
+          <option>Graduate</option>
+          <option>Post-Graduate</option>
+          <option>PhD</option>
+        </select>
+        <select name="job">
+          <option value="">Select Job Type</option>
+          <option>Pvt</option>
+          <option>Govt</option>
+          <option>PSU</option>
+          <option>Advocate</option>
+          <option>Builder</option>
+          <option>Defence</option>
+          <option>Police</option>
+        </select>
+        <input type="text" name="salary" placeholder="Monthly Salary" required />
+        <select name="salary_mode">
+          <option value="">Salary Received via</option>
+          <option>Bank Account</option>
+          <option>Cheque</option>
+          <option>Cash</option>
+        </select>
+        <input type="text" name="other_income" placeholder="Other Income" />
+        <input type="text" name="cibil" placeholder="CIBIL Score" required />
+        <button type="submit">Submit</button>
+      </form>
+    </div>
+  </div>
+
+  <footer>
+    &copy; 2025 LoanSaathiHub
+  </footer>
+</body>
+</html>

@@ -1,2 +1,42 @@
-<!-- Updated admin.html template -->
-<h1>Admin Panel</h1>
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Admin Panel – LoanSaathiHub</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style/style.css') }}">
+</head>
+<body>
+<header>
+    <div class="logo">LoanSaathiHub</div>
+    <div class="tagline">Admin Panel – Approve or Reject Loans</div>
+</header>
+
+<div class="container">
+    <h2>Loan Requests</h2>
+    {% for loan in loans %}
+        <div style="background:#fff;padding:15px;margin-bottom:10px;border-radius:8px;box-shadow:0 0 5px #ccc;">
+            <p><strong>Name:</strong> {{ loan.name }}</p>
+            <p><strong>Loan ID:</strong> {{ loan.loanId }}</p>
+            <p><strong>Loan Type:</strong> {{ loan.loanType }}</p>
+            <p><strong>Amount:</strong> ₹{{ loan.amount }}</p>
+            <p><strong>Status:</strong> {{ loan.status }}</p>
+            <p><strong>Remarks:</strong> {{ loan.remark }}</p>
+            <form method="POST">
+                <input type="hidden" name="loan_id" value="{{ loan.loanId }}">
+                <label>Action:</label>
+                <select name="action" required>
+                    <option value="">--Select--</option>
+                    <option value="Approved">Approve</option>
+                    <option value="Rejected">Reject</option>
+                </select>
+                <br><br>
+                <input type="text" name="remark" placeholder="Remark or reason (optional)">
+                <br><br>
+                <button type="submit">Submit</button>
+            </form>
+        </div>
+    {% endfor %}
+</div>
+
+<footer>© LoanSaathiHub</footer>
+</body>
+</html>

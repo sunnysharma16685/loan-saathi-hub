@@ -1,24 +1,59 @@
+<!-- File: templates/admin.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8">
   <title>Admin Panel - LoanSaathiHub</title>
-  <link rel="stylesheet" href="/static/style/style.css" />
+  <link rel="stylesheet" href="/static/style/style.css">
 </head>
 <body>
   <header>
-    <div class="logo">LoanSaathiHub</div>
-    <div class="tagline">Admin Panel</div>
+    <div class="logo">LoanSaathiHub Admin</div>
+    <div class="tagline">Manage Loan Requests</div>
   </header>
+
   <div class="container">
-    <h2>Loan Requests Overview</h2>
-    <div id="loanRequestsTable">
-      <!-- Dynamic data will be injected via Flask -->
-    </div>
-    <a href="/admin/logout"><button>Logout</button></a>
+    <h2>Pending Loan Applications</h2>
+
+    {% if pending_loans %}
+      <table>
+        <tr>
+          <th>Request ID</th>
+          <th>User</th>
+          <th>Amount</th>
+          <th>Duration</th>
+          <th>Type</th>
+          <th>Action</th>
+        </tr>
+        {% for loan in pending_loans %}
+        <tr>
+          <td>{{ loan.id }}</td>
+          <td>{{ loan.user }}</td>
+          <td>{{ loan.amount }}</td>
+          <td>{{ loan.duration }}</td>
+          <td>{{ loan.type }}</td>
+          <td>
+            <form action="/admin/approve/{{ loan.id }}" method="post" style="display:inline;">
+              <button type="submit">Approve</button>
+            </form>
+            <form action="/admin/reject/{{ loan.id }}" method="post" style="display:inline;">
+              <input type="text" name="remarks" placeholder="Reason" required>
+              <button type="submit">Reject</button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+      </table>
+    {% else %}
+      <p>No pending applications.</p>
+    {% endif %}
+
+    <a href="/admin/dashboard"><button>Refresh</button></a>
+    <a href="/logout"><button>Logout</button></a>
   </div>
+
   <footer>
-    &copy; 2025 LoanSaathiHub. All rights reserved.
+    &copy; 2025 LoanSaathiHub Admin
   </footer>
 </body>
 </html>

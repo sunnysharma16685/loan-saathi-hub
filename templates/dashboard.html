@@ -1,52 +1,48 @@
+<!-- File: templates/dashboard.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <title>Dashboard - LoanSaathiHub</title>
-  <link rel="stylesheet" href="/static/style/style.css" />
+  <link rel="stylesheet" href="/static/style/style.css">
 </head>
 <body>
   <header>
     <div class="logo">LoanSaathiHub</div>
-    <div class="tagline">Welcome, {{ user }}</div>
+    <div class="tagline">Your Loan Dashboard</div>
   </header>
 
   <div class="container">
-    <h2>Your Dashboard</h2>
-    
-    <a href="/create-profile"><button>Create Profile</button></a>
-    <a href="/apply-loan"><button>Apply for New Loan</button></a>
-    
+    <h2>Welcome, {{ user }}</h2>
+    <p><a href="/apply-loan">Apply for New Loan</a></p>
+
     <h3>Your Loan Requests</h3>
-    {% if loans %}
+    {% if loan_requests %}
       <table>
-        <thead>
-          <tr>
-            <th>Request ID</th>
-            <th>Loan Type</th>
-            <th>Amount</th>
-            <th>Duration</th>
-            <th>Status</th>
-            <th>Remarks</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for loan in loans %}
-          <tr>
-            <td>{{ loan.id }}</td>
-            <td>{{ loan.loan_type }}</td>
-            <td>₹{{ loan.amount }}</td>
-            <td>{{ loan.duration }} months</td>
-            <td>{{ loan.status }}</td>
-            <td>{{ loan.remarks }}</td>
-          </tr>
-          {% endfor %}
-        </tbody>
+        <tr>
+          <th>Request ID</th>
+          <th>Type</th>
+          <th>Amount</th>
+          <th>Duration</th>
+          <th>Status</th>
+          <th>Remarks</th>
+        </tr>
+        {% for loan in loan_requests %}
+        <tr>
+          <td>{{ loan.id }}</td>
+          <td>{{ loan.type }}</td>
+          <td>{{ loan.amount }}</td>
+          <td>{{ loan.duration }}</td>
+          <td>{{ loan.status }}</td>
+          <td>{{ loan.remarks }}</td>
+        </tr>
+        {% endfor %}
       </table>
     {% else %}
-      <p>No loan requests yet.</p>
+      <p>No loan requests found.</p>
     {% endif %}
 
+    <br>
     <a href="/logout"><button>Logout</button></a>
   </div>
 

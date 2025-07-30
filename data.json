@@ -1,10 +1,1 @@
-{
-  "loanId": 19870001,
-  "email": "user@example.com",
-  "name": "Sunny Sharma",
-  "loanType": "Personal Loan",
-  "amount": "500000",
-  "duration": "36",
-  "status": "In Process",
-  "remark": ""
-}
+{}

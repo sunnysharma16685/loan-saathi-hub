@@ -7,13 +7,16 @@ app.secret_key = 'your_secret_key'
 
 # Supabase credentials
 url = "https://cokxynyddbloupedszoj.supabase.co"
-key = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNva3h5bnlkZGJsb3VwZWRzem9qIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM4ODcwNDIsImV4cCI6MjA2OTQ2MzA0Mn0.gdeUkmoUs5qMW6vrzyOqRr0A1OVt_E_Tsq0nZ7X-h8A"
+key = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
 supabase: Client = create_client(url, key)
 
+# ----------------------- Home -----------------------
 @app.route('/')
 def home():
     return render_template('home.html')
 
+
+# ----------------------- Signup & Profile Creation -----------------------
 @app.route('/signup', methods=['GET', 'POST'])
 def signup():
     if request.method == 'POST':
@@ -42,10 +45,13 @@ def signup():
         return redirect('/loan-request')
     return render_template('signup.html')
 
+
+# ----------------------- Loan Request -----------------------
 @app.route('/loan-request', methods=['GET', 'POST'])
 def loan_request():
     if 'user' not in session:
         return redirect('/login')
+    
     if request.method == 'POST':
         data = request.form
         latest = supabase.table("loan_requests").select("loan_id").order("loan_id", desc=True).limit(1).execute()
@@ -62,8 +68,11 @@ def loan_request():
         }).execute()
 
         return render_template('thankyou.html', loan_id=new_loan_id)
+    
     return render_template('loan_request.html')
 
+
+# ----------------------- Login -----------------------
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
@@ -77,6 +86,8 @@ def login():
             return "Invalid Login ID"
     return render_template('login.html')
 
+
+# ----------------------- Dashboard -----------------------
 @app.route('/dashboard')
 def dashboard():
     if 'user' not in session:
@@ -84,12 +95,15 @@ def dashboard():
     res = supabase.table("loan_requests").select("*").eq("user_email", session['user']).execute()
     return render_template('dashboard.html', user=session['user'], loans=res.data)
 
+
+# ----------------------- Logout -----------------------
 @app.route('/logout')
 def logout():
     session.clear()
     return redirect('/')
 
-# Admin Panel
+
+# ----------------------- Admin Login -----------------------
 @app.route('/admin-login', methods=['GET', 'POST'])
 def admin_login():
     if request.method == 'POST':
@@ -98,13 +112,16 @@ def admin_login():
             session['admin'] = email
             return redirect('/admin-dashboard')
         else:
-            return "Unauthorized"
+            return "Unauthorized Access"
     return render_template('admin_login.html')
 
+
+# ----------------------- Admin Dashboard -----------------------
 @app.route('/admin-dashboard', methods=['GET', 'POST'])
 def admin_dashboard():
     if 'admin' not in session:
         return redirect('/admin-login')
+
     if request.method == 'POST':
         loan_id = request.form['loan_id']
         status = request.form['status']
@@ -113,5 +130,11 @@ def admin_dashboard():
             "status": status,
             "remark": remark
         }).eq("loan_id", loan_id).execute()
+
     res = supabase.table("loan_requests").select("*").execute()
     return render_template('admin_dashboard.html', loans=res.data)
+
+
+# ----------------------- Run the App -----------------------
+if __name__ == '__main__':
+    app.run(debug=True)

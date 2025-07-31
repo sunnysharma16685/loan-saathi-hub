@@ -1,36 +1,15 @@
-from flask import Flask, render_template, request, redirect, url_for, session
-import json
-import os
+from flask import Flask, render_template, request, redirect, session, url_for
 from supabase import create_client, Client
-
-SUPABASE_URL = "https://cokxynyddbloupedszoj.supabase.co"
-SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
-
-supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
+import uuid
 
 app = Flask(__name__)
-app.secret_key = 'secure_key'
+app.secret_key = 'your_secret_key'
 
-DATA_FILE = 'data.json'
+# Supabase credentials
+url = "https://cokxynyddbloupedszoj.supabase.co"
+key = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNva3h5bnlkZGJsb3VwZWRzem9qIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM4ODcwNDIsImV4cCI6MjA2OTQ2MzA0Mn0.gdeUkmoUs5qMW6vrzyOqRr0A1OVt_E_Tsq0nZ7X-h8A"
+supabase: Client = create_client(url, key)
 
-# Utility functions
-def load_data():
-    if os.path.exists(DATA_FILE):
-        with open(DATA_FILE, 'r') as file:
-            return json.load(file)
-    return {"users": [], "loan_requests": []}
-
-def save_data(data):
-    with open(DATA_FILE, 'w') as file:
-        json.dump(data, file, indent=4)
-
-def generate_loan_id():
-    data = load_data()
-    existing = [int(lr["loan_id"]) for lr in data["loan_requests"]] if data["loan_requests"] else []
-    next_id = max(existing, default=19870000) + 1
-    return str(next_id)
-
-# Routes
 @app.route('/')
 def home():
     return render_template('home.html')
@@ -38,95 +17,85 @@ def home():
 @app.route('/signup', methods=['GET', 'POST'])
 def signup():
     if request.method == 'POST':
-        user = {
-            "first_name": request.form['first_name'],
-            "last_name": request.form['last_name'],
-            "email": request.form['email'],
-            "mobile": request.form['mobile']
-        }
-        session['user'] = user
-        return redirect(url_for('create_profile'))
-    return render_template('signup.html')
+        data = request.form
+        supabase.table("users").insert({
+            "first_name": data['first_name'],
+            "last_name": data['last_name'],
+            "dob": data['dob'],
+            "city": data['city'],
+            "state": data['state'],
+            "mobile": data['mobile'],
+            "email": data['email'],
+            "pan": data['pan'],
+            "aadhaar": data['aadhaar'],
+            "education": data['education'],
+            "job": data['job'],
+            "salary_mode": data['salary_mode'],
+            "monthly_income": data['monthly_income'],
+            "other_income": data['other_income'],
+            "address": data['address'],
+            "cibil": data['cibil']
+        }).execute()
 
-@app.route('/create-profile', methods=['GET', 'POST'])
-def create_profile():
-    if 'user' not in session:
-        return redirect('/signup')
-    if request.method == 'POST':
-        data = load_data()
-        user = session['user']
-        user.update({
-            "dob": request.form['dob'],
-            "city": request.form['city'],
-            "state": request.form['state'],
-            "pan": request.form['pan'],
-            "aadhaar": request.form['aadhaar'],
-            "education": request.form['education'],
-            "job": request.form['job'],
-            "salary_mode": request.form['salary_mode'],
-            "monthly_income": request.form['monthly_income'],
-            "other_income": request.form['other_income'],
-            "address": request.form['address'],
-            "cibil": request.form['cibil']
-        })
-        data["users"].append(user)
-        save_data(data)
+        session['user'] = data['email']
+        session['mobile'] = data['mobile']
         return redirect('/loan-request')
-    return render_template('create_profile.html')
+    return render_template('signup.html')
 
 @app.route('/loan-request', methods=['GET', 'POST'])
 def loan_request():
     if 'user' not in session:
-        return redirect('/signup')
+        return redirect('/login')
     if request.method == 'POST':
-        data = load_data()
-        loan = {
-            "loan_id": generate_loan_id(),
-            "email": session['user']['email'],
-            "loan_type": request.form['loan_type'],
-            "amount": request.form['amount'],
-            "duration": request.form['duration'],
-            "status": "In-process",
-            "remarks": ""
-        }
-        data["loan_requests"].append(loan)
-        save_data(data)
-        return render_template('thankyou.html', loan_id=loan["loan_id"])
+        data = request.form
+        latest = supabase.table("loan_requests").select("loan_id").order("loan_id", desc=True).limit(1).execute()
+        last_id = int(latest.data[0]['loan_id']) if latest.data else 19870000
+        new_loan_id = str(last_id + 1)
+
+        supabase.table("loan_requests").insert({
+            "loan_id": new_loan_id,
+            "user_email": session['user'],
+            "loan_type": data['loan_type'],
+            "amount": data['amount'],
+            "duration": data['duration'],
+            "status": "In Process"
+        }).execute()
+
+        return render_template('thankyou.html', loan_id=new_loan_id)
     return render_template('loan_request.html')
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
-        email = request.form['email']
-        mobile = request.form['mobile']
-        data = load_data()
-        user = next((u for u in data["users"] if u["email"] == email and u["mobile"] == mobile), None)
-        if user:
-            session['user'] = user
+        login_id = request.form['login_id']
+        res = supabase.table("users").select("*").or_(f"email.eq.{login_id},mobile.eq.{login_id}").execute()
+        if res.data:
+            session['user'] = res.data[0]['email']
+            session['mobile'] = res.data[0]['mobile']
             return redirect('/dashboard')
         else:
-            return "Invalid credentials"
+            return "Invalid Login ID"
     return render_template('login.html')
 
 @app.route('/dashboard')
 def dashboard():
     if 'user' not in session:
         return redirect('/login')
-    data = load_data()
-    user_loans = [lr for lr in data["loan_requests"] if lr["email"] == session['user']['email']]
-    return render_template('dashboard.html', user=session['user'], loans=user_loans)
+    res = supabase.table("loan_requests").select("*").eq("user_email", session['user']).execute()
+    return render_template('dashboard.html', user=session['user'], loans=res.data)
 
 @app.route('/logout')
 def logout():
     session.clear()
     return redirect('/')
 
-# Admin routes
+# Admin Panel
 @app.route('/admin-login', methods=['GET', 'POST'])
 def admin_login():
     if request.method == 'POST':
-        if request.form['email'] == 'admin@loansaathihub.in':
-            session['admin'] = True
+        email = request.form['email']
+        if email == "mayuri.luhar@gmail.com":
+            session['admin'] = email
             return redirect('/admin-dashboard')
         else:
             return "Unauthorized"
@@ -136,24 +105,13 @@ def admin_login():
 def admin_dashboard():
     if 'admin' not in session:
         return redirect('/admin-login')
-    data = load_data()
     if request.method == 'POST':
         loan_id = request.form['loan_id']
-        action = request.form['action']
-        remarks = request.form.get('remarks', '')
-        for lr in data['loan_requests']:
-            if lr['loan_id'] == loan_id:
-                lr['status'] = 'Approved' if action == 'approve' else 'Rejected'
-                lr['remarks'] = remarks
-                break
-        save_data(data)
-    return render_template('admin_dashboard.html', loans=data["loan_requests"])
-
-@app.route('/forgot', methods=['GET', 'POST'])
-def forgot():
-    if request.method == 'POST':
-        return "Recovery link sent to your email/mobile (mock)"
-    return render_template('forgot.html')
-
-if __name__ == '__main__':
-    app.run(debug=True)
+        status = request.form['status']
+        remark = request.form['remark']
+        supabase.table("loan_requests").update({
+            "status": status,
+            "remark": remark
+        }).eq("loan_id", loan_id).execute()
+    res = supabase.table("loan_requests").select("*").execute()
+    return render_template('admin_dashboard.html', loans=res.data)

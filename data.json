@@ -1,10 +1,38 @@
 {
-  "loanId": 19870001,
-  "email": "user@example.com",
-  "name": "Sunny Sharma",
-  "loanType": "Personal Loan",
-  "amount": "500000",
-  "duration": "36",
-  "status": "In Process",
-  "remark": ""
+  "users": [
+    {
+      "id": 1,
+      "first_name": "Sunny",
+      "last_name": "Sharma",
+      "dob": "1990-01-01",
+      "city": "Jaipur",
+      "state": "Rajasthan",
+      "mobile": "9876543210",
+      "email": "sunny@example.com",
+      "pan": "ABCDE1234F",
+      "aadhaar": "123456789012",
+      "education": "Graduate",
+      "job": "Private",
+      "salary_mode": "Bank Account",
+      "monthly_income": 50000,
+      "other_income": 5000,
+      "address": "123 MG Road, Jaipur",
+      "cibil": "750"
+    }
+  ],
+  "loan_requests": [
+    {
+      "loan_id": "19870001",
+      "user_email": "sunny@example.com",
+      "loan_type": "Personal Loan",
+      "amount": 300000,
+      "duration": 24,
+      "status": "In Process",
+      "remark": ""
+    }
+  ],
+  "admin": {
+    "email": "mayuri.luhar@gmail.com",
+    "mobile": "+919662131087"
+  }
 }

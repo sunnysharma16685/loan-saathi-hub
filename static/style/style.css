@@ -1,3 +1,8 @@
+<head>
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
 /* === General Reset and Base Styles === */
 * {
   margin: 0;

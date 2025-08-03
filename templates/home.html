@@ -1,35 +1,48 @@
-<!-- File: templates/home.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>LoanSaathiHub - Sign Up</title>
-  <link rel="stylesheet" href="/static/style/style.css" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Loan Saathi Hub</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
   <header>
     <div class="logo">LoanSaathiHub</div>
-    <div class="tagline">Your Trusted Loan Assistant</div>
+    <p class="tagline">Aapka Loan Saathi – Vishwas ke Saath</p>
   </header>
 
-  <div class="container home-layout">
-    <div class="signup-form">
+  <main class="container">
+    <div class="left-ad-section">
+      <!-- You can replace this image with actual ad banners or text -->
+      <img src="{{ url_for('static', filename='loan_banner.jpg') }}" alt="Loan Banner" class="ad-image" />
+    </div>
+
+    <div class="right-form-section">
       <h2>Sign Up</h2>
-      <form method="POST" action="/register">
+      <form action="{{ url_for('signup') }}" method="POST">
         <input type="text" name="first_name" placeholder="First Name" required />
         <input type="text" name="last_name" placeholder="Last Name" required />
-        <input type="text" name="mobile" placeholder="Mobile Number" required />
-        <input type="email" name="email" placeholder="Email Address" required />
-        <!-- OTP Verification Placeholder -->
+        <input type="tel" name="mobile" placeholder="Mobile Number" required />
+        <input type="email" name="email" placeholder="Email ID" required />
         <button type="submit">Submit</button>
       </form>
-      <p><a href="/login">Already have an account? Login</a></p>
-      <p><a href="/forgot">Forgot Password?</a></p>
+
+      <div class="form-footer">
+        <a href="{{ url_for('login') }}">Already have an account? Login</a><br />
+        <a href="{{ url_for('forgot_password') }}">Forgot Password?</a>
+      </div>
     </div>
-  </div>
+  </main>
 
   <footer>
-    &copy; 2025 LoanSaathiHub
+    <div class="footer-content">
+      <a href="#">About Us</a> |
+      <a href="#">Privacy Policy</a> |
+      <a href="#">Terms & Conditions</a> |
+      <a href="#">Support</a> |
+      <a href="#">Contact Us</a>
+    </div>
   </footer>
 </body>
 </html>

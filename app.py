@@ -2,7 +2,7 @@ from flask import Flask, render_template, request, redirect, session, url_for
 from supabase import create_client, Client
 
 url = "https://cokxynyddbloupedszoj.supabase.co"  # ✅ Your Supabase project URL
-key = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."  # ✅ Replace with your Anon Public Key
+key = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNva3h5bnlkZGJsb3VwZWRzem9qIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM4ODcwNDIsImV4cCI6MjA2OTQ2MzA0Mn0.gdeUkmoUs5qMW6vrzyOqRr0A1OVt_E_Tsq0nZ7X-h8A..."  # ✅ Replace with your Anon Public Key
 
 supabase: Client = create_client(url, key)
 

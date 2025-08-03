@@ -2,7 +2,7 @@ from flask import Flask, render_template, request, redirect, session, url_for
 from supabase import create_client, Client
 
 app = Flask(__name__)
-app.secret_key = 'supersecretkey'  # Change this to a more secure value in production
+app.secret_key = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNva3h5bnlkZGJsb3VwZWRzem9qIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1Mzg4NzA0MiwiZXhwIjoyMDY5NDYzMDQyfQ.qL4RdShkKKQRGfqYlfwjIwYmjRuYd5JG7LddIeLXkJg"
 
 # Supabase Configuration
 SUPABASE_URL = "https://cokxynyddbloupedszoj.supabase.co"

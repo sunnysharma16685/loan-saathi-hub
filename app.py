@@ -1,14 +1,21 @@
 from flask import Flask, render_template, request, redirect, session, url_for
 from supabase import create_client, Client
-import uuid
 
-app = Flask(__name__)
-app.secret_key = 'your_secret_key'
+url = "https://cokxynyddbloupedszoj.supabase.co"  # ✅ Your Supabase project URL
+key = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."  # ✅ Replace with your Anon Public Key
 
-# Supabase credentials
-url = "https://cokxynyddbloupedszoj.supabase.co"
-key = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
 supabase: Client = create_client(url, key)
+
+data = {
+    "first_name": "Sunny",
+    "last_name": "Sharma",
+    "email": "sunny@example.com",
+    "mobile": "9876543210"
+}
+
+response = supabase.table("users").insert(data).execute()
+print(response)
+
 
 # ----------------------- Home -----------------------
 @app.route('/')

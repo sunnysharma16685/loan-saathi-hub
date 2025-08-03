@@ -1,27 +1,59 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Welcome to LoanSaathiHub</title>
-  <link rel="stylesheet" href="/static/style/style.css" />
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>LoanSaathiHub - Home</title>
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <header>
+  <!-- Header -->
+  <header class="header">
     <div class="logo">LoanSaathiHub</div>
-    <div class="tagline">Your Trusted Loan Partner</div>
+    <div class="tagline">आपके सपनों का साथी</div>
   </header>
 
-  <div class="container home-layout">
-    <div class="signup-form">
-      <h2>Get Started</h2>
-      <a href="/signup"><button>Sign Up</button></a>
-      <p>Already registered?</p>
-      <a href="/login"><button>Login</button></a>
+  <!-- Main Layout -->
+  <div class="main-container">
+    <!-- Left Side: Advertisement -->
+    <div class="left-ad">
+      <h3>Advertisement</h3>
+      <div class="ad-placeholder">[Ad Space - 300x600]</div>
+    </div>
+
+    <!-- Right Side: Signup Form -->
+    <div class="right-form">
+      <h2>Sign Up</h2>
+      <form id="signupForm">
+        <input type="text" name="firstName" placeholder="First Name" required />
+        <input type="text" name="lastName" placeholder="Last Name" required />
+        
+        <div class="otp-section">
+          <input type="tel" name="mobile" placeholder="Mobile Number" required />
+          <button type="button" class="otp-btn">Send OTP</button>
+        </div>
+        
+        <input type="email" name="email" placeholder="Email ID" required />
+        
+        <button type="submit">Submit</button>
+      </form>
+
+      <div class="login-link">
+        Already have an account? <a href="login.html">Login</a>
+      </div>
     </div>
   </div>
 
-  <footer>
-    &copy; 2025 LoanSaathiHub
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="footer-links">
+      <a href="about.html">About Us</a>
+      <a href="policy.html">Privacy Policy</a>
+      <a href="terms.html">Terms & Conditions</a>
+      <a href="support.html">Support</a>
+      <a href="contact.html">Contact Us</a>
+    </div>
+    <p>&copy; 2025 LoanSaathiHub. All Rights Reserved.</p>
   </footer>
 </body>
 </html>

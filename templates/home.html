@@ -20,15 +20,18 @@
 
     <div class="right-form-section">
       <h2>Sign Up</h2>
-      <form action="{{ url_for('signup') }}" method="POST">
+      <form method="POST" action="{{ url_for('signup') }}">
         <input type="text" name="first_name" placeholder="First Name" required />
         <input type="text" name="last_name" placeholder="Last Name" required />
-        <input type="tel" name="mobile" placeholder="Mobile Number" required />
-        <input type="email" name="email" placeholder="Email ID" required />
-        <form action="{{ url_for('signup') }}" method="get">
- 	 <button type="submit">Submit</button>
-	</form>
 
+        <div class="otp-section">
+          <input type="tel" name="mobile" placeholder="Mobile Number" required />
+          <button type="button" class="otp-btn">Send OTP</button>
+        </div>
+
+        <input type="email" name="email" placeholder="Email ID" required />
+        <button type="submit">Submit</button>
+      </form>
 
       <div class="form-footer">
         <a href="{{ url_for('login') }}">Already have an account? Login</a><br />
@@ -38,13 +41,13 @@
   </main>
 
   <footer>
-  <div class="footer-content">
-    <a href="{{ url_for('about') }}">About Us</a> |
-    <a href="{{ url_for('privacy') }}">Privacy Policy</a> |
-    <a href="{{ url_for('terms') }}">Terms & Conditions</a> |
-    <a href="{{ url_for('support') }}">Support</a> |
-    <a href="{{ url_for('contact') }}">Contact Us</a>
-  </div>
-</footer>
+    <div class="footer-content">
+      <a href="{{ url_for('about') }}">About Us</a> |
+      <a href="{{ url_for('policy') }}">Privacy Policy</a> |
+      <a href="{{ url_for('terms') }}">Terms & Conditions</a> |
+      <a href="{{ url_for('support') }}">Support</a> |
+      <a href="{{ url_for('contact') }}">Contact Us</a>
+    </div>
+  </footer>
 </body>
 </html>

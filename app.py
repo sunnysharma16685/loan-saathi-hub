@@ -161,6 +161,27 @@ def admin_dashboard():
 def forgot_password():
     return "Coming soon..."
 
+@app.route('/about')
+def about():
+    return render_template('about.html')  # Create this HTML file
+
+@app.route('/privacy')
+def privacy():
+    return render_template('privacy.html')
+
+@app.route('/terms')
+def terms():
+    return render_template('terms.html')
+
+@app.route('/support')
+def support():
+    return render_template('support.html')
+
+@app.route('/contact')
+def contact():
+    return render_template('contact.html')
+
+
 
 # ----------------------- Run App -----------------------
 if __name__ == '__main__':

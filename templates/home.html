@@ -7,20 +7,24 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
+
+  <!-- Header -->
   <header>
     <div class="logo">LoanSaathiHub</div>
     <p class="tagline">Aapka Loan Saathi – Vishwas ke Saath</p>
   </header>
 
+  <!-- Main Layout -->
   <main class="container">
+    <!-- Left Advertisement Section -->
     <div class="left-ad-section">
-      <!-- You can replace this image with actual ad banners or text -->
       <img src="{{ url_for('static', filename='loan_banner.jpg') }}" alt="Loan Banner" class="ad-image" />
     </div>
 
+    <!-- Right Signup Form Section -->
     <div class="right-form-section">
       <h2>Sign Up</h2>
-      <form method="POST" action="{{ url_for('signup') }}">
+      <form method="POST" action="{{ url_for('create_profile') }}">
         <input type="text" name="first_name" placeholder="First Name" required />
         <input type="text" name="last_name" placeholder="Last Name" required />
 
@@ -40,17 +44,17 @@
     </div>
   </main>
 
+  <!-- Footer -->
   <footer>
     <div class="footer-content">
       <a href="{{ url_for('about') }}">About Us</a> |
-<a href="{{ url_for('privacy') }}">Privacy Policy</a> |
-<a href="{{ url_for('terms') }}">Terms & Conditions</a> |
-<a href="{{ url_for('support') }}">Support</a> |
-<a href="{{ url_for('contact') }}">Contact Us</a>
-
+      <a href="{{ url_for('privacy') }}">Privacy Policy</a> |
+      <a href="{{ url_for('terms') }}">Terms & Conditions</a> |
+      <a href="{{ url_for('support') }}">Support</a> |
+      <a href="{{ url_for('contact') }}">Contact Us</a>
     </div>
+    <p>&copy; 2025 LoanSaathiHub. All Rights Reserved.</p>
   </footer>
-{% include 'footer.html' %}
 
 </body>
 </html>

@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Admin - Agent Approvals</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <h2>Pending Agent Approvals</h2>
+
+  {% if agents %}
+    <table>
+      <thead>
+        <tr>
+          <th>Full Name</th>
+          <th>Email</th>
+          <th>Mobile</th>
+          <th>City</th>
+          <th>State</th>
+          <th>Mode</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for agent in agents %}
+        <tr>
+          <td>{{ agent.full_name }}</td>
+          <td>{{ agent.email }}</td>
+          <td>{{ agent.mobile }}</td>
+          <td>{{ agent.city }}</td>
+          <td>{{ agent.state }}</td>
+          <td>{{ agent.mode }}</td>
+          <td>
+            <form method="POST" style="display:inline;">
+              <input type="hidden" name="email" value="{{ agent.email }}">
+              <button type="submit" name="action" value="approve">Approve</button>
+            </form>
+            <form method="POST" style="display:inline;">
+              <input type="hidden" name="email" value="{{ agent.email }}">
+              <button type="submit" name="action" value="reject">Reject</button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p>No pending agent requests.</p>
+  {% endif %}
+</body>
+</html>

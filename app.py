@@ -19,39 +19,210 @@ def home():
 @app.route('/create-profile', methods=['GET', 'POST'])
 def create_profile():
     if request.method == 'POST':
-	return redirect(url_for('dashboard'))
-    return render_template('create_profile.html')
-        data = request.form
+        # Basic Loan User profile data
+        first_name = request.form['first_name']
+        last_name = request.form['last_name']
+        mobile = request.form['mobile']
+        email = request.form['email']
 
-        # Insert user into Supabase
+        # Save to Supabase
         supabase.table("users").insert({
-            "first_name": data['first_name'],
-            "last_name": data['last_name'],
-            "dob": data['dob'],
-            "city": data['city'],
-            "state": data['state'],
-            "mobile": data['mobile'],
-            "email": data['email'],
-            "pan": data['pan'],
-            "aadhaar": data['aadhaar'],
-            "education": data['education'],
-            "job": data['job'],
-            "salary_mode": data['salary_mode'],
-            "monthly_income": data.get('monthly_income', ''),
-            "other_income": data.get('other_income', ''),
-            "itr_last_3years": data.get('itr_last_3years', ''),
-            "address": data['address'],
-            "cibil": data.get('cibil', '')
+            "first_name": first_name,
+            "last_name": last_name,
+            "mobile": mobile,
+            "email": email,
+            "user_type": "loan_user"
         }).execute()
 
-        # Set session and redirect
-        session['user'] = data['email']
-        session['mobile'] = data['mobile']
+        # Set session
+        session['user'] = email
+        session['mobile'] = mobile
+
         return redirect('/loan-request')
-    
     return render_template('create_profile.html')
 
+# ----------------------- Agent Profile-----------------
+@app.route('/agent-signup', methods=['POST'])
+def agent_signup():
+    # Agent basic info
+    first_name = request.form['first_name']
+    last_name = request.form['last_name']
+    mobile = request.form['mobile']
+    email = request.form['email']
 
+    # Insert minimal agent data to track
+    supabase.table("agents").insert({
+        "first_name": first_name,
+        "last_name": last_name,
+        "mobile": mobile,
+        "email": email,
+        "status": "pending",
+        "agent_stage": "basic_signup"
+    }).execute()
+
+    # Save session
+    session['agent'] = email
+    session['mobile'] = mobile
+
+    # Redirect to full agent profile page
+    return redirect('/agent-profile')
+
+@app.route('/agent-profile', methods=['GET', 'POST'])
+def agent_profile():
+    if 'agent' not in session:
+        return redirect('/')
+
+    if request.method == 'POST':
+        data = request.form
+
+        # Get all loan type checkboxes
+        loan_types = request.form.getlist('loan_types')
+        agent_mode = data.get('agent_mode')
+
+        extra_fields = {}
+
+        if agent_mode == 'proprietor':
+            extra_fields = {
+                "aadhar": data.get('proprietor_aadhar'),
+                "agent_code": data.get('proprietor_code'),
+                "bank": data.get('proprietor_bank')
+            }
+        elif agent_mode == 'bank':
+            extra_fields = {
+                "designation": data.get('bank_designation'),
+                "branch": data.get('bank_branch'),
+                "employee_id": data.get('bank_employee_id')
+            }
+        elif agent_mode == 'dsa':
+            extra_fields = {
+                "dsa_code": data.get('dsa_code'),
+                "bank": data.get('dsa_bank')
+            }
+
+        # Save all data
+        supabase.table("agents").update({
+            "loan_types": loan_types,
+            "city": data.get('city'),
+            "state": data.get('state'),
+            "address": data.get('address'),
+            "agent_mode": agent_mode,
+            "status": "active",
+            **extra_fields
+        }).eq("email", session['agent']).execute()
+
+        return redirect('/agent-dashboard')
+
+    return render_template('agent_profile.html')
+
+
+@app.route('/agent-dashboard', methods=['GET', 'POST'])
+def agent_dashboard():
+    if 'agent' not in session:
+        return redirect('/')
+
+    agent_email = session['agent']
+
+    # Agent की details लो
+    agent_data = supabase.table("agents").select("city").eq("email", agent_email).single().execute()
+    agent_city = agent_data.data.get('city') if agent_data.data else None
+
+    if not agent_city:
+        return "Agent city not found. Please complete your profile."
+
+    if request.method == 'POST':
+        action = request.form.get('action')
+        loan_id = request.form.get('loan_id')
+
+        if action == 'reject':
+            reason = request.form.get('reason')
+            supabase.table("agent_leads").insert({
+                "agent_email": agent_email,
+                "loan_id": loan_id,
+                "status": "rejected",
+                "reason": reason
+            }).execute()
+
+        elif action == 'accept':
+            # Simulate ₹99 payment done
+            supabase.table("agent_leads").insert({
+                "agent_email": agent_email,
+                "loan_id": loan_id,
+                "status": "accepted",
+                "paid": True
+            }).execute()
+
+    # सभी loan_requests लो लेकिन सिर्फ उसी city के जहाँ agent है
+    city_loans = supabase.table("loan_requests").select("*").eq("city", agent_city).execute().data
+
+    # पहले से rejected या accepted leads हटाओ
+    handled_ids = supabase.table("agent_leads").select("loan_id").eq("agent_email", agent_email).execute().data
+    handled_loan_ids = [row['loan_id'] for row in handled_ids]
+
+    unhandled_leads = [loan for loan in city_loans if loan['loan_id'] not in handled_loan_ids]
+
+    return render_template("agent_dashboard.html", leads=unhandled_leads)
+
+@app.route('/agent-dashboard')
+def agent_dashboard():
+    if 'agent' not in session:
+        return redirect('/')
+
+    # Agent approval check
+    agent_email = session['agent']
+    agent = supabase.table("agents").select("approved").eq("email", agent_email).single().execute()
+    if not agent.data or not agent.data.get("approved"):
+        return "Your account is pending approval by admin."
+
+    # Proceed to dashboard...
+
+
+@app.route('/agent-leads')
+def agent_leads():
+    if 'agent' not in session:
+        return redirect('/')
+
+    agent_email = session['agent']
+
+    # Agent ने जो lead accept की हैं (paid=True)
+    accepted_leads_data = supabase.table("agent_leads").select("loan_id").eq("agent_email", agent_email).eq("status", "accepted").eq("paid", True).execute()
+    loan_ids = [entry['loan_id'] for entry in accepted_leads_data.data]
+
+    # अब उन loan_ids की details लो
+    all_leads = []
+    for loan_id in loan_ids:
+        loan_data = supabase.table("loan_requests").select("*").eq("loan_id", loan_id).single().execute()
+        if loan_data.data:
+            all_leads.append(loan_data.data)
+
+    return render_template("agent_leads.html", leads=all_leads)
+supabase.table("agents").insert({
+    "full_name": data['first_name'] + " " + data['last_name'],
+    "email": data['email'],
+    "mobile": data['mobile'],
+    "city": data['city'],
+    "state": data['state'],
+    "address": data['address'],
+    "mode": data['mode'],
+    "approved": False
+}).execute()
+
+# ----------------------- Admin Agent -----------------------
+@app.route('/admin-agents', methods=['GET', 'POST'])
+def admin_agents():
+    if 'admin' not in session:
+        return redirect('/admin-login')
+
+    if request.method == 'POST':
+        agent_email = request.form['email']
+        action = request.form['action']
+
+        if action == 'approve':
+            supabase.table("agents").update({"approved": True}).eq("email", agent_email).execute()
+        elif action == 'reject':
+            supabase.table("agents").delete().eq("email", agent_email).execute()
+
+    agents = supabase.table("agents").select("*").eq("approved", False).execute()
+    return render_template("admin_agents.html", agents=agents.data)
 
 
 # ----------------------- Loan Request -----------------------

@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Agent Profile - LoanSaathiHub</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <script>
+    function showFields(mode) {
+      document.querySelectorAll('.agent-fields').forEach(div => div.style.display = 'none');
+      document.getElementById(mode).style.display = 'block';
+    }
+  </script>
+</head>
+<body>
+  <header>
+    <div class="logo">LoanSaathiHub</div>
+    <div class="tagline">Agent Profile</div>
+  </header>
+
+  <div class="container">
+    <form method="POST" action="{{ url_for('agent_profile') }}">
+      <h2>Complete Your Agent Profile</h2>
+
+      <label>Select Loan Types You Deal In:</label><br>
+      <input type="checkbox" name="loan_types" value="Personal Loan"> Personal Loan
+      <input type="checkbox" name="loan_types" value="Business Loan"> Business Loan
+      <input type="checkbox" name="loan_types" value="Home Loan"> Home Loan
+      <input type="checkbox" name="loan_types" value="Education Loan"> Education Loan
+      <br><br>
+
+      <input type="text" name="city" placeholder="City" required />
+      <input type="text" name="state" placeholder="State" required />
+      <textarea name="address" placeholder="Full Address" required></textarea>
+
+      <label>Select Agent Mode:</label>
+      <select name="agent_mode" onchange="showFields(this.value)" required>
+        <option value="">-- Select --</option>
+        <option value="individual">Individual</option>
+        <option value="proprietor">Proprietor</option>
+        <option value="bank">Bank</option>
+        <option value="dsa">DSA</option>
+      </select>
+
+      <!-- Mode specific fields -->
+      <div id="individual" class="agent-fields" style="display:none;">
+        <p>No extra fields needed for Individual.</p>
+      </div>
+
+      <div id="proprietor" class="agent-fields" style="display:none;">
+        <input type="text" name="proprietor_aadhar" placeholder="Aadhar Number" />
+        <input type="text" name="proprietor_code" placeholder="Agent Code" />
+        <input type="text" name="proprietor_bank" placeholder="Bank Name" />
+      </div>
+
+      <div id="bank" class="agent-fields" style="display:none;">
+        <input type="text" name="bank_designation" placeholder="Designation" />
+        <input type="text" name="bank_branch" placeholder="Branch Name" />
+        <input type="text" name="bank_employee_id" placeholder="Employee ID" />
+      </div>
+
+      <div id="dsa" class="agent-fields" style="display:none;">
+        <input type="text" name="dsa_code" placeholder="DSA Code" />
+        <input type="text" name="dsa_bank" placeholder="Bank Name" />
+      </div>
+
+      <button type="submit">Submit Profile</button>
+    </form>
+  </div>
+
+  <footer>
+    &copy; 2025 LoanSaathiHub
+  </footer>
+</body>
+</html>

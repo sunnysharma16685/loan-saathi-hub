@@ -3,58 +3,96 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Loan Saathi Hub</title>
+  <title>LoanSaathiHub - Home</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <style>
+    .button-group button {
+      padding: 10px 20px;
+      margin: 10px;
+      font-size: 1rem;
+      cursor: pointer;
+    }
+    .form-section {
+      display: none;
+      margin-top: 20px;
+    }
+    .form-section.active {
+      display: block;
+    }
+    .form-box {
+      max-width: 400px;
+      padding: 20px;
+      background: #f9f9f9;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+  </style>
 </head>
 <body>
 
   <!-- Header -->
-  <header>
+  <header class="header">
     <div class="logo">LoanSaathiHub</div>
-    <p class="tagline">Aapka Loan Saathi – Vishwas ke Saath</p>
+    <div class="tagline">Aapka Vishwas ka Saathi</div>
   </header>
 
   <!-- Main Layout -->
-  <main class="container">
-    <!-- Left Advertisement Section -->
-    <div class="left-ad-section">
-      <img src="{{ url_for('static', filename='loan_banner.jpg') }}" alt="Loan Banner" class="ad-image" />
+  <div class="main-container" style="display:flex; gap: 40px; padding: 40px; align-items: flex-start;">
+    
+    <!-- Left Ad -->
+    <div class="left-ad" style="flex:1;">
+      <img src="{{ url_for('static', filename='loan_banner.jpg') }}" alt="Ad Banner" style="width:100%; border-radius: 12px;">
     </div>
 
-    <!-- Right Signup Form Section -->
-    <div class="right-form-section">
-      <h2>Sign Up</h2>
-      <form method="POST" action="{{ url_for('create_profile') }}">
-        <input type="text" name="first_name" placeholder="First Name" required />
-        <input type="text" name="last_name" placeholder="Last Name" required />
+    <!-- Right Buttons + Form -->
+    <div class="right-section" style="flex:1.5;">
+      <div class="button-group">
+        <button onclick="showForm('loanUser')">Loan User</button>
+        <button onclick="showForm('agent')">Agent</button>
+      </div>
 
-        <div class="otp-section">
-          <input type="tel" name="mobile" placeholder="Mobile Number" required />
-          <button type="button" class="otp-btn">Send OTP</button>
-        </div>
+      <!-- Loan User Form -->
+      <div id="loanUser" class="form-section form-box">
+        <h3>Loan User Sign Up</h3>
+        <form method="POST" action="{{ url_for('create_profile') }}">
+          <input type="text" name="first_name" placeholder="First Name" required><br>
+          <input type="text" name="last_name" placeholder="Last Name" required><br>
+          <input type="tel" name="mobile" placeholder="Mobile Number" required><br>
+          <input type="email" name="email" placeholder="Email ID" required><br>
+          <button type="submit">Start Profile</button>
+        </form>
+      </div>
 
-        <input type="email" name="email" placeholder="Email ID" required />
-        <button type="submit">Submit</button>
-      </form>
-
-      <div class="form-footer">
-        <a href="{{ url_for('login') }}">Already have an account? Login</a><br />
-        <a href="{{ url_for('forgot_password') }}">Forgot Password?</a>
+      <!-- Agent Form -->
+      <div id="agent" class="form-section form-box">
+        <h3>Agent Sign Up</h3>
+        <form method="POST" action="{{ url_for('agent_signup') }}">
+          <input type="text" name="first_name" placeholder="First Name" required><br>
+          <input type="text" name="last_name" placeholder="Last Name" required><br>
+          <input type="tel" name="mobile" placeholder="Mobile Number" required><br>
+          <input type="email" name="email" placeholder="Email ID" required><br>
+          <button type="submit">Start Agent Profile</button>
+        </form>
       </div>
     </div>
-  </main>
+  </div>
 
   <!-- Footer -->
-  <footer>
-    <div class="footer-content">
-      <a href="{{ url_for('about') }}">About Us</a> |
-      <a href="{{ url_for('privacy') }}">Privacy Policy</a> |
-      <a href="{{ url_for('terms') }}">Terms & Conditions</a> |
-      <a href="{{ url_for('support') }}">Support</a> |
-      <a href="{{ url_for('contact') }}">Contact Us</a>
-    </div>
-    <p>&copy; 2025 LoanSaathiHub. All Rights Reserved.</p>
+  <footer style="text-align:center; padding:20px; background:#f0f0f0;">
+    <a href="{{ url_for('about') }}">About Us</a> |
+    <a href="{{ url_for('privacy') }}">Privacy Policy</a> |
+    <a href="{{ url_for('terms') }}">Terms & Conditions</a> |
+    <a href="{{ url_for('support') }}">Support</a> |
+    <a href="{{ url_for('contact') }}">Contact Us</a>
+    <p>&copy; 2025 LoanSaathiHub</p>
   </footer>
 
+  <!-- JS -->
+  <script>
+    function showForm(id) {
+      document.querySelectorAll('.form-section').forEach(div => div.classList.remove('active'));
+      document.getElementById(id).classList.add('active');
+    }
+  </script>
 </body>
 </html>

@@ -19,6 +19,8 @@ def home():
 @app.route('/create-profile', methods=['GET', 'POST'])
 def create_profile():
     if request.method == 'POST':
+	return redirect(url_for('dashboard'))
+    return render_template('create_profile.html')
         data = request.form
 
         # Insert user into Supabase

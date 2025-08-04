@@ -14,6 +14,23 @@
     </nav>	
   </header>
 
+{% extends "base.html" %}
+{% block title %}Create Profile - LoanSaathiHub{% endblock %}
+
+{% block content %}
+<div class="container home-layout">
+  <div class="signup-form">
+    <h2>Create Profile</h2>
+    <form method="POST" action="{{ url_for('create_profile') }}">
+      <!-- All input fields here -->
+      <input type="text" name="first_name" placeholder="First Name" required />
+      <!-- ...rest fields... -->
+      <button type="submit">Submit</button>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
   <div class="container home-layout">
     <div class="signup-form">
       <h2>Create Profile</h2>

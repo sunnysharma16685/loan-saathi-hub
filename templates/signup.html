@@ -9,6 +9,9 @@
   <header>
     <div class="logo">LoanSaathiHub</div>
     <div class="tagline">Create Your Full Profile</div>
+    <nav>
+    <a href="{{ url_for('home') }}">Home</a>
+  </nav>	
   </header>
 
   <div class="container home-layout">
@@ -52,9 +55,19 @@
           <option value="Cash">Cash</option>
         </select>
 
-        <input type="text" name="other_income" placeholder="Other Income">
+	<input type="text" name="other_income" placeholder="Other Income">
+
+	<select name="ITR Last 3Yearss">
+          <option value="">ITR Last 3Years</option>
+          <option value="Last 3Years">Last 3Years</option>
+          <option value="Last 2Years">Last 2Years</option>
+          <option value="Last 1Year">Last 1Year</option>
+	  <option value="No ITR">No ITR</option>	
+        </select>
+
+        
         <textarea name="address" placeholder="Full Address"></textarea>
-        <input type="text" name="cibil_score" placeholder="CIBIL Score">
+        <input type="text" name="cibil_score" placeholder="CIBIL Score if you know">
 
         <button type="submit">Submit</button>
       </form>

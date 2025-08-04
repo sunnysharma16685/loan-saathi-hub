@@ -47,6 +47,14 @@ def signup():
         return redirect('/loan-request')
     return render_template('signup.html')
 
+@app.route('/create-profile', methods=['GET', 'POST'])
+def create_profile():
+    if request.method == 'POST':
+        # handle profile logic or redirect
+        return redirect(url_for('dashboard'))
+    return render_template('create_profile.html')
+
+
 
 # ----------------------- Loan Request -----------------------
 @app.route('/loan-request', methods=['GET', 'POST'])

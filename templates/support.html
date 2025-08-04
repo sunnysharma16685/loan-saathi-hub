@@ -1,10 +1,37 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>support</title>
+  <meta charset="UTF-8" />
+  <title>Support - LoanSaathiHub</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-  <h2>support Page</h2>
-  <p>Coming Soon...</p>
+  <header>
+    <div class="logo">LoanSaathiHub</div>
+    <p class="tagline">Aapka Loan Saathi – Vishwas ke Saath</p>
+  </header>
+
+  <main class="container">
+    <h2>Support</h2>
+    <p>अगर आपको किसी भी प्रकार की सहायता की आवश्यकता है, तो आप हमसे निम्नलिखित तरीकों से संपर्क कर सकते हैं:</p>
+
+    <ul>
+      <li><strong>ईमेल:</strong> support@loansaathihub.in</li>
+      <li><strong>फोन:</strong> +91 9662131087</li>
+      <li><strong>WhatsApp Support:</strong> +91 7861837682</li>
+    </ul>
+
+    <p>हमारी टीम सोमवार से शनिवार (10 AM से 6 PM) तक उपलब्ध है।</p>
+  </main>
+
+  <footer>
+    <div class="footer-content">
+      <a href="{{ url_for('about') }}">About Us</a> |
+      <a href="{{ url_for('privacy') }}">Privacy Policy</a> |
+      <a href="{{ url_for('terms') }}">Terms & Conditions</a> |
+      <a href="{{ url_for('support') }}">Support</a> |
+      <a href="{{ url_for('contact') }}">Contact Us</a>
+    </div>
+  </footer>
 </body>
 </html>

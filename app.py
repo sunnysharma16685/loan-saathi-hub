@@ -161,9 +161,11 @@ def admin_dashboard():
 def forgot_password():
     return "Coming soon..."
 
+# ----------------------- Static Info Pages -----------------------
+
 @app.route('/about')
 def about():
-    return render_template('about.html')  # Create this HTML file
+    return render_template('about.html')
 
 @app.route('/privacy')
 def privacy():
@@ -180,7 +182,6 @@ def support():
 @app.route('/contact')
 def contact():
     return render_template('contact.html')
-
 
 
 # ----------------------- Run App -----------------------

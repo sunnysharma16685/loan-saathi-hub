@@ -1,10 +1,38 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>About Us</title>
+  <meta charset="UTF-8" />
+  <title>About Us - LoanSaathiHub</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-  <h2>About Us Page</h2>
-  <p>Coming Soon...</p>
+  <header>
+    <div class="logo">LoanSaathiHub</div>
+    <p class="tagline">Aapka Loan Saathi – Vishwas ke Saath</p>
+  </header>
+
+  <main class="container">
+    <h2>About Us</h2>
+    <p>
+      LoanSaathiHub का उद्देश्य है आपको आसान, भरोसेमंद और तेज़ लोन समाधान देना।  
+      हम व्यक्तिगत लोन, गृह लोन, बिज़नेस लोन और अन्य फाइनेंशियल उत्पादों के लिए  
+      एक प्लेटफॉर्म उपलब्ध कराते हैं जो पारदर्शिता और सुविधा को प्राथमिकता देता है।
+    </p>
+    <p>
+      हमारा मानना है कि हर ग्राहक को वित्तीय सेवाओं तक आसान पहुँच मिलनी चाहिए –  
+      बिना किसी जटिलता के। इसलिए हम आपके लिए लाए हैं एक ऐसा डिजिटल प्लेटफॉर्म  
+      जो सरल, सुरक्षित और स्मार्ट है।
+    </p>
+  </main>
+
+  <footer>
+    <div class="footer-content">
+      <a href="{{ url_for('about') }}">About Us</a> |
+      <a href="{{ url_for('privacy') }}">Privacy Policy</a> |
+      <a href="{{ url_for('terms') }}">Terms & Conditions</a> |
+      <a href="{{ url_for('support') }}">Support</a> |
+      <a href="{{ url_for('contact') }}">Contact Us</a>
+    </div>
+  </footer>
 </body>
 </html>

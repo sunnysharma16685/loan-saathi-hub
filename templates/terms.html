@@ -1,10 +1,39 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>terms</title>
+  <meta charset="UTF-8" />
+  <title>Terms & Conditions - LoanSaathiHub</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-  <h2>terms Page</h2>
-  <p>Coming Soon...</p>
+  <header>
+    <div class="logo">LoanSaathiHub</div>
+    <p class="tagline">Aapka Loan Saathi – Vishwas ke Saath</p>
+  </header>
+
+  <main class="container">
+    <h2>Terms & Conditions</h2>
+    <p>LoanSaathiHub वेबसाइट का उपयोग करके, आप निम्नलिखित शर्तों और नियमों से सहमत होते हैं:</p>
+
+    <ul>
+      <li>यह साइट केवल सूचना के उद्देश्य से बनाई गई है।</li>
+      <li>हम आपकी दी गई जानकारी को सुरक्षित रखने का पूरा प्रयास करते हैं।</li>
+      <li>LoanSaathiHub किसी भी समय अपनी सेवाओं या शर्तों को बदल सकता है।</li>
+      <li>हमारी साइट पर दी गई जानकारी की पूर्णता की कोई गारंटी नहीं है।</li>
+      <li>LoanSaathiHub किसी भी गलत जानकारी या फॉर्म भरने की ग़लती के लिए ज़िम्मेदार नहीं होगा।</li>
+    </ul>
+
+    <p>कृपया सभी जानकारियों को भरते समय सावधानी बरतें।</p>
+  </main>
+
+  <footer>
+    <div class="footer-content">
+      <a href="{{ url_for('about') }}">About Us</a> |
+      <a href="{{ url_for('privacy') }}">Privacy Policy</a> |
+      <a href="{{ url_for('terms') }}">Terms & Conditions</a> |
+      <a href="{{ url_for('support') }}">Support</a> |
+      <a href="{{ url_for('contact') }}">Contact Us</a>
+    </div>
+  </footer>
 </body>
 </html>

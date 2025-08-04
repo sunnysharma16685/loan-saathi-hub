@@ -43,11 +43,14 @@
   <footer>
     <div class="footer-content">
       <a href="{{ url_for('about') }}">About Us</a> |
-      <a href="{{ url_for('policy') }}">Privacy Policy</a> |
-      <a href="{{ url_for('terms') }}">Terms & Conditions</a> |
-      <a href="{{ url_for('support') }}">Support</a> |
-      <a href="{{ url_for('contact') }}">Contact Us</a>
+<a href="{{ url_for('privacy') }}">Privacy Policy</a> |
+<a href="{{ url_for('terms') }}">Terms & Conditions</a> |
+<a href="{{ url_for('support') }}">Support</a> |
+<a href="{{ url_for('contact') }}">Contact Us</a>
+
     </div>
   </footer>
+{% include 'footer.html' %}
+
 </body>
 </html>

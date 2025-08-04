@@ -15,9 +15,9 @@ def home():
     return render_template('home.html')
 
 
-# ----------------------- Signup -----------------------
-@app.route('/signup', methods=['GET', 'POST'])
-def signup():
+# ----------------------- Create Profile -----------------------
+@app.route('/create-profile', methods=['GET', 'POST'])
+def create_profile():
     if request.method == 'POST':
         data = request.form
 
@@ -35,24 +35,20 @@ def signup():
             "education": data['education'],
             "job": data['job'],
             "salary_mode": data['salary_mode'],
-            "monthly_income": data['monthly_income'],
-            "other_income": data['other_income'],
+            "monthly_income": data.get('monthly_income', ''),
+            "other_income": data.get('other_income', ''),
+            "itr_last_3years": data.get('itr_last_3years', ''),
             "address": data['address'],
-            "cibil": data['cibil']
+            "cibil": data.get('cibil', '')
         }).execute()
 
         # Set session and redirect
         session['user'] = data['email']
         session['mobile'] = data['mobile']
         return redirect('/loan-request')
-    return render_template('signup.html')
-
-@app.route('/create-profile', methods=['GET', 'POST'])
-def create_profile():
-    if request.method == 'POST':
-        # handle profile logic or redirect
-        return redirect(url_for('dashboard'))
+    
     return render_template('create_profile.html')
+
 
 
 

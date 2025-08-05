@@ -22,6 +22,7 @@ def generate_custom_id(table, id_column, prefix, length=5):
         new_num = 1
     return f"{prefix}{str(new_num).zfill(length)}"
 
+@app.route('/')
 def home():
     return render_template('home.html')
 

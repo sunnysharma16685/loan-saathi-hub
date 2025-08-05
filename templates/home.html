@@ -31,9 +31,9 @@
 <body>
 
   <!-- Header -->
-  <header class="header">
-    <div class="logo">LoanSaathiHub</div>
-    <div class="tagline">Aapka Vishwas ka Saathi</div>
+  <header class="header" style="padding: 20px; background-color: #004080; color: white; text-align: center;">
+    <div class="logo" style="font-size: 28px; font-weight: bold;">LoanSaathiHub</div>
+    <div class="tagline">आपका विश्वास का साथी</div>
   </header>
 
   <!-- Main Layout -->
@@ -55,24 +55,24 @@
       <div id="loanUser" class="form-section form-box">
         <h3>Loan User Sign Up</h3>
         <form method="POST" action="{{ url_for('create_profile') }}">
-  <input type="text" name="first_name" placeholder="First Name" required />
-  <input type="text" name="last_name" placeholder="Last Name" required />
-  <input type="tel" name="mobile" placeholder="Mobile Number" required />
-  <input type="email" name="email" placeholder="Email" required />
-  <button type="submit">Start Profile</button>
-</form>
+          <input type="text" name="first_name" placeholder="First Name" required />
+          <input type="text" name="last_name" placeholder="Last Name" required />
+          <input type="tel" name="mobile" placeholder="Mobile Number" required />
+          <input type="email" name="email" placeholder="Email" required />
+          <button type="submit">Start Profile</button>
+        </form>
       </div>
 
       <!-- Agent Form -->
       <div id="agent" class="form-section form-box">
         <h3>Agent Sign Up</h3>
         <form method="POST" action="{{ url_for('agent_signup') }}">
-  <input type="text" name="first_name" placeholder="First Name" required />
-  <input type="text" name="last_name" placeholder="Last Name" required />
-  <input type="tel" name="mobile" placeholder="Mobile Number" required />
-  <input type="email" name="email" placeholder="Email" required />
-  <button type="submit">Start Agent Profile</button>
-</form>
+          <input type="text" name="first_name" placeholder="First Name" required />
+          <input type="text" name="last_name" placeholder="Last Name" required />
+          <input type="tel" name="mobile" placeholder="Mobile Number" required />
+          <input type="email" name="email" placeholder="Email" required />
+          <button type="submit">Start Agent Profile</button>
+        </form>
       </div>
     </div>
   </div>

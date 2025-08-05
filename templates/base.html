@@ -1,36 +1,46 @@
+<!-- templates/base.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>{% block title %}LoanSaathiHub{% endblock %}</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-  <header>
+
+  <!-- HEADER -->
+  <header class="header">
     <div class="logo">LoanSaathiHub</div>
-    <div class="tagline">Aapka Loan Saathi – Vishwas ke Saath</div>
-    <nav>
-      <a href="{{ url_for('home') }}">Home</a>
-      <a href="{{ url_for('login') }}">Login</a>
-      <a href="{{ url_for('create_profile') }}">Sign Up</a>
-      <a href="{{ url_for('dashboard') }}">Dashboard</a>
-    </nav>
+    <div class="tagline">Aapka Vishwas ka Saathi</div>
+
+    {% if session.get('user') or session.get('agent') or session.get('admin') %}
+    <div style="text-align: right; margin-top: 10px; margin-right: 20px;">
+      <a href="{{ url_for('home') }}" class="header-btn">🏠 Home</a>
+      {% if session.get('user') %}
+        <a href="{{ url_for('dashboard') }}" class="header-btn">📊 Dashboard</a>
+      {% elif session.get('agent') %}
+        <a href="{{ url_for('agent_dashboard') }}" class="header-btn">📊 Agent Dashboard</a>
+      {% elif session.get('admin') %}
+        <a href="{{ url_for('admin_dashboard') }}" class="header-btn">📊 Admin Dashboard</a>
+      {% endif %}
+    </div>
+    {% endif %}
   </header>
 
-  <main>
+  <!-- PAGE CONTENT -->
+  <main style="min-height: 70vh;">
     {% block content %}{% endblock %}
   </main>
 
-  <footer>
-    <div class="footer-links">
-      <a href="{{ url_for('about') }}">About Us</a> |
-      <a href="{{ url_for('privacy') }}">Privacy Policy</a> |
-      <a href="{{ url_for('terms') }}">Terms & Conditions</a> |
-      <a href="{{ url_for('support') }}">Support</a> |
-      <a href="{{ url_for('contact') }}">Contact Us</a>
-    </div>
+  <!-- FOOTER -->
+  <footer class="footer">
+    <a href="{{ url_for('about') }}">About Us</a> |
+    <a href="{{ url_for('privacy') }}">Privacy Policy</a> |
+    <a href="{{ url_for('terms') }}">Terms & Conditions</a> |
+    <a href="{{ url_for('support') }}">Support</a> |
+    <a href="{{ url_for('contact') }}">Contact Us</a>
     <p>&copy; 2025 LoanSaathiHub</p>
   </footer>
+
 </body>
 </html>

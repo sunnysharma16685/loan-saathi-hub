@@ -1,46 +1,23 @@
-<!-- templates/base.html -->
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8">
   <title>{% block title %}LoanSaathiHub{% endblock %}</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
 
-  <!-- HEADER -->
-  <header class="header">
-    <div class="logo">LoanSaathiHub</div>
-    <div class="tagline">Aapka Vishwas ka Saathi</div>
+  {% block header %}
+  <header> ...common header code... </header>
+  {% endblock %}
 
-    {% if session.get('user') or session.get('agent') or session.get('admin') %}
-    <div style="text-align: right; margin-top: 10px; margin-right: 20px;">
-      <a href="{{ url_for('home') }}" class="header-btn">🏠 Home</a>
-      {% if session.get('user') %}
-        <a href="{{ url_for('dashboard') }}" class="header-btn">📊 Dashboard</a>
-      {% elif session.get('agent') %}
-        <a href="{{ url_for('agent_dashboard') }}" class="header-btn">📊 Agent Dashboard</a>
-      {% elif session.get('admin') %}
-        <a href="{{ url_for('admin_dashboard') }}" class="header-btn">📊 Admin Dashboard</a>
-      {% endif %}
-    </div>
-    {% endif %}
-  </header>
-
-  <!-- PAGE CONTENT -->
-  <main style="min-height: 70vh;">
+  <main>
     {% block content %}{% endblock %}
   </main>
 
-  <!-- FOOTER -->
-  <footer class="footer">
-    <a href="{{ url_for('about') }}">About Us</a> |
-    <a href="{{ url_for('privacy') }}">Privacy Policy</a> |
-    <a href="{{ url_for('terms') }}">Terms & Conditions</a> |
-    <a href="{{ url_for('support') }}">Support</a> |
-    <a href="{{ url_for('contact') }}">Contact Us</a>
-    <p>&copy; 2025 LoanSaathiHub</p>
-  </footer>
+  {% block footer %}
+  <footer> ...common footer code... </footer>
+  {% endblock %}
 
 </body>
 </html>

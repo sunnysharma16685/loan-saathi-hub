@@ -1,3 +1,6 @@
+{% extends "base.html" %}
+{% block title %}Home - LoanSaathiHub{% endblock %}
+{% block content %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -79,13 +82,14 @@
 
   <!-- Footer -->
   <footer style="text-align:center; padding:20px; background:#f0f0f0;">
-    <a href="{{ url_for('about') }}">About Us</a> |
-    <a href="{{ url_for('privacy') }}">Privacy Policy</a> |
-    <a href="{{ url_for('terms') }}">Terms & Conditions</a> |
-    <a href="{{ url_for('support') }}">Support</a> |
-    <a href="{{ url_for('contact') }}">Contact Us</a>
-    <p>&copy; 2025 LoanSaathiHub</p>
-  </footer>
+  <a href="{{ url_for('about') }}">About Us</a> |
+  <a href="{{ url_for('privacy') }}">Privacy Policy</a> |
+  <a href="{{ url_for('terms') }}">Terms & Conditions</a> |
+  <a href="{{ url_for('support') }}">Support</a> |
+  <a href="{{ url_for('contact') }}">Contact Us</a> |
+  <p>&copy; 2025 LoanSaathiHub</p>
+</footer>
+
 
   <!-- JS -->
   <script>
@@ -96,3 +100,5 @@
   </script>
 </body>
 </html>
+{% endblock %}
+

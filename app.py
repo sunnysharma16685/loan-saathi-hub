@@ -19,7 +19,7 @@ def generate_custom_id(table, column, prefix):
 
 @app.route('/')
 def home():
-    return render_template('index.html')
+    return render_template('home.html')
 
 @app.route('/create-profile', methods=['GET', 'POST'])
 def create_profile():

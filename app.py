@@ -23,11 +23,12 @@ def generate_custom_id(table, id_column, prefix, length=5):
 
 @app.route('/')
 def home():
-    return render_template('home.html')
 
-@app.route('/create-profile', methods=['GET', 'POST'])
+    @app.route('/create-profile', methods=['GET', 'POST'])
 def create_profile():
-    if request.method == 'POST':
+    return render_template('create_profile.html')
+    
+if request.method == 'POST':
         first_name = request.form['first_name']
         last_name = request.form['last_name']
         mobile = request.form['mobile']

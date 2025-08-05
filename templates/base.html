@@ -8,7 +8,13 @@
 <body>
 
   {% block header %}
-  <header> ...common header code... </header>
+  <header>
+    ...common header code...
+    <!-- Correct place for navigation link -->
+    <nav>
+      <a href="{{ url_for('create_profile') }}">Create Profile</a>
+    </nav>
+  </header>
   {% endblock %}
 
   <main>

@@ -1,71 +1,84 @@
+{# File: templates/agent_profile.html #}
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <title>Agent Profile - LoanSaathiHub</title>
+  <meta name="description" content="Fill your Agent Profile on LoanSaathiHub to start offering loans like Personal Loan, Business Loan, and more.">
+  <meta name="keywords" content="Agent registration, DSA registration, loan agent profile, LoanSaathiHub agent">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+
   <script>
     function showFields(mode) {
       document.querySelectorAll('.agent-fields').forEach(div => div.style.display = 'none');
-      document.getElementById(mode).style.display = 'block';
+      const selected = document.getElementById(mode);
+      if (selected) selected.style.display = 'block';
     }
   </script>
 </head>
 <body>
   <header>
     <div class="logo">LoanSaathiHub</div>
-    <div class="tagline">Agent Profile</div>
+    <div class="tagline">Agent Profile Registration</div>
   </header>
 
-  <div class="container">
-    <form method="POST" action="{{ url_for('agent_profile') }}">
-      <h2>Complete Your Agent Profile</h2>
+  <main class="container">
+    <section class="form-section">
+      <h1>Complete Your Agent Profile</h1>
+      <p class="form-info">Provide accurate information to get started as a registered agent with LoanSaathiHub.</p>
 
-      <label>Select Loan Types You Deal In:</label><br>
-      <input type="checkbox" name="loan_types" value="Personal Loan"> Personal Loan
-      <input type="checkbox" name="loan_types" value="Business Loan"> Business Loan
-      <input type="checkbox" name="loan_types" value="Home Loan"> Home Loan
-      <input type="checkbox" name="loan_types" value="Education Loan"> Education Loan
-      <br><br>
+      <form method="POST" action="{{ url_for('agent_profile') }}">
+        <!-- Loan Types -->
+        <fieldset>
+          <legend>Select Loan Types You Deal In:</legend>
+          <label><input type="checkbox" name="loan_types" value="Personal Loan"> Personal Loan</label>
+          <label><input type="checkbox" name="loan_types" value="Business Loan"> Business Loan</label>
+          <label><input type="checkbox" name="loan_types" value="Home Loan"> Home Loan</label>
+          <label><input type="checkbox" name="loan_types" value="Education Loan"> Education Loan</label>
+        </fieldset>
 
-      <input type="text" name="city" placeholder="City" required />
-      <input type="text" name="state" placeholder="State" required />
-      <textarea name="address" placeholder="Full Address" required></textarea>
+        <!-- Location -->
+        <input type="text" name="city" placeholder="City*" required />
+        <input type="text" name="state" placeholder="State*" required />
+        <textarea name="address" placeholder="Full Address*" rows="3" required></textarea>
 
-      <label>Select Agent Mode:</label>
-      <select name="agent_mode" onchange="showFields(this.value)" required>
-        <option value="">-- Select --</option>
-        <option value="individual">Individual</option>
-        <option value="proprietor">Proprietor</option>
-        <option value="bank">Bank</option>
-        <option value="dsa">DSA</option>
-      </select>
+        <!-- Agent Mode -->
+        <label for="agent_mode">Select Agent Type:</label>
+        <select name="agent_mode" id="agent_mode" onchange="showFields(this.value)" required>
+          <option value="">-- Select --</option>
+          <option value="individual">Individual</option>
+          <option value="proprietor">Proprietor</option>
+          <option value="bank">Bank</option>
+          <option value="dsa">DSA</option>
+        </select>
 
-      <!-- Mode specific fields -->
-      <div id="individual" class="agent-fields" style="display:none;">
-        <p>No extra fields needed for Individual.</p>
-      </div>
+        <!-- Dynamic Fields -->
+        <div id="individual" class="agent-fields" style="display: none;">
+          <p class="sub-note">No additional information is required for Individual agents.</p>
+        </div>
 
-      <div id="proprietor" class="agent-fields" style="display:none;">
-        <input type="text" name="proprietor_aadhar" placeholder="Aadhar Number" />
-        <input type="text" name="proprietor_code" placeholder="Agent Code" />
-        <input type="text" name="proprietor_bank" placeholder="Bank Name" />
-      </div>
+        <div id="proprietor" class="agent-fields" style="display: none;">
+          <input type="text" name="proprietor_aadhar" placeholder="Aadhar Number*" required />
+          <input type="text" name="proprietor_code" placeholder="Agent Code*" required />
+          <input type="text" name="proprietor_bank" placeholder="Bank Name*" required />
+        </div>
 
-      <div id="bank" class="agent-fields" style="display:none;">
-        <input type="text" name="bank_designation" placeholder="Designation" />
-        <input type="text" name="bank_branch" placeholder="Branch Name" />
-        <input type="text" name="bank_employee_id" placeholder="Employee ID" />
-      </div>
+        <div id="bank" class="agent-fields" style="display: none;">
+          <input type="text" name="bank_designation" placeholder="Designation*" required />
+          <input type="text" name="bank_branch" placeholder="Branch Name*" required />
+          <input type="text" name="bank_employee_id" placeholder="Employee ID*" required />
+        </div>
 
-      <div id="dsa" class="agent-fields" style="display:none;">
-        <input type="text" name="dsa_code" placeholder="DSA Code" />
-        <input type="text" name="dsa_bank" placeholder="Bank Name" />
-      </div>
+        <div id="dsa" class="agent-fields" style="display: none;">
+          <input type="text" name="dsa_code" placeholder="DSA Code*" required />
+          <input type="text" name="dsa_bank" placeholder="Bank Name*" required />
+        </div>
 
-      <button type="submit">Submit Profile</button>
-    </form>
-  </div>
+        <button type="submit" class="btn-primary">Submit Agent Profile</button>
+      </form>
+    </section>
+  </main>
 
   <footer>
     &copy; 2025 LoanSaathiHub

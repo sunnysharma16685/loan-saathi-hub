@@ -1,29 +1,73 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>{% block title %}LoanSaathiHub{% endblock %}</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}LoanSaathiHub - India’s Trusted Loan Assistance Platform{% endblock %}</title>
+  
+  <!-- SEO Meta Tags -->
+  <meta name="description" content="LoanSaathiHub is your trusted partner for personal, business, and home loans. Easy profile creation, fast approval, and expert support.">
+  <meta name="keywords" content="Loan, Personal Loan, Business Loan, Home Loan, Fast Loan, Loan Agent, LoanSaathiHub, DSA">
+  <meta name="author" content="LoanSaathiHub Team">
+
+  <!-- Open Graph for Social Sharing -->
+  <meta property="og:title" content="LoanSaathiHub - Your Trusted Loan Partner">
+  <meta property="og:description" content="Get loans fast and hassle-free with LoanSaathiHub. Create profile, apply, and get approved easily.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://www.loansaathihub.in">
+  <meta property="og:image" content="{{ url_for('static', filename='images/og-image.png') }}">
+
+  <!-- Canonical URL -->
+  <link rel="canonical" href="https://www.loansaathihub.in">
+
+  <!-- Favicon -->
+  <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon">
+
+  <!-- CSS -->
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
 
+  <!-- Header -->
   {% block header %}
-  <header>
-    ...common header code...
-    <!-- Correct place for navigation link -->
-    <nav>
-      <a href="{{ url_for('create_profile') }}">Create Profile</a>
-    </nav>
+  <header class="site-header">
+    <div class="container">
+      <div class="logo">
+        <a href="{{ url_for('home') }}"><img src="{{ url_for('static', filename='images/logo.png') }}" alt="LoanSaathiHub Logo"></a>
+      </div>
+      <nav class="main-nav">
+        <ul>
+          <li><a href="{{ url_for('home') }}">Home</a></li>
+          <li><a href="{{ url_for('create_profile') }}">Create Profile</a></li>
+          <li><a href="{{ url_for('login') }}">Login</a></li>
+          <li><a href="{{ url_for('apply_loan') }}">Apply Loan</a></li>
+          <li><a href="{{ url_for('contact') }}">Contact</a></li>
+        </ul>
+      </nav>
+    </div>
   </header>
   {% endblock %}
 
-  <main>
+  <!-- Main Content Area -->
+  <main class="main-content container">
     {% block content %}{% endblock %}
   </main>
 
+  <!-- Footer -->
   {% block footer %}
-  <footer> ...common footer code... </footer>
+  <footer class="site-footer">
+    <div class="container">
+      <p>&copy; {{ current_year }} LoanSaathiHub. All rights reserved.</p>
+      <p>
+        <a href="{{ url_for('privacy_policy') }}">Privacy Policy</a> |
+        <a href="{{ url_for('terms_conditions') }}">Terms & Conditions</a> |
+        <a href="{{ url_for('support') }}">Support</a>
+      </p>
+    </div>
+  </footer>
   {% endblock %}
 
+  <!-- JS (Optional future enhancements) -->
+  <script src="{{ url_for('static', filename='script.js') }}"></script>
 </body>
 </html>

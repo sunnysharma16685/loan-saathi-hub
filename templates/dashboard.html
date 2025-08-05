@@ -1,79 +1,65 @@
-<!-- File: templates/dashboard.html -->
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>Dashboard - LoanSaathiHub</title>
-  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-</head>
-<body>
-  <header>
-    <div class="logo">LoanSaathiHub</div>
-    <div class="tagline">Your Loan Dashboard</div>
-  </header>
-
+{# File: templates/dashboard.html #}
 {% extends 'base.html' %}
 
 {% block title %}User Dashboard - LoanSaathiHub{% endblock %}
 
-{% block content %}
-  <h2>Welcome to your dashboard, {{ user }}</h2>
-  <!-- user data show here -->
+{% block head_meta %}
+  <meta name="description" content="View your loan profile, check status, and apply for new loans with LoanSaathiHub's easy-to-use dashboard.">
+  <meta name="keywords" content="Loan dashboard, check loan status, apply loan, LoanSaathiHub">
+  <meta name="robots" content="noindex, nofollow"> {# Since this page is behind login #}
 {% endblock %}
 
-  <div class="container">
-    <h2>Welcome, {{ user }}</h2>
-    <p><a href="/apply-loan">Apply for New Loan</a></p>
+{% block content %}
+<section class="dashboard-section container">
+  <h1 class="page-title">Welcome, {{ user }}</h1>
+  <p class="dashboard-subtext">Track your loan applications, apply for new loans, and manage your account efficiently.</p>
 
-    <h3>Your Loan Requests</h3>
-    {% if loan_requests %}
-      <table>
-  <tr>
-    <th>Sl. No.</th>
-    <th>Apply Date</th>
-    <th>Loan ID</th>
-    <th>Loan Type</th>
-    <th>Amount</th>
-    <th>Status</th>
-    <th>View Approvals</th>
-  </tr>
-  {% for loan in loans %}
-  <tr>
-    <td>{{ loop.index }}</td>
-    <td>{{ loan.applied_date[:10] }}</td>
-    <td>{{ loan.loan_id }}</td>
-    <td>{{ loan.loan_type }}</td>
-    <td>{{ loan.amount }}</td>
-    <td>{{ loan.status }}</td>
-    <td>
-      {% if loan.status == "Approved" %}
-        <a href="/loan-approvals/{{ loan.loan_id }}">View</a>
-      {% endif %}
-    </td>
-  </tr>
-  {% endfor %}
-</table>
-
-    {% else %}
-      <p>No loan requests found.</p>
-    {% endif %}
-
-
-    <br>
-    <a href="/logout"><button>Logout</button></a>
+  <div class="dashboard-actions">
+    <a href="{{ url_for('apply_loan') }}" class="btn btn-primary">Apply for New Loan</a>
+    <a href="{{ url_for('logout') }}" class="btn btn-secondary">Logout</a>
   </div>
 
-{% extends 'base.html' %}
-
-{% block title %}User Dashboard - LoanSaathiHub{% endblock %}
-
-{% block content %}
-  <h2>Welcome to your dashboard, {{ user }}</h2>
-  <!-- user data show here -->
+  <h2>Your Loan Requests</h2>
+  {% if loans %}
+    <div class="table-wrapper">
+      <table class="loan-table" aria-label="Loan Requests Table">
+        <thead>
+          <tr>
+            <th scope="col">Sl. No.</th>
+            <th scope="col">Apply Date</th>
+            <th scope="col">Loan ID</th>
+            <th scope="col">Loan Type</th>
+            <th scope="col">Amount</th>
+            <th scope="col">Status</th>
+            <th scope="col">Approvals</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for loan in loans %}
+          <tr>
+            <td>{{ loop.index }}</td>
+            <td>{{ loan.applied_date[:10] }}</td>
+            <td>{{ loan.loan_id }}</td>
+            <td>{{ loan.loan_type }}</td>
+            <td>₹{{ "{:,.2f}".format(loan.amount) }}</td>
+            <td>{{ loan.status }}</td>
+            <td>
+              {% if loan.status.lower() == "approved" %}
+              <a href="{{ url_for('loan_approvals', loan_id=loan.loan_id) }}" class="btn-link">View</a>
+              {% else %}
+              <span class="text-muted">-</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <div class="empty-state">
+      <p>No loan requests found. Click below to apply for your first loan.</p>
+      <a href="{{ url_for('apply_loan') }}" class="btn btn-primary">Apply Now</a>
+    </div>
+  {% endif %}
+</section>
 {% endblock %}
-
-  <footer>
-    &copy; 2025 LoanSaathiHub
-  </footer>
-</body>
-</html>

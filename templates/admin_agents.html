@@ -1,57 +1,45 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Admin - Agent Approvals</title>
-  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <meta name="description" content="Admin panel to view registered loan agents and their status."/>
+    <meta name="keywords" content="LoanSaathiHub, Admin Panel, Agents, Lead Management"/>
+    <meta name="author" content="LoanSaathiHub"/>
+    <title>Admin - Loan Agents | LoanSaathiHub</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-  <h2>Pending Agent Approvals</h2>
-
-  {% if agents %}
-    <h2>Pending Agents</h2>
-<table>
-  <tr><th>Email</th><th>Actions</th></tr>
-  {% for agent in pending_agents %}
-  <tr>
-    <td>{{ agent.email }}</td>
-    <td>
-      <form method="POST">
-        <input type="hidden" name="email" value="{{ agent.email }}">
-        <input type="hidden" name="action" value="approve">
-        <button type="submit">Approve</button>
-      </form>
-      <form method="POST">
-        <input type="hidden" name="email" value="{{ agent.email }}">
-        <input type="hidden" name="action" value="reject">
-        <button type="submit">Reject</button>
-      </form>
-    </td>
-  </tr>
-  {% endfor %}
-</table>
-
-<h2>Active Agents</h2>
-<table>
-  <tr><th>Email</th><th>Status</th><th>Remarks</th><th>Deactivate</th></tr>
-  {% for agent in active_agents %}
-  <tr>
-    <td>{{ agent.email }}</td>
-    <td>{{ agent.status }}</td>
-    <td>{{ agent.remarks or "N/A" }}</td>
-    <td>
-      <form method="POST">
-        <input type="hidden" name="email" value="{{ agent.email }}">
-        <input type="hidden" name="action" value="deactivate">
-        <input type="text" name="remark" placeholder="Reason for deactivation" required>
-        <button type="submit">Deactivate</button>
-      </form>
-    </td>
-  </tr>
-  {% endfor %}
-</table>
-
-  {% else %}
-    <p>No pending agent requests.</p>
-  {% endif %}
+    <div class="container">
+        <h2>All Agents</h2>
+        {% if agents %}
+        <table>
+            <thead>
+                <tr>
+                    <th>Sl. No.</th>
+                    <th>Email</th>
+                    <th>Mobile</th>
+                    <th>Status</th>
+                    <th>City</th>
+                    <th>Remarks</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for agent in agents %}
+                <tr>
+                    <td>{{ loop.index }}</td>
+                    <td>{{ agent.email }}</td>
+                    <td>{{ agent.mobile }}</td>
+                    <td>{{ agent.status }}</td>
+                    <td>{{ agent.city or '—' }}</td>
+                    <td>{{ agent.remarks or '—' }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p>No agents found.</p>
+        {% endif %}
+    </div>
 </body>
 </html>

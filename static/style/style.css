@@ -1,14 +1,14 @@
-<head>
-<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-</head>
-<body>
-
-/* === General Reset and Base Styles === */
+/* === Base Reset and Typography === */
 * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
   font-family: 'Segoe UI', sans-serif;
+  scroll-behavior: smooth;
+}
+
+html {
+  font-size: 16px;
 }
 
 body {
@@ -17,9 +17,52 @@ body {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  line-height: 1.6;
+}
+
+/* === Reusable Utility Classes === */
+.text-center {
+  text-align: center;
+}
+
+.mt-20 { margin-top: 20px; }
+.mb-20 { margin-bottom: 20px; }
+.btn {
+  display: inline-block;
+  background: #0072ff;
+  color: white;
+  padding: 10px 18px;
+  border-radius: 8px;
+  font-weight: bold;
+  text-decoration: none;
+  transition: background 0.3s ease;
+}
+
+.btn:hover {
+  background: #005bb5;
 }
 
 /* === Header Styles === */
+header {
+  background: #0072ff;
+  color: white;
+  padding: 20px 30px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.logo {
+  font-size: 24px;
+  font-weight: bold;
+}
+
+.tagline {
+  font-size: 16px;
+  opacity: 0.85;
+}
+
 .header-btn {
   background: #0a8f94;
   color: white;
@@ -50,13 +93,18 @@ footer a {
   text-decoration: underline;
 }
 
-/* === Form Container Styles === */
+footer a:hover {
+  color: #ccc;
+}
+
+/* === Form & Layout === */
 .container {
   display: flex;
   padding: 40px;
   justify-content: space-between;
   align-items: flex-start;
   gap: 40px;
+  flex-wrap: wrap;
 }
 
 /* === Left Advertisement Section === */
@@ -68,7 +116,7 @@ footer a {
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
 }
 
-/* === Signup/Login Form Section === */
+/* === Signup/Login Form === */
 .form-section {
   background: white;
   padding: 30px;
@@ -89,7 +137,9 @@ form label {
   font-weight: 500;
 }
 
-form input, form select {
+form input,
+form select,
+form textarea {
   width: 100%;
   padding: 10px;
   margin-bottom: 15px;
@@ -107,6 +157,7 @@ form button {
   font-size: 18px;
   border-radius: 8px;
   cursor: pointer;
+  transition: background 0.3s ease;
 }
 
 form button:hover {
@@ -125,6 +176,10 @@ form button:hover {
   text-decoration: none;
 }
 
+.login-link a:hover, .forgot-link a:hover {
+  text-decoration: underline;
+}
+
 /* === Dashboard Cards === */
 .dashboard {
   display: flex;
@@ -140,7 +195,7 @@ form button:hover {
   padding: 20px;
   width: 300px;
   box-shadow: 0 3px 8px rgba(0, 0, 0, 0.1);
-  transition: 0.3s;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
 .card:hover {
@@ -156,6 +211,7 @@ form button:hover {
 /* === Admin Panel === */
 .admin-panel {
   padding: 30px;
+  width: 100%;
 }
 
 .admin-panel table {
@@ -175,6 +231,10 @@ form button:hover {
   color: white;
 }
 
+.admin-panel td form {
+  display: inline-block;
+}
+
 /* === OTP Section === */
 .otp-input {
   letter-spacing: 8px;
@@ -187,23 +247,33 @@ form button:hover {
   margin-bottom: 15px;
 }
 
-/* === Responsive Design === */
+/* === Mobile Responsiveness === */
 @media screen and (max-width: 768px) {
   .container {
     flex-direction: column;
     padding: 20px;
   }
 
-  .advertisement, .form-section {
+  .advertisement,
+  .form-section {
     width: 100%;
   }
 
-  header, footer {
-    text-align: center;
+  header {
     flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
   }
 
-  header a {
-    margin: 10px 0 0;
+  .dashboard {
+    padding: 20px;
+  }
+
+  .card {
+    width: 100%;
+  }
+
+  .admin-panel {
+    padding: 15px;
   }
 }

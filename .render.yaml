@@ -2,9 +2,19 @@ services:
   - type: web
     name: loan-saathi-hub
     env: python
-    buildCommand: pip install -r requirements.txt
-    startCommand: gunicorn app:app
+    region: singapore  # 🔁 Update this to your target user region for faster UX
+    buildCommand: pip install --upgrade pip && pip install -r requirements.txt
+    startCommand: gunicorn app:app --timeout 120 --workers 3
     envVars:
       - key: PYTHON_VERSION
         value: 3.10
+      - key: FLASK_ENV
+        value: production
+      - key: SECRET_KEY
+        value: your-secure-secret-key-here
+      - key: SUPABASE_URL
+        value: your-supabase-url
+      - key: SUPABASE_KEY
+        value: your-supabase-anon-key
     autoDeploy: true
+    plan: free

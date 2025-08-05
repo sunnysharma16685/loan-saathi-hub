@@ -1,16 +1,30 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="hi">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>LoanSaathiHub - Home</title>
+  <title>LoanSaathiHub - आपका डिजिटल लोन साथी</title>
+  
+  <!-- ✅ SEO Meta Tags -->
+  <meta name="description" content="LoanSaathiHub भारत का भरोसेमंद लोन प्लेटफॉर्म है जहाँ आप पर्सनल, होम और बिज़नेस लोन के लिए आसानी से आवेदन कर सकते हैं।">
+  <meta name="keywords" content="Loan, LoanSaathiHub, Personal Loan, Home Loan, Business Loan, Loan Application, Bharat Loan Platform">
+  <meta name="author" content="LoanSaathiHub Team">
+
+  <!-- ✅ Favicon and CSS -->
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon" />
+
+  <!-- ✅ Inline Styles for key layout elements -->
   <style>
     .button-group button {
       padding: 10px 20px;
       margin: 10px;
       font-size: 1rem;
       cursor: pointer;
+      background-color: #004080;
+      color: #fff;
+      border: none;
+      border-radius: 5px;
     }
     .form-section {
       display: none;
@@ -26,34 +40,45 @@
       border-radius: 10px;
       box-shadow: 0 0 10px rgba(0,0,0,0.1);
     }
+    input, button {
+      display: block;
+      width: 100%;
+      margin: 10px 0;
+      padding: 10px;
+      font-size: 1rem;
+    }
+    button:hover {
+      background-color: #003060;
+    }
   </style>
 </head>
+
 <body>
 
-  <!-- Header -->
+  <!-- ✅ Header -->
   <header class="header" style="padding: 20px; background-color: #004080; color: white; text-align: center;">
     <div class="logo" style="font-size: 28px; font-weight: bold;">LoanSaathiHub</div>
     <div class="tagline">आपका विश्वास का साथी</div>
   </header>
 
-  <!-- Main Layout -->
-  <div class="main-container" style="display:flex; gap: 40px; padding: 40px; align-items: flex-start;">
-    
-    <!-- Left Ad -->
-    <div class="left-ad" style="flex:1;">
-      <img src="{{ url_for('static', filename='loan_banner.jpg') }}" alt="Ad Banner" style="width:100%; border-radius: 12px;">
-    </div>
+  <!-- ✅ Main Layout -->
+  <main class="main-container" style="display:flex; flex-wrap: wrap; gap: 40px; padding: 40px; justify-content: center;">
 
-    <!-- Right Buttons + Forms -->
-    <div class="right-section" style="flex:1.5;">
-      <div class="button-group">
+    <!-- Left Banner -->
+    <section class="left-ad" style="flex: 1; min-width: 300px;">
+      <img src="{{ url_for('static', filename='loan_banner.jpg') }}" alt="Loan Banner Image" style="width:100%; border-radius: 12px;">
+    </section>
+
+    <!-- Right Section -->
+    <section class="right-section" style="flex: 1; min-width: 300px;">
+      <div class="button-group" style="text-align: center;">
         <button onclick="showForm('loanUser')">Loan User</button>
         <button onclick="showForm('agent')">Agent</button>
       </div>
 
       <!-- Loan User Form -->
       <div id="loanUser" class="form-section form-box">
-        <h3>Loan User Sign Up</h3>
+        <h2>Loan User Sign Up</h2>
         <form method="POST" action="{{ url_for('create_profile') }}">
           <input type="text" name="first_name" placeholder="First Name" required />
           <input type="text" name="last_name" placeholder="Last Name" required />
@@ -65,7 +90,7 @@
 
       <!-- Agent Form -->
       <div id="agent" class="form-section form-box">
-        <h3>Agent Sign Up</h3>
+        <h2>Agent Sign Up</h2>
         <form method="POST" action="{{ url_for('agent_signup') }}">
           <input type="text" name="first_name" placeholder="First Name" required />
           <input type="text" name="last_name" placeholder="Last Name" required />
@@ -74,26 +99,27 @@
           <button type="submit">Start Agent Profile</button>
         </form>
       </div>
-    </div>
-  </div>
+    </section>
+  </main>
 
-  <!-- Footer -->
+  <!-- ✅ Footer -->
   <footer style="text-align:center; padding:20px; background:#f0f0f0;">
-    <a href="{{ url_for('about') }}">About Us</a> |
-    <a href="{{ url_for('privacy') }}">Privacy Policy</a> |
-    <a href="{{ url_for('terms') }}">Terms & Conditions</a> |
-    <a href="{{ url_for('support') }}">Support</a> |
-    <a href="{{ url_for('contact') }}">Contact Us</a>
-    <p>&copy; 2025 LoanSaathiHub</p>
+    <div>
+      <a href="{{ url_for('about') }}" rel="nofollow" title="About LoanSaathiHub">About Us</a> |
+      <a href="{{ url_for('privacy') }}" rel="nofollow" title="Privacy Policy">Privacy Policy</a> |
+      <a href="{{ url_for('terms') }}" rel="nofollow" title="Terms and Conditions">Terms & Conditions</a> |
+      <a href="{{ url_for('support') }}" rel="nofollow" title="Customer Support">Support</a> |
+      <a href="{{ url_for('contact') }}" rel="nofollow" title="Contact Us">Contact Us</a>
+    </div>
+    <p style="margin-top: 10px;">&copy; 2025 LoanSaathiHub. सभी अधिकार सुरक्षित।</p>
   </footer>
 
-  <!-- JS to toggle forms -->
+  <!-- ✅ JS: Toggle Forms -->
   <script>
     function showForm(id) {
       document.querySelectorAll('.form-section').forEach(div => div.classList.remove('active'));
       document.getElementById(id).classList.add('active');
     }
   </script>
-
 </body>
 </html>

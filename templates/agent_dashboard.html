@@ -1,30 +1,29 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <title>Agent Dashboard - LoanSaathiHub</title>
-  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-	<a href="{{ url_for('agent_leads') }}">My Purchased Leads</a>
-</head>
-<body>
-  <header>
-    <div class="logo">LoanSaathiHub</div>
-    <h2>Welcome Agent</h2>
-  </header>
-
+{# File: templates/agent_dashboard.html #}
 {% extends 'base.html' %}
 
-{% block title %}User Dashboard - LoanSaathiHub{% endblock %}
+{% block title %}Agent Dashboard - LoanSaathiHub{% endblock %}
 
-{% block content %}
-  <h2>Welcome to your dashboard, {{ user }}</h2>
-  <!-- user data show here -->
+{% block meta %}
+  <meta name="description" content="Agent dashboard for managing and purchasing loan leads on LoanSaathiHub. Accept or reject leads based on your preference.">
+  <meta name="keywords" content="Agent Dashboard, Loan Leads, Buy Leads, LoanSaathiHub">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 {% endblock %}
 
-  <div class="container">
-    <h3>Available Leads (Your City)</h3>
-    {% if leads %}
-      <table>
+{% block content %}
+<section class="dashboard-section container">
+  <header class="dashboard-header">
+    <h1>Welcome, {{ user }}</h1>
+    <div class="dashboard-links">
+      <a href="{{ url_for('agent_leads') }}" class="btn-secondary">My Purchased Leads</a>
+      <a href="{{ url_for('logout') }}" class="btn-secondary">Logout</a>
+    </div>
+  </header>
+
+  <h2>Available Leads in Your City</h2>
+
+  {% if leads %}
+    <div class="table-wrapper">
+      <table class="lead-table">
         <thead>
           <tr>
             <th>Full Name</th>
@@ -41,31 +40,31 @@
           <tr>
             <td>{{ lead.first_name }} {{ lead.last_name }}</td>
             <td>{{ lead.loan_type }}</td>
-            <td>{{ lead.amount }}</td>
+            <td>₹{{ "{:,.2f}".format(lead.amount) }}</td>
             <td>{{ lead.duration }}</td>
             <td>{{ lead.pan }}</td>
             <td>{{ lead.city }}</td>
             <td>
-              <form method="POST" style="margin-bottom:5px;">
+              <!-- Reject Form -->
+              <form method="POST" class="inline-form">
                 <input type="hidden" name="loan_id" value="{{ lead.loan_id }}">
-                <input type="text" name="reason" placeholder="Reject Reason" required>
-                <button type="submit" name="action" value="reject">Reject</button>
+                <input type="text" name="reason" placeholder="Reason to Reject" required>
+                <button type="submit" name="action" value="reject" class="btn-reject">Reject</button>
               </form>
 
-              <form method="POST">
+              <!-- Accept Form -->
+              <form method="POST" class="inline-form">
                 <input type="hidden" name="loan_id" value="{{ lead.loan_id }}">
-                <button type="submit" name="action" value="accept">Accept & Buy ₹99</button>
+                <button type="submit" name="action" value="accept" class="btn-accept">Accept & Buy ₹99</button>
               </form>
             </td>
           </tr>
           {% endfor %}
         </tbody>
       </table>
-    {% else %}
-      <p>No new leads available for your city right now.</p>
-    {% endif %}
-  </div>
-
-  <footer>&copy; 2025 LoanSaathiHub</footer>
-</body>
-</html>
+    </div>
+  {% else %}
+    <p>No new leads available in your city right now. Please check back later.</p>
+  {% endif %}
+</section>
+{% endblock %}

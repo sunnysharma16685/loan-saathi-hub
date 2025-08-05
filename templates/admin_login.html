@@ -2,28 +2,47 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Admin Login - LoanSaathiHub</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Admin Login page for LoanSaathiHub – secure access to admin dashboard.">
+  <meta name="keywords" content="LoanSaathiHub, Admin, Login, Finance, Loan Management">
+  <meta name="author" content="LoanSaathiHub Team">
+  <title>Admin Login | LoanSaathiHub</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon">
 </head>
 <body>
-  <header>
-    <div class="logo">LoanSaathiHub Admin</div>
-    <div class="tagline">Secure Admin Login</div>
+
+  <header class="admin-header">
+    <div class="container">
+      <div class="logo">LoanSaathiHub <span class="admin-highlight">Admin</span></div>
+      <p class="tagline">Secure Admin Login to Manage Your Platform</p>
+    </div>
   </header>
 
-  <div class="container">
-    <div class="signup-form">
-      <h2>Admin Login</h2>
-      <form method="POST">
-        <input type="email" name="email" placeholder="Admin Email" required>
-        <input type="password" name="password" placeholder="Password" required>
-        <button type="submit">Login</button>
-      </form>
+  <main class="main-content">
+    <div class="container">
+      <section class="login-section">
+        <h1>Admin Login</h1>
+        <form method="POST" class="login-form" autocomplete="off" aria-label="Admin Login Form">
+          <div class="form-group">
+            <label for="email">Admin Email</label>
+            <input type="email" id="email" name="email" placeholder="Enter your admin email" required>
+          </div>
+          <div class="form-group">
+            <label for="password">Password</label>
+            <input type="password" id="password" name="password" placeholder="Enter your password" required>
+          </div>
+          <button type="submit" class="btn-submit">Login</button>
+        </form>
+      </section>
     </div>
-  </div>
+  </main>
 
-  <footer>
-    &copy; 2025 LoanSaathiHub Admin
+  <footer class="footer">
+    <div class="container">
+      <p>&copy; 2025 <strong>LoanSaathiHub Admin Panel</strong>. All rights reserved.</p>
+    </div>
   </footer>
+
 </body>
 </html>

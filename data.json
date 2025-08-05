@@ -1,38 +1,26 @@
-{
-  "users": [
-    {
-      "id": 1,
-      "first_name": "Sunny",
-      "last_name": "Sharma",
-      "dob": "1990-01-01",
-      "city": "Jaipur",
-      "state": "Rajasthan",
-      "mobile": "9876543210",
-      "email": "sunny@example.com",
-      "pan": "ABCDE1234F",
-      "aadhaar": "123456789012",
-      "education": "Graduate",
-      "job": "Private",
-      "salary_mode": "Bank Account",
-      "monthly_income": 50000,
-      "other_income": 5000,
-      "address": "123 MG Road, Jaipur",
-      "cibil": "750"
-    }
-  ],
-  "loan_requests": [
-    {
-      "loan_id": "19870001",
-      "user_email": "sunny@example.com",
-      "loan_type": "Personal Loan",
-      "amount": 300000,
-      "duration": 24,
-      "status": "In Process",
-      "remark": ""
-    }
-  ],
-  "admin": {
-    "email": "mayuri.luhar@gmail.com",
-    "mobile": "+919662131087"
+<script>
+function loginUser(event) {
+  event.preventDefault();
+
+  const email = document.getElementById("loginEmail").value.trim();
+  const password = document.getElementById("loginPassword").value.trim();
+
+  if (!email || !password) {
+    alert("कृपया ईमेल और पासवर्ड भरें।");
+    return;
+  }
+
+  // Simulated login check — replace with real backend logic
+  const storedUsers = JSON.parse(localStorage.getItem("users")) || [];
+  const matchedUser = storedUsers.find(user => user.email === email);
+
+  if (matchedUser) {
+    alert("लॉगिन सफल रहा! आपका स्वागत है " + matchedUser.first_name + " जी");
+    // Store user session (basic simulation)
+    localStorage.setItem("currentUser", JSON.stringify(matchedUser));
+    window.location.href = "dashboard.html";
+  } else {
+    alert("गलत ईमेल या पासवर्ड। कृपया फिर से प्रयास करें।");
   }
 }
+</script>

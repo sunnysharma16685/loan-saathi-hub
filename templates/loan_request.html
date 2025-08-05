@@ -1,26 +1,9 @@
-<!-- File: templates/loan_request.html -->
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>Loan Request</title>
-  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-</head>
-<body>
-  <header>
-    <div class="logo">LoanSaathiHub</div>
-    <div class="tagline">Apply for Loan Easily</div>
-  </header>
-
+{# File: templates/loan_request.html #}
 {% extends 'base.html' %}
 
-{% block title %}User Dashboard - LoanSaathiHub{% endblock %}
+{% block title %}Loan Request - LoanSaathiHub{% endblock %}
 
 {% block content %}
-  <h2>Welcome to your dashboard, {{ user }}</h2>
-  <!-- user data show here -->
-{% endblock %}
-
   <div class="container">
     <div class="signup-form">
       <h2>Loan Request</h2>
@@ -43,9 +26,4 @@
       </form>
     </div>
   </div>
-
-  <footer>
-    &copy; 2025 LoanSaathiHub
-  </footer>
-</body>
-</html>
+{% endblock %}

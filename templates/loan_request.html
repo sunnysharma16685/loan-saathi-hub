@@ -12,6 +12,15 @@
     <div class="tagline">Apply for Loan Easily</div>
   </header>
 
+{% extends 'base.html' %}
+
+{% block title %}User Dashboard - LoanSaathiHub{% endblock %}
+
+{% block content %}
+  <h2>Welcome to your dashboard, {{ user }}</h2>
+  <!-- user data show here -->
+{% endblock %}
+
   <div class="container">
     <div class="signup-form">
       <h2>Loan Request</h2>

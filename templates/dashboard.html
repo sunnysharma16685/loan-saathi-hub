@@ -12,6 +12,15 @@
     <div class="tagline">Your Loan Dashboard</div>
   </header>
 
+{% extends 'base.html' %}
+
+{% block title %}User Dashboard - LoanSaathiHub{% endblock %}
+
+{% block content %}
+  <h2>Welcome to your dashboard, {{ user }}</h2>
+  <!-- user data show here -->
+{% endblock %}
+
   <div class="container">
     <h2>Welcome, {{ user }}</h2>
     <p><a href="/apply-loan">Apply for New Loan</a></p>
@@ -49,9 +58,19 @@
       <p>No loan requests found.</p>
     {% endif %}
 
+
     <br>
     <a href="/logout"><button>Logout</button></a>
   </div>
+
+{% extends 'base.html' %}
+
+{% block title %}User Dashboard - LoanSaathiHub{% endblock %}
+
+{% block content %}
+  <h2>Welcome to your dashboard, {{ user }}</h2>
+  <!-- user data show here -->
+{% endblock %}
 
   <footer>
     &copy; 2025 LoanSaathiHub

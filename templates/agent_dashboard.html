@@ -12,6 +12,15 @@
     <h2>Welcome Agent</h2>
   </header>
 
+{% extends 'base.html' %}
+
+{% block title %}User Dashboard - LoanSaathiHub{% endblock %}
+
+{% block content %}
+  <h2>Welcome to your dashboard, {{ user }}</h2>
+  <!-- user data show here -->
+{% endblock %}
+
   <div class="container">
     <h3>Available Leads (Your City)</h3>
     {% if leads %}

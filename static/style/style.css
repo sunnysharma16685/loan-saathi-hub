@@ -20,27 +20,18 @@ body {
 }
 
 /* === Header Styles === */
-header {
-  background: linear-gradient(90deg, #0072ff, #00c6ff);
+.header-btn {
+  background: #0a8f94;
   color: white;
-  padding: 20px 40px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-size: 22px;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-}
-
-header h1 {
-  margin: 0;
+  padding: 8px 14px;
+  border-radius: 8px;
+  text-decoration: none;
+  margin-left: 10px;
   font-weight: bold;
 }
 
-header a {
-  color: white;
-  text-decoration: none;
-  margin-left: 20px;
-  font-weight: 500;
+.header-btn:hover {
+  background: #076e70;
 }
 
 /* === Footer Styles === */

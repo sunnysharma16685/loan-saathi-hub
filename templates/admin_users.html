@@ -1,0 +1,38 @@
+<h2>All Loan Users</h2>
+@app.route('/admin-users', methods=['GET', 'POST'])
+def admin_users():
+    if 'admin' not in session:
+        return redirect('/admin-login')
+
+    if request.method == 'POST':
+        email = request.form['email']
+        action = request.form['action']
+        remark = request.form.get('remark', '')
+
+        if action == 'deactivate':
+            supabase.table("users").update({
+                "status": "inactive",
+                "remarks": remark
+            }).eq("email", email).execute()
+
+        elif action == 'delete':
+            supabase.table("users").delete().eq("email", email).execute()
+
+    users = supabase.table("users").select("*").execute().data
+    return render_template("admin_users.html", users=users)
+
+
+<h2>All Agents</h2>
+<table>
+  <tr><th>Sl. No.</th><th>Email</th><th>Mobile</th><th>Status</th><th>City</th><th>Remarks</th></tr>
+  {% for agent in agents %}
+  <tr>
+    <td>{{ loop.index }}</td>
+    <td>{{ agent.email }}</td>
+    <td>{{ agent.mobile }}</td>
+    <td>{{ agent.status }}</td>
+    <td>{{ agent.city or '—' }}</td>
+    <td>{{ agent.remarks or '—' }}</td>
+  </tr>
+  {% endfor %}
+</table>

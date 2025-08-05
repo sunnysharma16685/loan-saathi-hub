@@ -13,26 +13,45 @@ supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 # ----------------------- All your routes below here -----------------------
 
 @app.route('/')
+def generate_custom_id(table, id_column, prefix, length=5):
+    latest = supabase.table(table).select(id_column).order(id_column, desc=True).limit(1).execute()
+    if latest.data:
+        last_id = latest.data[0][id_column].replace(prefix, "")
+        new_num = int(last_id) + 1
+    else:
+        new_num = 1
+    return f"{prefix}{str(new_num).zfill(length)}"
+
 def home():
     return render_template('home.html')
 
 @app.route('/create-profile', methods=['GET', 'POST'])
 def create_profile():
     if request.method == 'POST':
-        data = request.form
+        first_name = request.form['first_name']
+        last_name = request.form['last_name']
+        mobile = request.form['mobile']
+        email = request.form['email']
+
+        # Generate custom user ID
+        user_id = generate_custom_id("users", "user_id", "LSHU")
+
         supabase.table("users").insert({
-            "first_name": data['first_name'],
-            "last_name": data['last_name'],
-            "mobile": data['mobile'],
-            "email": data['email'],
-            "user_type": "loan_user"
+            "first_name": first_name,
+            "last_name": last_name,
+            "mobile": mobile,
+            "email": email,
+            "user_type": "loan_user",
+            "user_id": user_id
         }).execute()
 
-        session['user'] = data['email']
-        session['mobile'] = data['mobile']
-        return redirect('/loan-request')
+        session['user'] = email
+        session['mobile'] = mobile
+        session['user_id'] = user_id
 
+        return redirect('/loan-request')
     return render_template('create_profile.html')
+
 
 @app.route('/loan-request', methods=['GET', 'POST'])
 def loan_request():
@@ -41,29 +60,36 @@ def loan_request():
 
     if request.method == 'POST':
         data = request.form
-        latest = supabase.table("loan_requests").select("loan_id").order("loan_id", desc=True).limit(1).execute()
-        last_id = int(latest.data[0]['loan_id']) if latest.data else 19870000
-        new_id = str(last_id + 1)
+
+        loan_type = data['loan_type']  # eg. personal_loan
+        short_code = "PL" if "personal" in loan_type.lower() else "HL" if "home" in loan_type.lower() else "LN"
+        prefix = short_code + "U"
+
+        loan_id = generate_custom_id("loan_requests", "loan_id", prefix)
 
         supabase.table("loan_requests").insert({
-            "loan_id": new_id,
+            "loan_id": loan_id,
             "user_email": session['user'],
-            "loan_type": data['loan_type'],
+            "loan_type": loan_type,
             "amount": data['amount'],
             "duration": data['duration'],
             "status": "In Process"
         }).execute()
 
-        return render_template('thankyou.html', loan_id=new_id)
+        return render_template('thankyou.html', loan_id=loan_id)
 
     return render_template('loan_request.html')
+
 
 @app.route('/dashboard')
 def dashboard():
     if 'user' not in session:
         return redirect('/login')
-    res = supabase.table("loan_requests").select("*").eq("user_email", session['user']).execute()
-    return render_template('dashboard.html', user=session['user'], loans=res.data)
+
+    loans = supabase.table("loan_requests").select("*").eq("user_email", session['user']).execute().data
+
+    return render_template('dashboard.html', loans=loans)
+
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -79,20 +105,46 @@ def login():
 
 @app.route('/agent-signup', methods=['POST'])
 def agent_signup():
-    data = request.form
+    first_name = request.form['first_name']
+    last_name = request.form['last_name']
+    mobile = request.form['mobile']
+    email = request.form['email']
+
+    # Generate agent ID
+    agent_id = generate_custom_id("agents", "agent_id", "LSHA")
+
     supabase.table("agents").insert({
-        "first_name": data['first_name'],
-        "last_name": data['last_name'],
-        "mobile": data['mobile'],
-        "email": data['email'],
+        "first_name": first_name,
+        "last_name": last_name,
+        "mobile": mobile,
+        "email": email,
         "status": "pending",
         "agent_stage": "basic_signup",
-        "approved": False
+        "approved": False,
+        "agent_id": agent_id
     }).execute()
 
-    session['agent'] = data['email']
-    session['mobile'] = data['mobile']
+    session['agent'] = email
+    session['mobile'] = mobile
+    session['agent_id'] = agent_id
+
     return redirect('/agent-profile')
+
+@app.route('/loan-approvals/<loan_id>')
+def loan_approvals(loan_id):
+    if 'user' not in session:
+        return redirect('/login')
+
+    approvals = supabase.table("loan_approvals").select("*").eq("loan_id", loan_id).execute().data
+
+    enriched_data = []
+    for item in approvals:
+        agent_info = supabase.table("agents").select("mobile").eq("email", item['agent_email']).single().execute()
+        item['mobile'] = agent_info.data['mobile'] if agent_info.data else "N/A"
+        enriched_data.append(item)
+
+    return render_template('loan_approvals.html', approvals=enriched_data, loan_id=loan_id)
+
 
 @app.route('/agent-profile', methods=['GET', 'POST'])
 def agent_profile():
@@ -197,6 +249,29 @@ def agent_leads():
 
     return render_template("agent_leads.html", leads=all_leads)
 
+@app.route('/admin-users', methods=['GET', 'POST'])
+def admin_users():
+    if 'admin' not in session:
+        return redirect('/admin-login')
+
+    if request.method == 'POST':
+        email = request.form['email']
+        action = request.form['action']
+        remark = request.form.get('remark', '')
+
+        if action == 'deactivate':
+            supabase.table("users").update({
+                "status": "inactive",
+                "remarks": remark
+            }).eq("email", email).execute()
+
+        elif action == 'delete':
+            supabase.table("users").delete().eq("email", email).execute()
+
+    users = supabase.table("users").select("*").execute().data
+    return render_template("admin_users.html", users=users)
+
+
 @app.route('/admin-login', methods=['GET', 'POST'])
 def admin_login():
     if request.method == 'POST':
@@ -229,13 +304,28 @@ def admin_agents():
     if request.method == 'POST':
         email = request.form['email']
         action = request.form['action']
+        remark = request.form.get('remark', '')
+
         if action == 'approve':
-            supabase.table("agents").update({"approved": True}).eq("email", email).execute()
+            supabase.table("agents").update({
+                "approved": True,
+                "status": "active",
+                "remarks": "Approved by Admin"
+            }).eq("email", email).execute()
+
         elif action == 'reject':
             supabase.table("agents").delete().eq("email", email).execute()
 
-    agents = supabase.table("agents").select("*").eq("approved", False).execute()
-    return render_template("admin_agents.html", agents=agents.data)
+        elif action == 'deactivate':
+            supabase.table("agents").update({
+                "status": "inactive",
+                "remarks": remark
+            }).eq("email", email).execute()
+
+    pending_agents = supabase.table("agents").select("*").eq("approved", False).execute().data
+    active_agents = supabase.table("agents").select("*").eq("approved", True).execute().data
+    return render_template("admin_agents.html", pending_agents=pending_agents, active_agents=active_agents)
+
 
 @app.route('/logout')
 def logout():

@@ -19,25 +19,32 @@
     <h3>Your Loan Requests</h3>
     {% if loan_requests %}
       <table>
-        <tr>
-          <th>Request ID</th>
-          <th>Type</th>
-          <th>Amount</th>
-          <th>Duration</th>
-          <th>Status</th>
-          <th>Remarks</th>
-        </tr>
-        {% for loan in loan_requests %}
-        <tr>
-          <td>{{ loan.id }}</td>
-          <td>{{ loan.type }}</td>
-          <td>{{ loan.amount }}</td>
-          <td>{{ loan.duration }}</td>
-          <td>{{ loan.status }}</td>
-          <td>{{ loan.remarks }}</td>
-        </tr>
-        {% endfor %}
-      </table>
+  <tr>
+    <th>Sl. No.</th>
+    <th>Apply Date</th>
+    <th>Loan ID</th>
+    <th>Loan Type</th>
+    <th>Amount</th>
+    <th>Status</th>
+    <th>View Approvals</th>
+  </tr>
+  {% for loan in loans %}
+  <tr>
+    <td>{{ loop.index }}</td>
+    <td>{{ loan.applied_date[:10] }}</td>
+    <td>{{ loan.loan_id }}</td>
+    <td>{{ loan.loan_type }}</td>
+    <td>{{ loan.amount }}</td>
+    <td>{{ loan.status }}</td>
+    <td>
+      {% if loan.status == "Approved" %}
+        <a href="/loan-approvals/{{ loan.loan_id }}">View</a>
+      {% endif %}
+    </td>
+  </tr>
+  {% endfor %}
+</table>
+
     {% else %}
       <p>No loan requests found.</p>
     {% endif %}

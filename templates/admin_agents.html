@@ -8,41 +8,48 @@
   <h2>Pending Agent Approvals</h2>
 
   {% if agents %}
-    <table>
-      <thead>
-        <tr>
-          <th>Full Name</th>
-          <th>Email</th>
-          <th>Mobile</th>
-          <th>City</th>
-          <th>State</th>
-          <th>Mode</th>
-          <th>Actions</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for agent in agents %}
-        <tr>
-          <td>{{ agent.full_name }}</td>
-          <td>{{ agent.email }}</td>
-          <td>{{ agent.mobile }}</td>
-          <td>{{ agent.city }}</td>
-          <td>{{ agent.state }}</td>
-          <td>{{ agent.mode }}</td>
-          <td>
-            <form method="POST" style="display:inline;">
-              <input type="hidden" name="email" value="{{ agent.email }}">
-              <button type="submit" name="action" value="approve">Approve</button>
-            </form>
-            <form method="POST" style="display:inline;">
-              <input type="hidden" name="email" value="{{ agent.email }}">
-              <button type="submit" name="action" value="reject">Reject</button>
-            </form>
-          </td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
+    <h2>Pending Agents</h2>
+<table>
+  <tr><th>Email</th><th>Actions</th></tr>
+  {% for agent in pending_agents %}
+  <tr>
+    <td>{{ agent.email }}</td>
+    <td>
+      <form method="POST">
+        <input type="hidden" name="email" value="{{ agent.email }}">
+        <input type="hidden" name="action" value="approve">
+        <button type="submit">Approve</button>
+      </form>
+      <form method="POST">
+        <input type="hidden" name="email" value="{{ agent.email }}">
+        <input type="hidden" name="action" value="reject">
+        <button type="submit">Reject</button>
+      </form>
+    </td>
+  </tr>
+  {% endfor %}
+</table>
+
+<h2>Active Agents</h2>
+<table>
+  <tr><th>Email</th><th>Status</th><th>Remarks</th><th>Deactivate</th></tr>
+  {% for agent in active_agents %}
+  <tr>
+    <td>{{ agent.email }}</td>
+    <td>{{ agent.status }}</td>
+    <td>{{ agent.remarks or "N/A" }}</td>
+    <td>
+      <form method="POST">
+        <input type="hidden" name="email" value="{{ agent.email }}">
+        <input type="hidden" name="action" value="deactivate">
+        <input type="text" name="remark" placeholder="Reason for deactivation" required>
+        <button type="submit">Deactivate</button>
+      </form>
+    </td>
+  </tr>
+  {% endfor %}
+</table>
+
   {% else %}
     <p>No pending agent requests.</p>
   {% endif %}

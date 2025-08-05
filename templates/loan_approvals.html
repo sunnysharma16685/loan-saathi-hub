@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Loan Approvals</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <header>
+    <h1>Loan Approvals for {{ loan_id }}</h1>
+  </header>
+
+  <main>
+    {% if approvals %}
+    <table>
+      <tr>
+        <th>Sl. No.</th>
+        <th>Date</th>
+        <th>Approved Amount</th>
+        <th>Required Documents</th>
+        <th>Remarks</th>
+        <th>Agent Mobile</th>
+      </tr>
+      {% for item in approvals %}
+      <tr>
+        <td>{{ loop.index }}</td>
+        <td>{{ item.approval_date[:10] }}</td>
+        <td>₹{{ item.approved_amount }}</td>
+        <td>{{ item.required_documents }}</td>
+        <td>{{ item.remarks }}</td>
+        <td>{{ item.mobile }}</td>
+      </tr>
+      {% endfor %}
+    </table>
+    {% else %}
+    <p>No approvals found for this loan.</p>
+    {% endif %}
+  </main>
+
+  <footer>
+    <a href="{{ url_for('dashboard') }}">Back to Dashboard</a>
+  </footer>
+</body>
+</html>

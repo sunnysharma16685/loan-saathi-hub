@@ -1,40 +1,36 @@
 from flask import Flask, render_template, request, redirect, session, url_for
 from supabase import create_client, Client
+import random
 
 app = Flask(__name__)
-app.secret_key = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNva3h5bnlkZGJsb3VwZWRzem9qIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1Mzg4NzA0MiwiZXhwIjoyMDY5NDYzMDQyfQ.qL4RdShkKKQRGfqYlfwjIwYmjRuYd5JG7LddIeLXkJg"
+app.secret_key = "your_secret_key_here"
 
-# Supabase Configuration
+# Supabase config
 SUPABASE_URL = "https://cokxynyddbloupedszoj.supabase.co"
-SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNva3h5bnlkZGJsb3VwZWRzem9qIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM4ODcwNDIsImV4cCI6MjA2OTQ2MzA0Mn0.gdeUkmoUs5qMW6vrzyOqRr0A1OVt_E_Tsq0nZ7X-h8A"
+SUPABASE_KEY = "your_supabase_anon_key_here"
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
-# ----------------------- Helper Function -----------------------
-def generate_custom_id(table, id_column, prefix, length=5):
-    latest = supabase.table(table).select(id_column).order(id_column, desc=True).limit(1).execute()
-    if latest.data:
-        last_id = latest.data[0][id_column].replace(prefix, "")
-        new_num = int(last_id) + 1
-    else:
-        new_num = 1
-    return f"{prefix}{str(new_num).zfill(length)}"
+# Helper: Custom ID Generator
+def generate_custom_id(table, column, prefix):
+    random_id = f"{prefix}{random.randint(100000, 999999)}"
+    return random_id
 
-# ----------------------- Routes Start -----------------------
+# ------------------ ROUTES START ------------------ #
 
 @app.route('/')
 def home():
+    return render_template('index.html')
 
-    @app.route('/create-profile', methods=['GET', 'POST'])
+@app.route('/create-profile', methods=['GET', 'POST'])
 def create_profile():
-    return render_template('create_profile.html')
-    
-if request.method == 'POST':
+    if request.method == 'POST':
         first_name = request.form['first_name']
         last_name = request.form['last_name']
         mobile = request.form['mobile']
         email = request.form['email']
 
         user_id = generate_custom_id("users", "user_id", "LSHU")
+
         supabase.table("users").insert({
             "first_name": first_name,
             "last_name": last_name,
@@ -49,6 +45,7 @@ if request.method == 'POST':
         session['user_id'] = user_id
 
         return redirect('/loan-request')
+
     return render_template('create_profile.html')
 
 @app.route('/loan-request', methods=['GET', 'POST'])
@@ -315,26 +312,14 @@ def logout():
     session.clear()
     return redirect('/')
 
-# Static Info Pages
-@app.route('/about')
-def about(): return render_template('about.html')
+# Static pages
+@app.route('/about') def about(): return render_template('about.html')
+@app.route('/privacy') def privacy(): return render_template('privacy.html')
+@app.route('/terms') def terms(): return render_template('terms.html')
+@app.route('/support') def support(): return render_template('support.html')
+@app.route('/contact') def contact(): return render_template('contact.html')
+@app.route('/forgot-password') def forgot_password(): return "Coming soon..."
 
-@app.route('/privacy')
-def privacy(): return render_template('privacy.html')
-
-@app.route('/terms')
-def terms(): return render_template('terms.html')
-
-@app.route('/support')
-def support(): return render_template('support.html')
-
-@app.route('/contact')
-def contact(): return render_template('contact.html')
-
-@app.route('/forgot-password')
-def forgot_password():
-    return "Coming soon..."
-
-# ----------------------- Run the App -----------------------
+# ------------------ RUN APP ------------------ #
 if __name__ == '__main__':
     app.run(debug=True)

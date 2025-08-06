@@ -16,13 +16,13 @@ def generate_custom_id(table, column, prefix):
 
 @app.route('/')
 def home():
-    return render_template('home.html', title="Home - LoanSeva", description="Welcome to LoanSeva - India’s most trusted loan matching platform.")
+    return render_template('home.html', title="LoanSaathiHub – Trusted Loan Partner", description="Apply for loans easily and securely with LoanSaathiHub – Your trusted loan Saathi.")
 
 @app.route('/create-profile', methods=['GET', 'POST'])
 def create_profile():
     if request.method == 'POST':
         first_name = request.form['first_name']
-        last_name = request.form['last_name']
+        last_name = request.form.get('last_name', '')
         mobile = request.form['mobile']
         email = request.form['email']
 
@@ -40,7 +40,7 @@ def create_profile():
         session.update({'user': email, 'mobile': mobile, 'user_id': user_id})
         return redirect('/loan-request')
 
-    return render_template('create_profile.html', title="Create Profile", description="Create your LoanSeva profile to apply for loans easily.")
+    return render_template('create_profile.html', title="Create Profile", description="Create your profile on LoanSaathiHub to apply for loans easily.")
 
 @app.route('/loan-request', methods=['GET', 'POST'])
 def loan_request():
@@ -59,20 +59,39 @@ def loan_request():
             "loan_type": loan_type,
             "amount": data['amount'],
             "duration": data['duration'],
+            "pan": data['pan'],
+            "aadhar": data.get('aadhar', ''),
+            "itr": data['itr'],
+            "cibil": data.get('cibil', ''),
+            "city": data['city'],
+            "state": data['state'],
+            "pincode": data['pincode'],
             "status": "In Process"
         }).execute()
 
-        return render_template('thankyou.html', loan_id=loan_id)
+        return redirect('/dashboard')
 
-    return render_template('loan_request.html', title="Loan Request", description="Apply for personal or home loans instantly on LoanSeva.")
+    return render_template('loan_request.html', title="Loan Request", description="Apply for quick and easy loans with LoanSaathiHub.")
 
 @app.route('/dashboard')
 def dashboard():
     if 'user' not in session:
         return redirect('/login')
 
-    loans = supabase.table("loan_requests").select("*").eq("user_email", session['user']).execute().data
-    return render_template('dashboard.html', loans=loans, title="Dashboard")
+    loans = supabase.table("loan_requests").select("*").eq("user_email", session['user']).order("applied_date", desc=True).execute().data
+    return render_template('dashboard.html', loans=loans, user=session['user'], title="User Dashboard - LoanSaathiHub")
+
+@app.route('/loan-approvals/<loan_id>')
+def loan_approvals(loan_id):
+    if 'user' not in session:
+        return redirect('/login')
+
+    approvals = supabase.table("loan_approvals").select("*").eq("loan_id", loan_id).execute().data
+    for item in approvals:
+        agent_info = supabase.table("agents").select("mobile").eq("email", item['agent_email']).single().execute()
+        item['mobile'] = agent_info.data['mobile'] if agent_info.data else "N/A"
+
+    return render_template('loan_approval_details.html', approvals=approvals, loan_id=loan_id, title="Loan Approvals")
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -84,12 +103,12 @@ def login():
             return redirect('/dashboard')
         return render_template('login.html', error="Invalid login ID")
 
-    return render_template('login.html', title="Login", description="Login to LoanSeva using your email or mobile number.")
+    return render_template('login.html', title="Login", description="Login to LoanSaathiHub using your email or mobile number.")
 
 @app.route('/agent-signup', methods=['POST'])
 def agent_signup():
     first_name = request.form['first_name']
-    last_name = request.form['last_name']
+    last_name = request.form.get('last_name', '')
     mobile = request.form['mobile']
     email = request.form['email']
 
@@ -107,18 +126,6 @@ def agent_signup():
 
     session.update({'agent': email, 'mobile': mobile, 'agent_id': agent_id})
     return redirect('/agent-profile')
-
-@app.route('/loan-approvals/<loan_id>')
-def loan_approvals(loan_id):
-    if 'user' not in session:
-        return redirect('/login')
-
-    approvals = supabase.table("loan_approvals").select("*").eq("loan_id", loan_id).execute().data
-    for item in approvals:
-        agent_info = supabase.table("agents").select("mobile").eq("email", item['agent_email']).single().execute()
-        item['mobile'] = agent_info.data['mobile'] if agent_info.data else "N/A"
-
-    return render_template('loan_approvals.html', approvals=approvals, loan_id=loan_id, title="Loan Approvals")
 
 @app.route('/agent-profile', methods=['GET', 'POST'])
 def agent_profile():
@@ -163,38 +170,29 @@ def agent_profile():
 
     return render_template('agent_profile.html', title="Agent Profile")
 
-# Other routes remain mostly the same with SEO-enhanced render_template
-# Example: return render_template('admin_dashboard.html', loans=res.data, title="Admin Dashboard")
-
-# Footer Pages
-@app.route('/privacy')
-def privacy():
-    return render_template('privacy.html')
-
-@app.route('/about')
-def about():
-    return render_template('about.html')
-
-@app.route('/terms')
-def terms():
-    return render_template('terms.html')
-
-@app.route('/support')
-def support():
-    return render_template('support.html')
-
-@app.route('/contact')
-def contact():
-    return render_template('contact.html')
-
-
-@app.route('/forgot-password')
-def forgot_password(): return "Coming soon..."
-
 @app.route('/logout')
 def logout():
     session.clear()
     return redirect('/')
+
+# Footer Pages
+@app.route('/privacy')
+def privacy(): return render_template('privacy.html')
+
+@app.route('/about')
+def about(): return render_template('about.html')
+
+@app.route('/terms')
+def terms(): return render_template('terms.html')
+
+@app.route('/support')
+def support(): return render_template('support.html')
+
+@app.route('/contact')
+def contact(): return render_template('contact.html')
+
+@app.route('/forgot-password')
+def forgot_password(): return "Coming soon..."
 
 if __name__ == '__main__':
     app.run(debug=True)

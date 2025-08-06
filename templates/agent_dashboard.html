@@ -1,11 +1,12 @@
 {# File: templates/agent_dashboard.html #}
 {% extends 'base.html' %}
 
-{% block title %}Agent Dashboard - LoanSaathiHub{% endblock %}
+{% block title %}Agent Dashboard | LoanSaathiHub{% endblock %}
 
 {% block meta %}
-  <meta name="description" content="Agent dashboard for managing and purchasing loan leads on LoanSaathiHub. Accept or reject leads based on your preference.">
-  <meta name="keywords" content="Agent Dashboard, Loan Leads, Buy Leads, LoanSaathiHub">
+  <meta name="description" content="Manage and purchase real-time loan leads tailored to your city. Accept or reject potential customers from your Agent Dashboard on LoanSaathiHub.">
+  <meta name="keywords" content="Loan agent dashboard, loan leads India, buy leads, DSA dashboard, agent panel, LoanSaathiHub">
+  <meta name="author" content="LoanSaathiHub">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 {% endblock %}
 
@@ -13,58 +14,60 @@
 <section class="dashboard-section container">
   <header class="dashboard-header">
     <h1>Welcome, {{ user }}</h1>
-    <div class="dashboard-links">
+    <div class="dashboard-actions">
       <a href="{{ url_for('agent_leads') }}" class="btn-secondary">My Purchased Leads</a>
       <a href="{{ url_for('logout') }}" class="btn-secondary">Logout</a>
     </div>
   </header>
 
-  <h2>Available Leads in Your City</h2>
+  <section class="leads-section">
+    <h2>Available Loan Leads in Your City</h2>
 
-  {% if leads %}
-    <div class="table-wrapper">
-      <table class="lead-table">
-        <thead>
-          <tr>
-            <th>Full Name</th>
-            <th>Loan Type</th>
-            <th>Amount</th>
-            <th>Duration</th>
-            <th>PAN</th>
-            <th>City</th>
-            <th>Action</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for lead in leads %}
-          <tr>
-            <td>{{ lead.first_name }} {{ lead.last_name }}</td>
-            <td>{{ lead.loan_type }}</td>
-            <td>₹{{ "{:,.2f}".format(lead.amount) }}</td>
-            <td>{{ lead.duration }}</td>
-            <td>{{ lead.pan }}</td>
-            <td>{{ lead.city }}</td>
-            <td>
-              <!-- Reject Form -->
-              <form method="POST" class="inline-form">
-                <input type="hidden" name="loan_id" value="{{ lead.loan_id }}">
-                <input type="text" name="reason" placeholder="Reason to Reject" required>
-                <button type="submit" name="action" value="reject" class="btn-reject">Reject</button>
-              </form>
+    {% if leads %}
+      <div class="table-wrapper">
+        <table class="lead-table">
+          <thead>
+            <tr>
+              <th>Full Name</th>
+              <th>Loan Type</th>
+              <th>Amount</th>
+              <th>Duration</th>
+              <th>PAN</th>
+              <th>City</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for lead in leads %}
+            <tr>
+              <td>{{ lead.first_name }} {{ lead.last_name }}</td>
+              <td>{{ lead.loan_type }}</td>
+              <td>₹{{ "{:,.2f}".format(lead.amount) }}</td>
+              <td>{{ lead.duration }}</td>
+              <td>{{ lead.pan }}</td>
+              <td>{{ lead.city }}</td>
+              <td class="lead-actions">
+                <!-- Reject Form -->
+                <form method="POST" class="inline-form reject-form">
+                  <input type="hidden" name="loan_id" value="{{ lead.loan_id }}">
+                  <input type="text" name="reason" placeholder="Reason to Reject" required>
+                  <button type="submit" name="action" value="reject" class="btn-reject">Reject</button>
+                </form>
 
-              <!-- Accept Form -->
-              <form method="POST" class="inline-form">
-                <input type="hidden" name="loan_id" value="{{ lead.loan_id }}">
-                <button type="submit" name="action" value="accept" class="btn-accept">Accept & Buy ₹99</button>
-              </form>
-            </td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
-  {% else %}
-    <p>No new leads available in your city right now. Please check back later.</p>
-  {% endif %}
+                <!-- Accept Form -->
+                <form method="POST" class="inline-form accept-form">
+                  <input type="hidden" name="loan_id" value="{{ lead.loan_id }}">
+                  <button type="submit" name="action" value="accept" class="btn-accept">Accept & Buy ₹99</button>
+                </form>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <p class="no-leads-msg">No new leads are available in your city at the moment. Please check back soon.</p>
+    {% endif %}
+  </section>
 </section>
 {% endblock %}

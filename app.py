@@ -29,12 +29,12 @@ def login():
 
         if data:
             session["user"] = data[0]
-            return redirect("/dashboard")
+            return redirect("/user_details")  # ✅ Move redirect here
         else:
             return render_template("login.html", error="Invalid credentials")
 
     return render_template("login.html")
-return redirect("/user_details")
+
 
 
 @app.route('/user-details', methods=['GET', 'POST'])

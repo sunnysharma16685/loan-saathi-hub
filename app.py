@@ -76,18 +76,6 @@ def dashboard():
     loans = supabase.table("loan_requests").select("*").eq("user_email", session['user']).order("applied_date", desc=True).execute().data
     return render_template('dashboard.html', loans=loans, user=session['user'], title="User Dashboard - LoanSaathiHub")
 
-@app.route('/dashboard/<loan_id>')
-def dashboard(loan_id):
-    if 'user' not in session:
-        return redirect('/login')
-
-    approvals = supabase.table("loan_approvals").select("*").eq("loan_id", loan_id).execute().data
-    for item in approvals:
-        agent_info = supabase.table("agents").select("mobile").eq("email", item['agent_email']).single().execute()
-        item['mobile'] = agent_info.data['mobile'] if agent_info.data else "N/A"
-
-    return render_template('loan_approval_details.html', approvals=approvals, loan_id=loan_id, title="Loan Approvals")
-
 @app.route('/agent-signup', methods=['POST'])
 def agent_signup():
     first_name = request.form['first_name']

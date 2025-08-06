@@ -15,7 +15,7 @@
   <p class="dashboard-subtext">Track your loan applications, apply for new loans, and manage your account efficiently.</p>
 
   <div class="dashboard-actions">
-    <a href="{{ url_for('apply_loan') }}" class="btn btn-primary">Apply for New Loan</a>
+    <a href="{{ url_for('loan-request }}" class="btn btn-primary">Apply for New Loan</a>
     <a href="{{ url_for('logout') }}" class="btn btn-secondary">Logout</a>
   </div>
 
@@ -58,7 +58,7 @@
   {% else %}
     <div class="empty-state">
       <p>No loan requests found. Click below to apply for your first loan.</p>
-      <a href="{{ url_for('apply_loan') }}" class="btn btn-primary">Apply Now</a>
+      <a href="{{ url_for('loan-request') }}" class="btn btn-primary">Apply Now</a>
     </div>
   {% endif %}
 </section>

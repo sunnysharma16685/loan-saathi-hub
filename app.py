@@ -18,17 +18,24 @@ def generate_custom_id(table, column, prefix):
 def home():
     return render_template('home.html', title="LoanSaathiHub – Trusted Loan Partner", description="Apply for loans easily and securely with LoanSaathiHub – Your trusted loan Saathi.")
 
-@app.route('/login', methods=['GET', 'POST'])
+@app.route("/login", methods=["GET", "POST"])
 def login():
-    if request.method == 'POST':
-        login_id = request.form['login_id']
-        res = supabase.table("users").select("*").or_(f"email.eq.{login_id},mobile.eq.{login_id}").execute()
-        if res.data:
-            session.update({'user': res.data[0]['email'], 'mobile': res.data[0]['mobile']})
-            return redirect('/user-details')
-        return render_template('login.html', error="Invalid login ID")
+    if request.method == "POST":
+        email = request.form["email"]
+        password = request.form["password"]
 
-    return render_template('login.html', title="Login", description="Login to LoanSaathiHub using your email or mobile number.")
+        response = supabase.table("users").select("*").eq("email", email).eq("password", password).execute()
+        data = response.data
+
+        if data:
+            session["user"] = data[0]
+            return redirect("/dashboard")
+        else:
+            return render_template("login.html", error="Invalid credentials")
+
+    return render_template("login.html")
+return redirect("/user_details")
+
 
 @app.route('/user-details', methods=['GET', 'POST'])
 def user_details():
@@ -69,8 +76,8 @@ def dashboard():
     loans = supabase.table("loan_requests").select("*").eq("user_email", session['user']).order("applied_date", desc=True).execute().data
     return render_template('dashboard.html', loans=loans, user=session['user'], title="User Dashboard - LoanSaathiHub")
 
-@app.route('/loan-approvals/<loan_id>')
-def loan_approvals(loan_id):
+@app.route('/dashboard/<loan_id>')
+def dashboard(loan_id):
     if 'user' not in session:
         return redirect('/login')
 

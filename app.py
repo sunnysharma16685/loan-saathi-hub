@@ -51,9 +51,9 @@ def loan_request():
         data = request.form
         loan_type = data['loan_type']
         short_code = "PL" if "personal" in loan_type.lower() else "HL" if "home" in loan_type.lower() else "LN"
-        loan_id = generate_custom_id("loan_requests", "loan_id", short_code + "U")
+        loan_id = generate_custom_id("loan-requests", "loan_id", short_code + "U")
 
-        supabase.table("loan_requests").insert({
+        supabase.table("loan-requests").insert({
             "loan_id": loan_id,
             "user_email": session['user'],
             "loan_type": loan_type,
@@ -71,7 +71,7 @@ def loan_request():
 
         return render_template('thankyou.html', loan_id=loan_id)
 
-    return render_template('loan_request.html', title="Loan Request", description="Submit your complete loan request on LoanSaathiHub.")
+    return render_template('loan-request.html', title="Loan Request", description="Submit your complete loan request on LoanSaathiHub.")
 
 
 @app.route('/dashboard')

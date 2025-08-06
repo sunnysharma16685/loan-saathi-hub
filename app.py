@@ -43,7 +43,7 @@ def create_profile():
     return render_template('create_profile.html', title="Create Profile", description="Create your profile on LoanSaathiHub to apply for loans easily.")
 
 @app.route('/loan-request', methods=['GET', 'POST'])
-def loan_request():
+def loan-request():
     if 'user' not in session:
         return redirect('/login')
 

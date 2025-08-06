@@ -1,0 +1,251 @@
+/* === Base Reset & Typography === */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Segoe UI', sans-serif;
+  scroll-behavior: smooth;
+}
+
+html {
+  font-size: 16px;
+}
+
+body {
+  background: #f4f7fc;
+  color: #222;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  line-height: 1.6;
+}
+
+/* === Utility Classes === */
+.text-center {
+  text-align: center;
+}
+.mt-20 { margin-top: 20px; }
+.mb-20 { margin-bottom: 20px; }
+.w-100 { width: 100%; }
+
+/* === Buttons === */
+.btn {
+  display: inline-block;
+  background: #0066cc;
+  color: #fff;
+  padding: 10px 20px;
+  font-weight: 600;
+  text-align: center;
+  border-radius: 6px;
+  text-decoration: none;
+  border: none;
+  transition: background 0.3s ease-in-out;
+}
+
+.btn:hover {
+  background: #004c99;
+  cursor: pointer;
+}
+
+/* === Header === */
+header {
+  background: #004080;
+  color: #fff;
+  padding: 20px 30px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.logo {
+  font-size: 28px;
+  font-weight: bold;
+}
+
+.tagline {
+  font-size: 14px;
+  opacity: 0.9;
+}
+
+/* === Footer === */
+footer {
+  margin-top: auto;
+  background: #002c5a;
+  color: #fff;
+  padding: 20px 30px;
+  text-align: center;
+  font-size: 14px;
+}
+
+footer a {
+  color: #fff;
+  margin: 0 10px;
+  text-decoration: underline;
+}
+
+footer a:hover {
+  color: #ddd;
+}
+
+/* === Container & Layout === */
+.main-container,
+.container {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  padding: 40px 20px;
+  gap: 40px;
+}
+
+.left-ad, .advertisement {
+  flex: 1;
+  min-width: 280px;
+  max-width: 500px;
+}
+
+.right-section,
+.form-section {
+  flex: 1;
+  min-width: 300px;
+  max-width: 500px;
+}
+
+/* === Form Boxes === */
+.form-box, .form-section {
+  background: #fff;
+  padding: 30px;
+  border-radius: 10px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+}
+
+.form-box h2,
+.form-section h2 {
+  color: #004080;
+  margin-bottom: 20px;
+  font-size: 22px;
+  text-align: center;
+}
+
+form input,
+form select,
+form textarea {
+  width: 100%;
+  padding: 12px;
+  margin-bottom: 15px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  font-size: 16px;
+}
+
+form button {
+  width: 100%;
+  padding: 12px;
+  background: #0066cc;
+  color: white;
+  font-size: 16px;
+  border: none;
+  border-radius: 6px;
+}
+
+form button:hover {
+  background: #004c99;
+}
+
+/* === Dashboard Cards === */
+.dashboard {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  padding: 40px;
+  gap: 30px;
+}
+
+.card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 20px;
+  width: 280px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 6px 16px rgba(0,102,204,0.3);
+}
+
+.card h3 {
+  color: #0066cc;
+  margin-bottom: 10px;
+}
+
+/* === Admin Panel === */
+.admin-panel {
+  padding: 30px;
+  width: 100%;
+  overflow-x: auto;
+}
+
+.admin-panel table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+}
+
+.admin-panel th, .admin-panel td {
+  border: 1px solid #ccc;
+  padding: 12px;
+  text-align: left;
+}
+
+.admin-panel th {
+  background-color: #004080;
+  color: white;
+}
+
+/* === OTP Input === */
+.otp-input {
+  letter-spacing: 10px;
+  text-align: center;
+  font-size: 22px;
+  border: 2px solid #00c6ff;
+  border-radius: 8px;
+  padding: 12px;
+  width: 100%;
+  margin-bottom: 15px;
+}
+
+/* === Responsive Media Queries === */
+@media screen and (max-width: 768px) {
+  .main-container,
+  .container {
+    flex-direction: column;
+    padding: 20px;
+  }
+
+  header {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .left-ad,
+  .right-section,
+  .form-section,
+  .form-box {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .dashboard {
+    padding: 20px;
+  }
+
+  .card {
+    width: 100%;
+  }
+
+  .admin-panel {
+    padding: 15px;
+  }
+}

@@ -167,20 +167,26 @@ def agent_profile():
 # Example: return render_template('admin_dashboard.html', loans=res.data, title="Admin Dashboard")
 
 # Footer Pages
-@app.route('/about')
-def about(): return render_template('about.html', title="About Us - LoanSeva")
-
 @app.route('/privacy')
-def privacy(): return render_template('privacy.html', title="Privacy Policy")
+def privacy():
+    return render_template('privacy.html')
+
+@app.route('/about')
+def about():
+    return render_template('about.html')
 
 @app.route('/terms')
-def terms(): return render_template('terms.html', title="Terms & Conditions")
+def terms():
+    return render_template('terms.html')
 
 @app.route('/support')
-def support(): return render_template('support.html', title="Support")
+def support():
+    return render_template('support.html')
 
 @app.route('/contact')
-def contact(): return render_template('contact.html', title="Contact Us")
+def contact():
+    return render_template('contact.html')
+
 
 @app.route('/forgot-password')
 def forgot_password(): return "Coming soon..."

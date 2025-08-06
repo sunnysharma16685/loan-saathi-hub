@@ -1,72 +1,41 @@
-{# File: templates/dashboard.html #}
-{% extends 'base.html' %}
-
-{% block title %}User Dashboard - LoanSaathiHub{% endblock %}
-
-{% block meta %}
-  <meta name="description" content="Track and manage your loan requests, view application statuses, and apply for new loans with LoanSaathiHub.">
-  <meta name="keywords" content="Loan Dashboard, Manage Loan Applications, Loan Status, LoanSaathiHub">
-  <meta name="robots" content="noindex, nofollow">  {# Block search engine indexing #}
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-{% endblock %}
-
+{% extends "base.html" %}
+{% block title %}Dashboard | LoanSaathiHub{% endblock %}
 {% block content %}
-<section class="dashboard-section container">
-  <h1 class="page-title">Welcome, {{ user }}</h1>
-  <p class="dashboard-subtext">Track your loan applications, apply for new loans, and manage your account easily.</p>
-
-  <div class="dashboard-actions">
-    <a href="{{ url_for('loan-request') }}" class="btn btn-primary">Apply for New Loan</a>
-    <a href="{{ url_for('logout') }}" class="btn btn-secondary">Logout</a>
-  </div>
-
-  <h2>Your Loan Requests</h2>
-
-  {% if loans %}
-    <div class="table-wrapper">
-      <table class="loan-table" aria-label="Loan Requests Table">
-        <thead>
-          <tr>
-            <th>Sl. No.</th>
-            <th>Apply Date</th>
-            <th>Loan ID</th>
-            <th>Loan Type</th>
-            <th>Amount (₹)</th>
-            <th>Status</th>
-            <th>Approvals</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for loan in loans %}
-          <tr>
-            <td>{{ loop.index }}</td>
-            <td>{{ loan.applied_date[:10] }}</td>
-            <td>{{ loan.loan_id }}</td>
-            <td>{{ loan.loan_type }}</td>
-            <td>₹{{ "{:,.2f}".format(loan.amount) }}</td>
-            <td>{{ loan.status }}</td>
-            <td>
-              {% if loan.status.lower() == "approved" %}
-                <a href="{{ url_for('loan_approvals', loan_id=loan.loan_id) }}"
-                   class="btn-link"
-                   title="View full approval details"
-                   aria-label="View approval details for Loan ID {{ loan.loan_id }}">
-                  ✅ View
-                </a>
-              {% else %}
-                <span class="text-muted">—</span>
-              {% endif %}
-            </td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
-  {% else %}
-    <div class="empty-state">
-      <p>No loan requests found. Click below to apply for your first loan.</p>
-      <a href="{{ url_for('loan-request') }}" class="btn btn-primary">Apply Now</a>
-    </div>
-  {% endif %}
-</section>
+<div class="dashboard">
+  <h2>Welcome {{ user.first_name }}</h2>
+  <a class="btn" href="/loan-request">Apply New Loan</a>
+  <h3>Loan Request Details</h3>
+  <table>
+    <thead>
+      <tr>
+        <th>Sl. No.</th>
+        <th>Apply Date</th>
+        <th>Loan ID</th>
+        <th>Loan Type</th>
+        <th>Amount (₹)</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for loan in loans %}
+      <tr>
+        <td>{{ loop.index }}</td>
+        <td>{{ loan.apply_date }}</td>
+        <td>{{ loan.loan_id }}</td>
+        <td>{{ loan.loan_type }}</td>
+        <td>₹{{ loan.amount }}</td>
+        <td>
+          {% if loan.status == 'In-process' %}
+            <a href="#" onclick="alert('No bank has accepted your request yet.')">In-process</a>
+          {% elif loan.status == 'Rejected' %}
+            <a href="/loan-status?type=rejected">Rejected</a>
+          {% elif loan.status == 'Approved' %}
+            <a href="/loan-status?type=approved">Approved</a>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
 {% endblock %}

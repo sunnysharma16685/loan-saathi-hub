@@ -1,39 +1,16 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <title>Login - LoanSaathiHub</title>
-  <meta name="description" content="Login to your LoanSaathiHub account to apply and track your loan applications.">
-  <meta name="keywords" content="Loan login, LoanSaathiHub login, track loan, apply loan">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-</head>
-<body>
-  <header>
-    <div class="logo">LoanSaathiHub</div>
-    <div class="tagline">Login to Your Account</div>
-  </header>
-
-  <main class="container home-layout">
-    <section class="signup-form">
-      <h2>User Login</h2>
-      <form method="POST">
-        <label for="login_id">Email or Mobile*</label>
-        <input type="text" id="login_id" name="login_id" placeholder="Enter Email or Mobile" required />
-
-        <label for="password">Password*</label>
-        <input type="password" id="password" name="password" placeholder="Enter Password" required />
-
-        <button type="submit" class="btn-primary">Login</button>
-      </form>
-
-      <p><a href="/forgot-password">Forgot Password?</a></p>
-      <p>Don’t have an account? <a href="/create-profile">Sign Up</a></p>
-    </section>
-  </main>
-
-  <footer>
-    &copy; 2025 LoanSaathiHub. All rights reserved.
-  </footer>
-</body>
-</html>
+{% extends "base.html" %}
+{% block title %}Login | LoanSaathiHub{% endblock %}
+{% block description %}Login to your LoanSaathiHub account to apply and track your loan applications.{% endblock %}
+{% block keywords %}loan login, LoanSaathiHub login, user login, OTP login{% endblock %}
+{% block content %}
+<div class="form-container">
+  <h2>User Login</h2>
+  <form method="post" action="/login">
+    <input type="text" name="first_name" placeholder="First Name" required>
+    <input type="text" name="last_name" placeholder="Last Name" required>
+    <input type="email" name="email" placeholder="Email" required>
+    <input type="text" name="mobile" placeholder="Mobile Number" required>
+    <button type="submit">Send OTP</button>
+  </form>
+</div>
+{% endblock %}

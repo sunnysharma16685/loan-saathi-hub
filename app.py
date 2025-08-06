@@ -59,19 +59,20 @@ def loan_request():
             "loan_type": loan_type,
             "amount": data['amount'],
             "duration": data['duration'],
-            "pan": data['pan'],
-            "aadhar": data.get('aadhar', ''),
-            "itr": data['itr'],
-            "cibil": data.get('cibil', ''),
+            "pincode": data['pincode'],
             "city": data['city'],
             "state": data['state'],
-            "pincode": data['pincode'],
+            "pan": data['pan'],
+            "aadhar": data.get('aadhar'),
+            "itr": data['itr'],
+            "cibil": data.get('cibil'),
             "status": "In Process"
         }).execute()
 
-        return redirect('/dashboard')
+        return render_template('thankyou.html', loan_id=loan_id)
 
-    return render_template('loan_request.html', title="Loan Request", description="Apply for quick and easy loans with LoanSaathiHub.")
+    return render_template('loan_request.html', title="Loan Request", description="Submit your complete loan request on LoanSaathiHub.")
+
 
 @app.route('/dashboard')
 def dashboard():
@@ -100,10 +101,11 @@ def login():
         res = supabase.table("users").select("*").or_(f"email.eq.{login_id},mobile.eq.{login_id}").execute()
         if res.data:
             session.update({'user': res.data[0]['email'], 'mobile': res.data[0]['mobile']})
-            return redirect('/dashboard')
+            return redirect('/loan-request')  # ✅ Changed from /dashboard to /loan-request
         return render_template('login.html', error="Invalid login ID")
 
     return render_template('login.html', title="Login", description="Login to LoanSaathiHub using your email or mobile number.")
+
 
 @app.route('/agent-signup', methods=['POST'])
 def agent_signup():

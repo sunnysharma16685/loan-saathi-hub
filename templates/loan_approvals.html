@@ -1,0 +1,33 @@
+{# File: templates/loan_approvals.html #}
+{% extends 'base.html' %}
+
+{% block title %}Loan Approvals - LoanSaathiHub{% endblock %}
+
+{% block meta %}
+  <meta name="description" content="Detailed approval information of your loan application on LoanSaathiHub.">
+  <meta name="keywords" content="Loan Approval Status, Approved Loans, Loan Details, LoanSaathiHub">
+  <meta name="robots" content="noindex, nofollow">  {# Protect private data #}
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+{% endblock %}
+
+{% block content %}
+<section class="container approval-details">
+  <h1>Loan Approval Details</h1>
+
+  {% if approval %}
+    <div class="loan-approval-card">
+      <p><strong>Loan ID:</strong> {{ approval.loan_id }}</p>
+      <p><strong>Status:</strong> {{ approval.status }}</p>
+      <p><strong>Approved By:</strong> {{ approval.approved_by }}</p>
+      <p><strong>Approved Amount:</strong> ₹{{ "{:,.2f}".format(approval.approved_amount) }}</p>
+      <p><strong>Rate of Interest:</strong> {{ approval.interest_rate }}%</p>
+      <p><strong>Processing Fee:</strong> ₹{{ approval.processing_fee }}</p>
+      <p><strong>Approval Date:</strong> {{ approval.approval_date[:10] }}</p>
+    </div>
+  {% else %}
+    <p>No approval information available for this loan.</p>
+  {% endif %}
+
+  <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">Back to Dashboard</a>
+</section>
+{% endblock %}

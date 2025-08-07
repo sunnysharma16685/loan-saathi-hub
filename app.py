@@ -18,55 +18,61 @@ def generate_custom_id(table, column, prefix):
 def home():
     return render_template('home.html', title="LoanSaathiHub – Trusted Loan Partner", description="Apply for loans easily and securely with LoanSaathiHub – Your trusted loan Saathi.")
 
-@app.route("/login", methods=["GET", "POST"])
-def login():
-    if request.method == "POST":
-        email = request.form["email"]
-        password = request.form["password"]
+@app.route('/create-profile', methods=['GET', 'POST'])
+def create_profile():
+    if request.method == 'POST':
+        first_name = request.form['first_name']
+        last_name = request.form.get('last_name', '')
+        mobile = request.form['mobile']
+        email = request.form['email']
 
-        response = supabase.table("users").select("*").eq("email", email).eq("password", password).execute()
-        data = response.data
+        user_id = generate_custom_id("users", "user_id", "LSHU")
 
-        if data:
-            session["user"] = data[0]
-            return redirect("/user_details")  # ✅ Move redirect here
-        else:
-            return render_template("login.html", error="Invalid credentials")
+        supabase.table("users").insert({
+            "first_name": first_name,
+            "last_name": last_name,
+            "mobile": mobile,
+            "email": email,
+            "user_type": "loan_user",
+            "user_id": user_id
+        }).execute()
 
-    return render_template("login.html")
+        session.update({'user': email, 'mobile': mobile, 'user_id': user_id})
+        return redirect('/loan-request')
 
+    return render_template('create_profile.html', title="Create Profile", description="Create your profile on LoanSaathiHub to apply for loans easily.")
 
-
-@app.route('/user-details', methods=['GET', 'POST'])
-def user_details():
+@app.route('/loan-request', methods=['GET', 'POST'])
+def loan-request():
     if 'user' not in session:
         return redirect('/login')
 
     if request.method == 'POST':
         data = request.form
-        loan_type = data.get('loan_type', 'personal')
+        loan_type = data['loan_type']
         short_code = "PL" if "personal" in loan_type.lower() else "HL" if "home" in loan_type.lower() else "LN"
         loan_id = generate_custom_id("loan-requests", "loan_id", short_code + "U")
 
-        supabase.table("loan_requests").insert({
+        supabase.table("loan-requests").insert({
             "loan_id": loan_id,
             "user_email": session['user'],
             "loan_type": loan_type,
-            "amount": data['loan_amount'],
-            "monthly_income": data['monthly_income'],
-            "employment_type": data['employment_type'],
-            "company_name": data['company_name'],
+            "amount": data['amount'],
+            "duration": data['duration'],
             "pincode": data['pincode'],
             "city": data['city'],
             "state": data['state'],
+            "pan": data['pan'],
+            "aadhar": data.get('aadhar'),
             "itr": data['itr'],
-            "cibil_score": data['cibil_score'],
+            "cibil": data.get('cibil'),
             "status": "In Process"
         }).execute()
 
-        return redirect('/dashboard')
+        return render_template('thankyou.html', loan_id=loan_id)
 
-    return render_template('user_details.html')
+    return render_template('loan-request.html', title="Loan Request", description="Submit your complete loan request on LoanSaathiHub.")
+
 
 @app.route('/dashboard')
 def dashboard():
@@ -75,6 +81,31 @@ def dashboard():
 
     loans = supabase.table("loan_requests").select("*").eq("user_email", session['user']).order("applied_date", desc=True).execute().data
     return render_template('dashboard.html', loans=loans, user=session['user'], title="User Dashboard - LoanSaathiHub")
+
+@app.route('/loan-approvals/<loan_id>')
+def loan_approvals(loan_id):
+    if 'user' not in session:
+        return redirect('/login')
+
+    approvals = supabase.table("loan_approvals").select("*").eq("loan_id", loan_id).execute().data
+    for item in approvals:
+        agent_info = supabase.table("agents").select("mobile").eq("email", item['agent_email']).single().execute()
+        item['mobile'] = agent_info.data['mobile'] if agent_info.data else "N/A"
+
+    return render_template('loan_approval_details.html', approvals=approvals, loan_id=loan_id, title="Loan Approvals")
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        login_id = request.form['login_id']
+        res = supabase.table("users").select("*").or_(f"email.eq.{login_id},mobile.eq.{login_id}").execute()
+        if res.data:
+            session.update({'user': res.data[0]['email'], 'mobile': res.data[0]['mobile']})
+            return redirect('/loan-request')  # ✅ Changed from /dashboard to /loan-request
+        return render_template('login.html', error="Invalid login ID")
+
+    return render_template('login.html', title="Login", description="Login to LoanSaathiHub using your email or mobile number.")
+
 
 @app.route('/agent-signup', methods=['POST'])
 def agent_signup():
@@ -145,15 +176,18 @@ def agent_profile():
 def logout():
     session.clear()
     return redirect('/')
-
 @app.route('/forgot', methods=['GET', 'POST'])
 def forgot_password():
     if request.method == 'POST':
         email_or_mobile = request.form['email_or_mobile']
+
+        # Add your password recovery logic here (send OTP/email link)
+        # Placeholder: pretend success
         message = "Password reset link has been sent to your email or mobile."
         return render_template('forgot.html', message=message)
 
     return render_template('forgot.html')
+
 
 # Footer Pages
 @app.route('/privacy')
@@ -170,6 +204,9 @@ def support(): return render_template('support.html')
 
 @app.route('/contact')
 def contact(): return render_template('contact.html')
+
+@app.route('/forgot-password')
+def forgot_password(): return "Coming soon..."
 
 if __name__ == '__main__':
     app.run(debug=True)

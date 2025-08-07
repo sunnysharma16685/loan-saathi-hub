@@ -145,17 +145,36 @@
         <button onclick="showForm('agent')">Agent</button>
       </div>
 
-      <!-- Loan User Form -->
-      <div id="loanUser" class="form-section form-box">
-        <h2>Loan User Sign Up</h2>
-        <form method="POST" action="{{ url_for('create_profile') }}">
-          <input type="text" name="first_name" placeholder="First Name" required />
-          <input type="text" name="last_name" placeholder="Last Name" required />
-          <input type="tel" name="mobile" placeholder="Mobile Number (10 digits)" pattern="[0-9]{10}" required />
-          <input type="email" name="email" placeholder="Email Address" required />
-          <button type="submit">Create Profile</button>
-        </form>
-      </div>
+      @app.route("/login", methods=["GET", "POST"])
+def login():
+    if request.method == "POST":
+        title = request.form["title"]
+        first_name = request.form["first_name"]
+        last_name = request.form["last_name"]
+        mobile = request.form["mobile"]
+        email = request.form["email"]
+
+        # Optional: Check if user already exists
+        existing_user = supabase.table("users").select("*").eq("email", email).execute()
+
+        if existing_user.data:
+            session["user"] = existing_user.data[0]
+        else:
+            # Insert new user into Supabase
+            response = supabase.table("users").insert({
+                "title": title,
+                "first_name": first_name,
+                "last_name": last_name,
+                "mobile": mobile,
+                "email": email
+            }).execute()
+            session["user"] = response.data[0]
+
+        # Redirect to loan_request
+        return redirect("/loan_request")
+
+    return render_template("login.html")
+
 
       <!-- Agent Form -->
       <div id="agent" class="form-section form-box">

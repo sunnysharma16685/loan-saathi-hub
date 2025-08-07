@@ -2,33 +2,44 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Login - LoanSaathiHub</title>
-  <meta name="description" content="Login to your LoanSaathiHub account to apply and track your loan applications.">
-  <meta name="keywords" content="Loan login, LoanSaathiHub login, track loan, apply loan">
+  <title>User Details - LoanSaathiHub</title>
+  <meta name="description" content="Complete your LoanSaathiHub profile to apply for your loan.">
+  <meta name="keywords" content="Loan registration, LoanSaathiHub, create account, user profile">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
   <header>
     <div class="logo">LoanSaathiHub</div>
-    <div class="tagline">Login to Your Account</div>
+    <div class="tagline">Complete Your Profile</div>
   </header>
 
   <main class="container home-layout">
     <section class="signup-form">
-      <h2>User Login</h2>
-      <form method="POST">
-        <label for="login_id">Email or Mobile*</label>
-        <input type="text" id="login_id" name="login_id" placeholder="Enter Email or Mobile" required />
+      <h2>User Details</h2>
+      <form method="POST" action="/loan-request">
+        <label for="title">Title*</label>
+        <select id="title" name="title" required>
+          <option value="">--Select--</option>
+          <option value="Mr">Mr</option>
+          <option value="Miss">Miss</option>
+          <option value="Other">Other</option>
+        </select>
 
-        <label for="password">Password*</label>
-        <input type="password" id="password" name="password" placeholder="Enter Password" required />
+        <label for="first_name">First Name*</label>
+        <input type="text" id="first_name" name="first_name" placeholder="Enter First Name" required />
 
-        <button type="submit" class="btn-primary">Login</button>
+        <label for="last_name">Last Name*</label>
+        <input type="text" id="last_name" name="last_name" placeholder="Enter Last Name" required />
+
+        <label for="mobile">Mobile Number*</label>
+        <input type="tel" id="mobile" name="mobile" placeholder="Enter 10-digit Mobile Number" required />
+
+        <label for="email">Email Address*</label>
+        <input type="email" id="email" name="email" placeholder="Enter Email Address" required />
+
+        <button type="submit" class="btn-primary">Next: Apply Loan</button>
       </form>
-
-      <p><a href="/forgot-password">Forgot Password?</a></p>
-      <p>Don’t have an account? <a href="/create-profile">Sign Up</a></p>
     </section>
   </main>
 

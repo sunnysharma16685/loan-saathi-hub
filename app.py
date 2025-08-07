@@ -18,32 +18,47 @@ def generate_custom_id(table, column, prefix):
 def home():
     return render_template('home.html', title="LoanSaathiHub – Trusted Loan Partner", description="Apply for loans easily and securely with LoanSaathiHub – Your trusted loan Saathi.")
 
-@app.route('/create-profile', methods=['GET', 'POST'])
-def create_profile():
-    if request.method == 'POST':
-        first_name = request.form['first_name']
-        last_name = request.form.get('last_name', '')
-        mobile = request.form['mobile']
-        email = request.form['email']
+@app.route("/login", methods=["GET", "POST"])
+def login():
+    if request.method == "POST":
+        title = request.form["title"]
+        first_name = request.form["first_name"]
+        last_name = request.form.get("last_name", "")
+        mobile = request.form["mobile"]
+        email = request.form["email"]
 
+        # Custom user ID generator
         user_id = generate_custom_id("users", "user_id", "LSHU")
 
-        supabase.table("users").insert({
-            "first_name": first_name,
-            "last_name": last_name,
-            "mobile": mobile,
-            "email": email,
-            "user_type": "loan_user",
-            "user_id": user_id
-        }).execute()
+        # Optional: check if user already exists
+        existing_user = supabase.table("users").select("*").eq("email", email).execute()
 
-        session.update({'user': email, 'mobile': mobile, 'user_id': user_id})
-        return redirect('/loan-request')
+        if existing_user.data:
+            session["user"] = existing_user.data[0]
+        else:
+            response = supabase.table("users").insert({
+                "title": title,
+                "first_name": first_name,
+                "last_name": last_name,
+                "mobile": mobile,
+                "email": email,
+                "user_type": "loan_user",
+                "user_id": user_id
+            }).execute()
 
-    return render_template('create_profile.html', title="Create Profile", description="Create your profile on LoanSaathiHub to apply for loans easily.")
+            session.update({
+                'user': email,
+                'mobile': mobile,
+                'user_id': user_id
+            })
 
-@app.route('/loan-request', methods=['GET', 'POST'])
-def loan-request():
+        return redirect("/loan_request")
+
+    return render_template("login.html", title="LoanSaathiHub – Login", description="Create or log in to your profile.")
+
+
+@app.route('/loan_request', methods=['GET', 'POST'])
+def loan_request():
     if 'user' not in session:
         return redirect('/login')
 
@@ -51,9 +66,9 @@ def loan-request():
         data = request.form
         loan_type = data['loan_type']
         short_code = "PL" if "personal" in loan_type.lower() else "HL" if "home" in loan_type.lower() else "LN"
-        loan_id = generate_custom_id("loan-requests", "loan_id", short_code + "U")
+        loan_id = generate_custom_id("loan_requests", "loan_id", short_code + "U")
 
-        supabase.table("loan-requests").insert({
+        supabase.table("loan_requests").insert({
             "loan_id": loan_id,
             "user_email": session['user'],
             "loan_type": loan_type,
@@ -70,8 +85,9 @@ def loan-request():
         }).execute()
 
         return render_template('thankyou.html', loan_id=loan_id)
+	return redirect("/dashboard")
 
-    return render_template('loan-request.html', title="Loan Request", description="Submit your complete loan request on LoanSaathiHub.")
+    return render_template('loan_request.html', title="Loan Request", description="Submit your complete loan request on LoanSaathiHub.")
 
 
 @app.route('/dashboard')

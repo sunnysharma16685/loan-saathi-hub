@@ -16,56 +16,18 @@ def generate_custom_id(table, column, prefix):
 @app.route('/')
 def home():
     return redirect(url_for('login'))
-    return render_template('home.html', title="LoanSaathiHub – Trusted Loan Partner", description="Apply for loans easily and securely with LoanSaathiHub – Your trusted loan Saathi.")
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
-    if request.method == "POST":
-        title = request.form['title']
-        first_name = request.form['first_name']
-        last_name = request.form['last_name']
-        mobile = request.form['mobile']
-        email = request.form['email']
-        password = request.form['password']
-        repeat_password = request.form['repeat_password']
-	
-	if email in users:
-            flash('Email already registered. Please login.', 'warning')
-            return redirect(url_for('login'))
+    if request.method == 'POST':
+        login_id = request.form['login_id']
+        res = supabase.table("users").select("*").or_(f"email.eq.{login_id},mobile.eq.{login_id}").execute()
+        if res.data:
+            session.update({'user': res.data[0]['email'], 'mobile': res.data[0]['mobile']})
+            return redirect('/loan_request')
+        return render_template('login.html', error="Invalid login ID")
 
-        if password != repeat_password:
-            flash('Passwords do not match. Try again.', 'danger')
-            return render_template('create_profile.html')
-
-        # Custom user ID generator
-        user_id = generate_custom_id("users", "user_id", "LSHU")
-
-        # Optional: check if user already exists
-        existing_user = supabase.table("users").select("*").eq("email", email).execute()
-
-        if existing_user.data:
-            session["user"] = existing_user.data[0]
-        else:
-            response = supabase.table("users").insert({
-                "title": title,
-                "first_name": first_name,
-                "last_name": last_name,
-                "mobile": mobile,
-                "email": email,
-                "user_type": "loan_user",
-                "user_id": user_id
-            }).execute()
-
-            session.update({
-                'user': email,
-                'mobile': mobile,
-                'user_id': user_id
-            })
-
-        return redirect("/loan_request")
-
-    return render_template("login.html", title="LoanSaathiHub – Login", description="Create or log in to your profile.")
-
+    return render_template('login.html', title="Login", description="Login to LoanSaathiHub using your email or mobile number.")
 
 @app.route('/loan_request', methods=['GET', 'POST'])
 def loan_request():
@@ -95,10 +57,8 @@ def loan_request():
         }).execute()
 
         return render_template('thankyou.html', loan_id=loan_id)
-	return redirect("/dashboard")
 
     return render_template('loan_request.html', title="Loan Request", description="Submit your complete loan request on LoanSaathiHub.")
-
 
 @app.route('/dashboard')
 def dashboard():
@@ -119,19 +79,6 @@ def loan_approvals(loan_id):
         item['mobile'] = agent_info.data['mobile'] if agent_info.data else "N/A"
 
     return render_template('loan_approval_details.html', approvals=approvals, loan_id=loan_id, title="Loan Approvals")
-
-@app.route('/login', methods=['GET', 'POST'])
-def login():
-    if request.method == 'POST':
-        login_id = request.form['login_id']
-        res = supabase.table("users").select("*").or_(f"email.eq.{login_id},mobile.eq.{login_id}").execute()
-        if res.data:
-            session.update({'user': res.data[0]['email'], 'mobile': res.data[0]['mobile']})
-            return redirect('/loan-request')  # ✅ Changed from /dashboard to /loan-request
-        return render_template('login.html', error="Invalid login ID")
-
-    return render_template('login.html', title="Login", description="Login to LoanSaathiHub using your email or mobile number.")
-
 
 @app.route('/agent-signup', methods=['POST'])
 def agent_signup():
@@ -198,22 +145,19 @@ def agent_profile():
 
     return render_template('agent_profile.html', title="Agent Profile")
 
-@app.route('/logout')
-def logout():
-    session.clear()
-    return redirect('/')
 @app.route('/forgot', methods=['GET', 'POST'])
 def forgot_password():
     if request.method == 'POST':
         email_or_mobile = request.form['email_or_mobile']
-
-        # Add your password recovery logic here (send OTP/email link)
-        # Placeholder: pretend success
         message = "Password reset link has been sent to your email or mobile."
         return render_template('forgot.html', message=message)
 
     return render_template('forgot.html')
 
+@app.route('/logout')
+def logout():
+    session.clear()
+    return redirect('/')
 
 # Footer Pages
 @app.route('/privacy')
@@ -232,7 +176,7 @@ def support(): return render_template('support.html')
 def contact(): return render_template('contact.html')
 
 @app.route('/forgot-password')
-def forgot_password(): return "Coming soon..."
+def forgot_password_coming(): return "Coming soon..."
 
 if __name__ == '__main__':
     app.run(debug=True)

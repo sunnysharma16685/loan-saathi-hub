@@ -16,16 +16,27 @@ def generate_custom_id(table, column, prefix):
 
 @app.route('/')
 def home():
+    return redirect(url_for('login'))
     return render_template('home.html', title="LoanSaathiHub – Trusted Loan Partner", description="Apply for loans easily and securely with LoanSaathiHub – Your trusted loan Saathi.")
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
-        title = request.form["title"]
-        first_name = request.form["first_name"]
-        last_name = request.form.get("last_name", "")
-        mobile = request.form["mobile"]
-        email = request.form["email"]
+        title = request.form['title']
+        first_name = request.form['first_name']
+        last_name = request.form['last_name']
+        mobile = request.form['mobile']
+        email = request.form['email']
+        password = request.form['password']
+        repeat_password = request.form['repeat_password']
+	
+	if email in users:
+            flash('Email already registered. Please login.', 'warning')
+            return redirect(url_for('login'))
+
+        if password != repeat_password:
+            flash('Passwords do not match. Try again.', 'danger')
+            return render_template('create_profile.html')
 
         # Custom user ID generator
         user_id = generate_custom_id("users", "user_id", "LSHU")

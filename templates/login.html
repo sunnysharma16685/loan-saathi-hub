@@ -2,49 +2,146 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>User Details - LoanSaathiHub</title>
-  <meta name="description" content="Complete your LoanSaathiHub profile to apply for your loan.">
-  <meta name="keywords" content="Loan registration, LoanSaathiHub, create account, user profile">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Create your LoanSaathiHub profile and apply for loans online with ease.">
+  <meta name="keywords" content="LoanSaathiHub, Create Profile, Sign Up, Loan Application, Register">
+  <meta name="author" content="LoanSaathiHub">
+  <title>Create Profile | LoanSaathiHub</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
 </head>
 <body>
-  <header>
-    <div class="logo">LoanSaathiHub</div>
-    <div class="tagline">Complete Your Profile</div>
-  </header>
 
-  <main class="container home-layout">
-    <section class="signup-form">
-      <h2>User Details</h2>
-      <form method="POST" action="/loan-request">
-        <label for="title">Title*</label>
-        <select id="title" name="title" required>
-          <option value="">--Select--</option>
-          <option value="Mr">Mr</option>
-          <option value="Miss">Miss</option>
-          <option value="Other">Other</option>
-        </select>
+<div class="container">
+  <div class="login-form">
+    <h2>Create Your Profile</h2>
+    <p>Sign up to get started</p>
 
-        <label for="first_name">First Name*</label>
-        <input type="text" id="first_name" name="first_name" placeholder="Enter First Name" required />
+    <form method="POST" action="/create-profile">
+      {% if csrf_token %}
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      {% endif %}
 
-        <label for="last_name">Last Name*</label>
-        <input type="text" id="last_name" name="last_name" placeholder="Enter Last Name" required />
+      <label for="title">Title</label>
+      <select name="title" id="title" required>
+        <option value="">Select Title</option>
+        <option value="Mr.">Mr.</option>
+        <option value="Miss">Miss</option>
+        <option value="Other">Other</option>
+      </select>
 
-        <label for="mobile">Mobile Number*</label>
-        <input type="tel" id="mobile" name="mobile" placeholder="Enter 10-digit Mobile Number" required />
+      <label for="first_name">First Name</label>
+      <input type="text" name="first_name" id="first_name" required>
 
-        <label for="email">Email Address*</label>
-        <input type="email" id="email" name="email" placeholder="Enter Email Address" required />
+      <label for="last_name">Last Name</label>
+      <input type="text" name="last_name" id="last_name" required>
 
-        <button type="submit" class="btn-primary">Next: Apply Loan</button>
-      </form>
-    </section>
-  </main>
+      <label for="mobile">Mobile Number</label>
+      <input type="tel" name="mobile" id="mobile" placeholder="10-digit mobile number" pattern="[0-9]{10}" required>
 
-  <footer>
-    &copy; 2025 LoanSaathiHub. All rights reserved.
-  </footer>
+      <label for="email">Email Address</label>
+      <input type="email" name="email" id="email" required>
+
+      <label for="password">Create Password</label>
+      <input type="password" name="password" id="password" required>
+
+      <label for="repeat_password">Repeat Password</label>
+      <input type="password" name="repeat_password" id="repeat_password" required>
+
+      <button type="submit">Create Profile</button>
+    </form>
+
+    <div class="extra-options">
+      <p>Already have an account? <a href="/login">Login</a></p>
+    </div>
+  </div>
+</div>
+
+<style>
+  body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #f1f6f9;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 400px;
+      background: white;
+      padding: 30px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.15);
+      border-radius: 10px;
+    }
+
+    .login-form h2 {
+      text-align: center;
+      margin-bottom: 10px;
+      color: #333;
+    }
+
+    .login-form p {
+      text-align: center;
+      color: #666;
+      font-size: 14px;
+    }
+
+    form {
+      display: flex;
+      flex-direction: column;
+    }
+
+    label {
+      margin-top: 15px;
+      margin-bottom: 5px;
+      font-weight: bold;
+    }
+
+    input {
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      font-size: 15px;
+    }
+
+    button {
+      margin-top: 20px;
+      padding: 10px;
+      background: #0275d8;
+      color: white;
+      border: none;
+      font-size: 16px;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #025aa5;
+    }
+
+    .extra-options {
+      text-align: center;
+      margin-top: 20px;
+    }
+
+    .extra-options a {
+      color: #0275d8;
+      text-decoration: none;
+      font-size: 14px;
+    }
+
+    .extra-options a:hover {
+      text-decoration: underline;
+    }
+
+    @media (max-width: 480px) {
+      .container {
+        margin: 20px;
+      }
+    }
+</style>
+
 </body>
 </html>

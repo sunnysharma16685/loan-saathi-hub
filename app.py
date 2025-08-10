@@ -6,6 +6,18 @@ SUPABASE_KEY = os.environ.get("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJz
 
 supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 
+from flask import Flask, render_template
+
+app = Flask(__name__)
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    # यहां पर actual login logic आएगा
+    return render_template('login.html')
+
+if __name__ == '__main__':
+    app.run(debug=True)
+
 
 # === Simple in-memory mock DB (still useful for quick registration flow) ===
 USERS = {}

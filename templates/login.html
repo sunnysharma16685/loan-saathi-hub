@@ -20,6 +20,7 @@
       {% endif %}
     {% endwith %}
 
+    <!-- Ensure this action points to the login route function name in app.py -->
     <form method="POST" action="{{ url_for('login') }}">
         <div style="text-align:center; margin-bottom: 20px;">
             <button type="button" id="btnUser" style="background:#004080; color:#fff; border:none; padding:10px 20px; margin-right: 10px; border-radius:5px; cursor:pointer;">
@@ -39,27 +40,25 @@
         <input type="password" id="password" name="password" required style="width: 100%; padding:8px; margin:6px 0" /><br/>
 
         <div style="display:flex; justify-content:space-between; margin-top: 20px;">
-
+            <!-- CHANGE 'homepage' here if your function is named differently -->
             <button type="button" style="background:#ccc; border:none; padding:10px 20px; cursor:pointer; border-radius: 5px;"
-                onclick="window.location.href='{{ url_for('home') }}'">Back</button>
+                onclick="window.location.href='{{ url_for('homepage') }}'">Back</button>
 
             <button type="submit" style="background:#004080; border:none; color:white; padding:10px 20px; cursor:pointer; border-radius:5px;">
                 Login
             </button>
-
         </div>
     </form>
 </div>
 
 <script>
-    // On page load, set selected role button style
     const btnUser = document.getElementById('btnUser');
     const btnAgent = document.getElementById('btnAgent');
     const roleInput = document.getElementById('role');
 
     function selectRole(role) {
         roleInput.value = role;
-        if(role === 'user') {
+        if (role === 'user') {
             btnUser.style.background = '#004080';
             btnUser.style.color = '#fff';
             btnAgent.style.background = '#ccc';
@@ -72,16 +71,10 @@
         }
     }
 
-    // Initialize on page load based on hidden input value
+    // Initialize on page load
     selectRole(roleInput.value);
 
-    btnUser.addEventListener('click', function() {
-        selectRole('user');
-    });
-
-    btnAgent.addEventListener('click', function() {
-        selectRole('agent');
-    });
+    btnUser.addEventListener('click', () => selectRole('user'));
+    btnAgent.addEventListener('click', () => selectRole('agent'));
 </script>
-
 {% endblock %}

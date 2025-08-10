@@ -10,14 +10,12 @@ from flask import Flask, render_template
 
 app = Flask(__name__)
 
-@app.route('/login', methods=['GET', 'POST'])
-def login():
-    # यहां पर actual login logic आएगा
-    return render_template('login.html')
+# === Routes ===
 
-if __name__ == '__main__':
-    app.run(debug=True)
-
+@app.route('/')
+def homepage():
+    # by default show index; you may choose to redirect to login
+    return render_template('index.html')
 
 # === Simple in-memory mock DB (still useful for quick registration flow) ===
 USERS = {}
@@ -47,12 +45,7 @@ def validate_pin_city_state(pincode, city, state):
         return False
     return valid['city'].lower() == city.lower() and valid['state'].lower() == state.lower()
 
-# === Routes ===
 
-@app.route('/')
-def homepage():
-    # by default show index; you may choose to redirect to login
-    return render_template('index.html')
 
 # ---------- Unified Login ----------
 @app.route('/login', methods=['GET', 'POST'])

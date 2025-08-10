@@ -1,10 +1,31 @@
 <footer>
-  <div class="footer-content">
-    <a href="{{ url_for('about') }}">About Us</a> |
-    <a href="{{ url_for('privacy') }}">Privacy Policy</a> |
-    <a href="{{ url_for('terms') }}">Terms & Conditions</a> |
-    <a href="{{ url_for('support') }}">Support</a> |
-    <a href="{{ url_for('contact') }}">Contact Us</a>
-  </div>
-  <p style="margin-top: 10px;">&copy; 2025 LoanSaathiHub. All rights reserved.</p>
+    <nav>
+        <a href="#">About Us</a> |
+        <a href="#">Privacy Policy</a> |
+        <a href="#">Terms & Conditions</a> |
+        <a href="#">Support</a> |
+        <a href="#">Contact Us</a>
+    </nav>
+    <div style="margin-top: 10px;">© 2025 LoanSaathiHub. All rights reserved.</div>
 </footer>
+
+<style>
+    footer {
+        background: #004080;
+        color: white;
+        padding: 20px 30px;
+        text-align: center;
+        font-size: 14px;
+        margin-top: 50px;
+    }
+    footer nav a {
+        color: white;
+        margin: 0 10px;
+        text-decoration: underline;
+        font-weight: 600;
+        cursor: pointer;
+    }
+    footer nav a:hover {
+        text-decoration: none;
+    }
+</style>

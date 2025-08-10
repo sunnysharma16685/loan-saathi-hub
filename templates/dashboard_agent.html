@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}Agent Dashboard{% endblock %}
+{% block content %}
+<div style="max-width: 900px; margin: 30px auto;">
+    <h2>Welcome, {{ first_name }}!</h2>
+
+    <p>Your dashboard content will appear here.</p>
+
+    <!-- Placeholder table - example -->
+    <table border="1" cellpadding="10" style="width: 100%; border-collapse: collapse; margin-top: 20px;">
+        <thead style="background-color:#004080; color: white;">
+            <tr>
+                <th>Client ID</th>
+                <th>Client Name</th>
+                <th>Loan Type</th>
+                <th>Amount Requested (₹)</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr><td>1001</td><td>Rahul Sharma</td><td>Business</td><td>2000000</td><td>Approved</td></tr>
+            <tr><td>1002</td><td>Neha Singh</td><td>Vehicle</td><td>800000</td><td>Pending</td></tr>
+        </tbody>
+    </table>
+</div>
+{% endblock %}

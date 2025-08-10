@@ -1,73 +1,160 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>{% block title %}LoanSaathiHub - India’s Trusted Loan Assistance Platform{% endblock %}</title>
-  
-  <!-- SEO Meta Tags -->
-  <meta name="description" content="LoanSaathiHub is your trusted partner for personal, business, and home loans. Easy profile creation, fast approval, and expert support.">
-  <meta name="keywords" content="Loan, Personal Loan, Business Loan, Home Loan, Fast Loan, Loan Agent, LoanSaathiHub, DSA">
-  <meta name="author" content="LoanSaathiHub Team">
-
-  <!-- Open Graph for Social Sharing -->
-  <meta property="og:title" content="LoanSaathiHub - Your Trusted Loan Partner">
-  <meta property="og:description" content="Get loans fast and hassle-free with LoanSaathiHub. Create profile, apply, and get approved easily.">
-  <meta property="og:type" content="website">
-  <meta property="og:url" content="https://www.loansaathihub.in">
-  <meta property="og:image" content="{{ url_for('static', filename='images/og-image.png') }}">
-
-  <!-- Canonical URL -->
-  <link rel="canonical" href="https://www.loansaathihub.in">
-
-  <!-- Favicon -->
-  <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon">
-
-  <!-- CSS -->
-  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{% block title %}LoanSaathiHub{% endblock %}</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            background: #f4f7fa;
+            color: #333;
+        }
+        header {
+            background-color: #004080;
+            padding: 15px 30px;
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        .header-left {
+            display: flex;
+            flex-direction: column;
+        }
+        .header-left .logo {
+            font-size: 24px;
+            font-weight: 700;
+            letter-spacing: 1.4px;
+            user-select: none;
+        }
+        .header-left .tagline {
+            font-style: italic;
+            font-size: 14px;
+            opacity: 0.85;
+            margin-top: 3px;
+        }
+        .header-right a {
+            color: white;
+            font-weight: 600;
+            background-color: transparent;
+            border: 2px solid white;
+            padding: 8px 16px;
+            border-radius: 5px;
+            text-decoration: none;
+            margin-left: 10px;
+            transition: background-color 0.3s ease;
+            user-select: none;
+        }
+        .header-right a:hover {
+            background-color: white;
+            color: #004080;
+        }
+        /* Footer */
+        footer {
+            background: #004080;
+            color: white;
+            padding: 20px 30px;
+            text-align: center;
+            font-size: 14px;
+            margin-top: 50px;
+        }
+        footer nav a {
+            color: white;
+            margin: 0 10px;
+            text-decoration: underline;
+            font-weight: 600;
+        }
+        footer nav a:hover {
+            text-decoration: none;
+        }
+        /* Flash messages */
+        .flash {
+            width: 90%;
+            margin: 15px auto;
+            padding: 12px 20px;
+            border-radius: 5px;
+            font-weight: 600;
+            max-width: 600px;
+            box-sizing: border-box;
+        }
+        .flash.success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .flash.error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        main {
+            max-width: 1100px;
+            margin: 25px auto;
+            padding: 0 15px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        nav.main-nav a {
+            color: white;
+            margin-left: 15px;
+            font-weight: 600;
+            text-decoration: none;
+            border: 2px solid white;
+            padding: 8px 16px;
+            border-radius: 5px;
+            transition: background-color 0.3s ease;
+        }
+        nav.main-nav a:hover {
+            background-color: white;
+            color: #004080;
+        }
+    </style>
+    {% block head %}{% endblock %}
 </head>
 <body>
-
-  <!-- Header -->
-  {% block header %}
-  <header class="site-header">
-    <div class="container">
-      <div class="logo">
-        <a href="{{ url_for('home') }}"><img src="{{ url_for('static', filename='images/logo.png') }}" alt="LoanSaathiHub Logo"></a>
-      </div>
-      <nav class="main-nav">
-        <ul>
-          <li><a href="{{ url_for('home') }}">Home</a></li>
-          <li><a href="{{ url_for('create_profile') }}">Create Profile</a></li>
-          <li><a href="{{ url_for('login') }}">Login</a></li>
-          <li><a href="{{ url_for('loan_request') }}">Loan Request</a></li>
-          <li><a href="{{ url_for('contact') }}">Contact</a></li>
-        </ul>
-      </nav>
+<header>
+    <div class="header-left">
+        <div class="logo">Loan Saathi Hub</div>
+        <div class="tagline">Apke vishwas ka Saathi</div>
     </div>
-  </header>
-  {% endblock %}
 
-  <!-- Main Content Area -->
-  <main class="main-content container">
+    <div class="header-right">
+        {% if session.get('user_id') %}
+            <a href="{{ url_for('homepage') }}">Home</a>
+            <a href="{{ url_for('logout') }}">Logout</a>
+        {% else %}
+            <a href="{{ url_for('login') }}">Login</a>
+        {% endif %}
+    </div>
+</header>
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    {% for category, message in messages %}
+      <div class="flash {{ category }}">{{ message }}</div>
+    {% endfor %}
+  {% endif %}
+{% endwith %}
+
+<main>
     {% block content %}{% endblock %}
-  </main>
+</main>
 
-  <!-- Footer -->
-  {% block footer %}
-  <footer class="site-footer">
-    <div class="container">
-      <p>&copy; {{ current_year }} LoanSaathiHub. All rights reserved.</p>
-      <p>
+<footer>
+    <nav>
+        <a href="{{ url_for('about_us') }}">About Us</a> |
         <a href="{{ url_for('privacy_policy') }}">Privacy Policy</a> |
         <a href="{{ url_for('terms_conditions') }}">Terms & Conditions</a> |
-        <a href="{{ url_for('support') }}">Support</a>
-      </p>
-    </div>
-  </footer>
-  {% endblock %}
+        <a href="{{ url_for('support') }}">Support</a> |
+        <a href="{{ url_for('contact_us') }}">Contact Us</a>
+    </nav>
+    <div style="margin-top: 10px;">© 2025 LoanSaathiHub. All rights reserved.</div>
+</footer>
 
-  <!-- JS (Optional future enhancements) -->
-  <script src="{{ url_for('static', filename='script.js') }}"></script>
 </body>
 </html>

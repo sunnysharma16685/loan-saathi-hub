@@ -1,38 +1,39 @@
-<!-- File: templates/admin_dashboard.html -->
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>Admin Dashboard - LoanSaathiHub</title>
-  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-<a href="{{ url_for('loan_approvals', loan_id=loan.loan_id) }}">View Approval</a>
-
-	
-</head>
-<body>
-  <header>
-    <div class="logo">LoanSaathiHub Admin</div>
-    <div class="tagline">Overview Dashboard</div>
-  </header>
-
 {% extends 'base.html' %}
 
-{% block title %}User Dashboard - LoanSaathiHub{% endblock %}
+{% block title %}Admin Dashboard - LoanSaathiHub{% endblock %}
 
 {% block content %}
-  <h2>Welcome to your dashboard, {{ user }}</h2>
-  <!-- user data show here -->
+<h2>Admin Dashboard</h2>
+<p>Welcome, {{ session.user_name }}</p>
+
+<div>
+  <h3>Quick Stats</h3>
+  <ul>
+    <li>Total Users: {{ user_count }}</li>
+    <li>Total Agents: {{ agent_count }}</li>
+    <li>Total Loan Applications: {{ loan_count }}</li>
+  </ul>
+</div>
+
+<div>
+  <h3>Recent Loan Applications</h3>
+  {% if recent_loans %}
+    <table border="1" cellpadding="5" cellspacing="0">
+      <tr>
+        <th>User</th><th>Loan Type</th><th>Amount</th><th>Status</th><th>Applied On</th>
+      </tr>
+      {% for loan in recent_loans %}
+        <tr>
+          <td>{{ loan.user.first_name }} {{ loan.user.last_name }}</td>
+          <td>{{ loan.loan_type.name }}</td>
+          <td>{{ loan.amount }}</td>
+          <td>{{ loan.application_status.replace('_',' ').title() }}</td>
+          <td>{{ loan.applied_at[:10] }}</td>
+        </tr>
+      {% endfor %}
+    </table>
+  {% else %}
+    <p>No recent loans found.</p>
+  {% endif %}
+</div>
 {% endblock %}
-
-  <div class="container">
-    <h2>Admin Overview</h2>
-    <ul>
-      <li>Total Loan Requests: {{ total_requests }}</li>
-      <li>Approved Loans: {{ approved_count }}</li>
-      <li>Pending Loans: {{ pending_count }}</li>
-      <li>Rejected Loans: {{ rejected_count }}</li>
-    </ul>
-<footer>&copy; 2025 LoanSaathiHub</footer>
-</body>
-</html>
-

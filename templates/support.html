@@ -1,37 +1,45 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>Support - LoanSaathiHub</title>
-  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <meta charset="UTF-8" />
+    <title>Support - Loan Saathi Hub</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; line-height: 1.6; }
+        h1,h2 { color: #007BFF; }
+        nav a { margin-right: 10px; color: #007BFF; text-decoration: none;}
+        nav a:hover { text-decoration: underline; }
+        .support-info { max-width: 600px; background: #f9f9f9; padding: 20px; border-radius: 8px; }
+        footer { margin-top: 40px; font-size: 14px; color: #555; }
+    </style>
 </head>
 <body>
-  <header>
-    <div class="logo">LoanSaathiHub</div>
-    <p class="tagline">Aapka Loan Saathi – Vishwas ke Saath</p>
-  </header>
 
-  <main class="container">
-    <h2>Support</h2>
-    <p>अगर आपको किसी भी प्रकार की सहायता की आवश्यकता है, तो आप हमसे निम्नलिखित तरीकों से संपर्क कर सकते हैं:</p>
+<nav>
+    <a href="{{ url_for('about_us') }}">About Us</a> |
+    <a href="{{ url_for('privacy_policy') }}">Privacy Policy</a> |
+    <a href="{{ url_for('terms_conditions') }}">Terms & Conditions</a> |
+    <a href="{{ url_for('support') }}">Support</a> |
+    <a href="{{ url_for('contact_us') }}">Contact Us</a>
+</nav>
 
+<h1>Support</h1>
+
+<div class="support-info">
+    <p>If you need assistance with your loan application or have any questions regarding our services, we are here to help.</p>
+
+    <h2>How to Reach Us</h2>
     <ul>
-      <li><strong>ईमेल:</strong> support@loansaathihub.in</li>
-      <li><strong>फोन:</strong> +91 9662131087</li>
-      <li><strong>WhatsApp Support:</strong> +91 7861837682</li>
+        <li>Call us at: <strong><a href="tel:+919662131087">9662131087</a></strong></li>
+        <li>Email support: <strong><a href="mailto:mayuri.luhar@gmail.com">mayuri.luhar@gmail.com</a></strong></li>
     </ul>
 
-    <p>हमारी टीम सोमवार से शनिवार (10 AM से 6 PM) तक उपलब्ध है।</p>
-  </main>
+    <h2>FAQs</h2>
+    <p>Coming soon! Please check back later for frequently asked questions and helpful guides.</p>
+</div>
 
-  <footer>
-    <div class="footer-content">
-      <a href="{{ url_for('about') }}">About Us</a> |
-      <a href="{{ url_for('privacy') }}">Privacy Policy</a> |
-      <a href="{{ url_for('terms') }}">Terms & Conditions</a> |
-      <a href="{{ url_for('support') }}">Support</a> |
-      <a href="{{ url_for('contact') }}">Contact Us</a>
-    </div>
-  </footer>
+<footer>
+    &copy; 2025 LoanSaathiHub. All rights reserved.
+</footer>
+
 </body>
 </html>

@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+{% block title %}Complete Your Profile - Agent{% endblock %}
+
+{% block head %}
+<script>
+    const pincodeData = {{ pincode_data | tojson }};
+    function autofill() {
+        const pin = document.getElementById("pincode").value;
+        if(pin.length === 6 && pin in pincodeData){
+            document.getElementById("city").value = pincodeData[pin].city;
+            document.getElementById("state").value = pincodeData[pin].state;
+        } else {
+            document.getElementById("city").value = '';
+            document.getElementById("state").value = '';
+        }
+    }
+</script>
+{% endblock %}
+
+{% block content %}
+<div style="max-width: 600px; margin: 30px auto; background: white; padding: 25px; border-radius: 8px; box-shadow: 0 3px 10px rgba(0,0,0,0.1);">
+    <h2 style="color:#004080; margin-bottom: 20px;">Complete Your Profile (Agent)</h2>
+    <form method="POST" novalidate>
+        <!-- Readonly Fields -->
+        <label>Title*</label>
+        <input type="text" name="title" value="{{ user.title }}" readonly required />
+
+        <label>Full Name*</label>
+        <input type="text" value="{{ user.first_name }} {{ user.last_name }}" readonly required />
+
+        <label>Mobile*</label>
+        <input type="tel" name="mobile" value="{{ user.mobile }}" readonly required />
+
+        <label>Email*</label>
+        <input type="email" name="email" value="{{ user.email }}" readonly required />
+
+        <!-- Agent Specific Fields -->
+        <label for="loan_type">Loan Type*</label>
+        <select name="loan_type" id="loan_type" required>
+            <option value="">-- Select --</option>
+            <option>Personal</option>
+            <option>Home</option>
+            <option>Business</option>
+            <option>Vehicle</option>
+        </select>
+
+        <label for="amount">Amount Required (₹)*</label>
+        <input type="number" name="amount" id="amount" min="1" required />
+
+        <label for="duration">Duration (in Months)*</label>
+        <input type="number" name="duration" id="duration" min="1" required />
+
+        <label for="pincode">PIN Code*</label>
+        <input type="text" id="pincode" name="pincode" maxlength="6" pattern="\d{6}" required oninput="autofill()" />
+
+        <label for="city">City*</label>
+        <input type="text" id="city" name="city" readonly required />
+
+        <label for="state">State*</label>
+        <input type="text" id="state" name="state" readonly required />
+
+        <label for="pan">PAN Number*</label>
+        <input type="text" name="pan" id="pan" required />
+
+        <label for="aadhar">Aadhar Number</label>
+        <input type="text" name="aadhar" id="aadhar" />
+
+        <label for="agent_type">Agent Type*</label>
+        <select name="agent_type" id="agent_type" required>
+            <option value="">-- Select --</option>
+            <option>Finance Company</option>
+            <option>DSA</option>
+            <option>Bank</option>
+            <option>Individual</option>
+            <option>Private Bank</option>
+        </select>
+
+        <label for="firm_name">Firm Name*</label>
+        <input type="text" name="firm_name" id="firm_name" required />
+
+        <label for="firm_code">Code*</label>
+        <input type="text" name="firm_code" id="firm_code" required />
+
+        <label for="bank_name">Bank Name*</label>
+        <select name="bank_name" id="bank_name" required>
+            <option value="">-- Select --</option>
+            <option>State Bank of India</option>
+            <option>HDFC Bank</option>
+            <option>ICICI Bank</option>
+            <option>Axis Bank</option>
+            <option>Punjab National Bank</option>
+	    <option>Bajaj Finance</option>
+            <option>Home Credit</option>
+        </select>
+
+        <input type="submit" value="Submit Loan Request" style="margin-top: 20px; background-color:#004080; color:white; padding:10px; cursor:pointer; border:none; border-radius:5px;" />
+    </form>
+</div>
+{% endblock %}

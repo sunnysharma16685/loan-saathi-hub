@@ -1,0 +1,340 @@
+{% extends "base.html" %}
+{% block title %}Homepage - LoanSaathiHub{% endblock %}
+{% block content %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Loan Saathi Hub - Homepage</title>
+    <style>
+        /* Reset */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f7fa;
+            color: #333;
+        }
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: #004080;
+            color: white;
+            padding: 15px 30px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+        .header-left {
+            display: flex;
+            flex-direction: column;
+        }
+        .header-left .logo {
+            font-size: 24px;
+            font-weight: 700;
+            letter-spacing: 1.4px;
+            user-select: none;
+        }
+        .header-left .tagline {
+            font-size: 14px;
+            font-style: italic;
+            opacity: 0.85;
+            margin-top: 4px;
+        }
+        .header-right a {
+            font-weight: 600;
+            font-size: 16px;
+            padding: 8px 16px;
+            background-color: transparent;
+            border: 2px solid white;
+            border-radius: 5px;
+            color: white;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            user-select: none;
+        }
+        .header-right a:hover {
+            background-color: white;
+            color: #004080;
+        }
+
+        /* Content layout */
+        .content {
+            display: flex;
+            padding: 20px 30px;
+            gap: 40px;
+        }
+
+        /* Left side ads */
+        .left-ads {
+            flex: 2;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .big-ad img {
+            width: 100%;
+            height: auto;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+
+        /* Running ads ticker */
+        .ticker-wrapper {
+            overflow: hidden;
+            background-color: #eaeaea;
+            border-radius: 6px;
+            box-shadow: inset 0 0 5px rgba(0,0,0,0.1);
+            height: 40px;
+            position: relative;
+        }
+        .ticker {
+            display: inline-block;
+            white-space: nowrap;
+            position: absolute;
+            will-change: transform;
+            animation: ticker-scroll 20s linear infinite;
+            font-size: 16px;
+            padding-left: 100%;
+            line-height: 40px;
+            color: #004080;
+        }
+
+        @keyframes ticker-scroll {
+            from {
+                transform: translateX(0%);
+            } to {
+                transform: translateX(-100%);
+            }
+        }
+
+        /* Right side buttons and form */
+        .right-section {
+            flex: 1;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            padding: 20px;
+            background: white;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            min-width: 280px;
+        }
+
+        .buttons {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+
+        .buttons button {
+            flex: 1;
+            margin: 0 5px;
+            padding: 10px 0;
+            font-size: 16px;
+            background-color: #004080;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        .buttons button:hover {
+            background-color: #003366;
+        }
+        .buttons button.active {
+            background-color: #0073e6;
+        }
+
+        form {
+            display: none;
+            flex-direction: column;
+            gap: 15px;
+        }
+        form.active {
+            display: flex;
+        }
+
+        label {
+            font-weight: 600;
+            margin-bottom: 5px;
+            display: block;
+        }
+        input, select {
+            padding: 8px;
+            font-size: 14px;
+            border: 1px solid #bbb;
+            border-radius: 4px;
+            width: 100%;
+        }
+
+        input[type="submit"] {
+            background-color: #004080;
+            color: white;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        input[type="submit"]:hover {
+            background-color: #003366;
+        }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .content {
+                flex-direction: column;
+                gap: 30px;
+            }
+            .right-section {
+                min-width: auto;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <div class="header-left">
+        <div class="logo">Loan Saathi Hub</div>
+        <div class="tagline">Apke vishwas ka Saathi</div>
+    </div>
+    <div class="header-right">
+        <a href="{{ url_for('login') }}">Login</a>
+    </div>
+</header>
+
+<div class="content">
+
+    <!-- Left Side Ads -->
+    <div class="left-ads">
+        <div class="big-ad">
+            <img src="{{ url_for('static', filename='images/big_ad.jpg') }}" alt="Big Advertisement" />
+        </div>
+
+        <div class="ticker-wrapper" aria-label="Running ads ticker">
+            <div class="ticker" id="ticker">
+                <!-- Ad texts separated by &nbsp;&nbsp;&nbsp; for spacing -->
+                Special Offer: Get loans at 9.99% interest! &nbsp;&nbsp;&nbsp;
+                Apply now and get instant approval! &nbsp;&nbsp;&nbsp;
+                Low EMI plans available! &nbsp;&nbsp;&nbsp;
+                Loan Saathi Hub - Your reliable partner! &nbsp;&nbsp;&nbsp;
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Side User / Agent Buttons + Forms -->
+    <div class="right-section">
+        <div class="buttons">
+            <button id="userBtn">User</button>
+            <button id="agentBtn">Agent</button>
+        </div>
+
+        <!-- User Form -->
+        <form id="userForm" method="POST" action="{{ url_for('register', role='user') }}">
+            <label for="titleUser">Title:</label>
+            <select name="title" id="titleUser" required>
+                <option value="" disabled selected>Select Title</option>
+                <option>Mr.</option>
+                <option>Ms.</option>
+                <option>Mrs.</option>
+                <option>Dr.</option>
+            </select>
+
+            <label for="firstNameUser">First Name:</label>
+            <input type="text" name="first_name" id="firstNameUser" required />
+
+            <label for="lastNameUser">Last Name:</label>
+            <input type="text" name="last_name" id="lastNameUser" required />
+
+            <label for="mobileUser">Mobile Number:</label>
+            <input type="tel" name="mobile" id="mobileUser" required pattern="[0-9]{10}" placeholder="10 digit mobile" />
+
+            <!-- Simulate OTP : A button that just alerts OTP sent -->
+            <button type="button" onclick="sendOTP('user')">Send OTP</button>
+
+            <label for="emailUser">Email:</label>
+            <input type="email" name="email" id="emailUser" required />
+
+            <input type="submit" value="Submit" />
+        </form>
+
+        <!-- Agent Form -->
+        <form id="agentForm" method="POST" action="{{ url_for('register', role='agent') }}">
+            <label for="titleAgent">Title:</label>
+            <select name="title" id="titleAgent" required>
+                <option value="" disabled selected>Select Title</option>
+                <option>Mr.</option>
+                <option>Ms.</option>
+                <option>Mrs.</option>
+                <option>Dr.</option>
+            </select>
+
+            <label for="firstNameAgent">First Name:</label>
+            <input type="text" name="first_name" id="firstNameAgent" required />
+
+            <label for="lastNameAgent">Last Name:</label>
+            <input type="text" name="last_name" id="lastNameAgent" required />
+
+            <label for="mobileAgent">Mobile Number:</label>
+            <input type="tel" name="mobile" id="mobileAgent" required pattern="[0-9]{10}" placeholder="10 digit mobile" />
+
+            <!-- Simulate OTP : A button that just alerts OTP sent -->
+            <button type="button" onclick="sendOTP('agent')">Send OTP</button>
+
+            <label for="emailAgent">Email:</label>
+            <input type="email" name="email" id="emailAgent" required />
+
+            <input type="submit" value="Submit" />
+        </form>
+    </div>
+</div>
+
+<script>
+    // Show/hide forms on button click
+    const userBtn = document.getElementById('userBtn');
+    const agentBtn = document.getElementById('agentBtn');
+    const userForm = document.getElementById('userForm');
+    const agentForm = document.getElementById('agentForm');
+
+    userBtn.addEventListener('click', () => {
+        userForm.classList.add('active');
+        agentForm.classList.remove('active');
+        userBtn.classList.add('active');
+        agentBtn.classList.remove('active');
+    });
+
+    agentBtn.addEventListener('click', () => {
+        agentForm.classList.add('active');
+        userForm.classList.remove('active');
+        agentBtn.classList.add('active');
+        userBtn.classList.remove('active');
+    });
+
+    // OTP simulation
+    function sendOTP(role) {
+        let mobileInput;
+        if(role === 'user') {
+            mobileInput = document.getElementById('mobileUser');
+        } else {
+            mobileInput = document.getElementById('mobileAgent');
+        }
+        if(!mobileInput.value.match(/^\d{10}$/)) {
+            alert('Please enter valid 10 digit mobile number');
+            mobileInput.focus();
+            return;
+        }
+        alert(`OTP has been sent to ${mobileInput.value} (Simulation)`);
+    }
+</script>
+
+</body>
+</html>
+<div style="padding: 30px; max-width: 960px; margin: auto;">
+    <h1>Welcome to Loan Saathi Hub</h1>
+    <p>Your trusted partner for all loan-related needs.</p>
+</div>
+
+{% endblock %}

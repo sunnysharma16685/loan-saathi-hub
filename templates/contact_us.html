@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Contact Us - Loan Saathi Hub</title>
+<style>
+    body { font-family: Arial, sans-serif; margin: 20px; line-height: 1.6; }
+    h1,h2 { color: #007BFF; }
+    nav a { margin-right: 10px; color: #007BFF; text-decoration: none;}
+    nav a:hover { text-decoration: underline; }
+    .contact-details { max-width:600px; background:#f1f1f1; padding:15px; border-radius:8px; }
+    a { color: #007BFF; text-decoration: none;}
+    a:hover { text-decoration: underline; }
+    footer { margin-top: 40px; font-size: 14px; color: #555; }
+</style>
+</head>
+<body>
+
+<nav>
+    <a href="{{ url_for('about_us') }}">About Us</a> |
+    <a href="{{ url_for('privacy_policy') }}">Privacy Policy</a> |
+    <a href="{{ url_for('terms_conditions') }}">Terms & Conditions</a> |
+    <a href="{{ url_for('support') }}">Support</a> |
+    <a href="{{ url_for('contact_us') }}">Contact Us</a>
+</nav>
+
+<h1>Contact Us</h1>
+
+<div class="contact-details">
+    <p><strong>Owner:</strong> Ms. Mayuri S Sharma</p>
+    <p><strong>Mobile:</strong> <a href="tel:+919662131087">9662131087</a></p>
+    <p><strong>Email:</strong> <a href="mailto:mayuri.luhar@gmail.com">mayuri.luhar@gmail.com</a></p>
+    <p><strong>Address:</strong><br/>
+       113, Pra. Srushti,<br/>
+       Gotri, Vadodara - 390016,<br/>
+       Gujarat, INDIA
+    </p>
+</div>
+
+<footer>
+    &copy; 2025 LoanSaathiHub. All rights reserved.
+</footer>
+
+</body>
+</html>

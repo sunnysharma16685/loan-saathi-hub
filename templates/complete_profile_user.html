@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% block title %}Complete Profile - User{% endblock %}
+{% block head %}
+<script>
+    const pincodeData = {{ pincode_data | tojson }};
+    function autofill() {
+        const pin = document.getElementById("pincode").value;
+        if(pin in pincodeData){
+            document.getElementById("city").value = pincodeData[pin].city;
+            document.getElementById("state").value = pincodeData[pin].state;
+        }
+    }
+</script>
+{% endblock %}
+{% block content %}
+<div style="max-width: 600px; margin: 30px auto; background: white; padding: 25px; border-radius: 8px; box-shadow: 0 3px 10px rgba(0,0,0,0.1);">
+    <h2 style="color:#004080; margin-bottom: 20px;">Complete Your Profile (User)</h2>
+    <form method="POST">
+        <label>Title*</label>
+        <input type="text" name="title" value="{{ user.title }}" readonly />
+
+        <label>Full Name*</label>
+        <input type="text" value="{{ user.first_name }} {{ user.last_name }}" readonly />
+
+        <label>Mobile*</label>
+        <input type="tel" name="mobile" value="{{ user.mobile }}" readonly />
+
+        <label>Email*</label>
+        <input type="email" name="email" value="{{ user.email }}" readonly />
+
+        <label for="loan_type">Loan Type*</label>
+        <select name="loan_type" id="loan_type" required>
+            <option value="">-- Select --</option>
+            <option>Personal</option>
+            <option>Home</option>
+            <option>Business</option>
+            <option>Vehicle</option>
+        </select>
+
+        <label for="amount">Amount Required (₹)*</label>
+        <input type="number" name="amount" id="amount" min="1" required />
+
+        <label for="duration">Duration (in Months)*</label>
+        <input type="number" name="duration" id="duration" min="1" required />
+
+        <label for="pincode">PIN Code*</label>
+        <input type="text" id="pincode" name="pincode" maxlength="6" pattern="\d{6}" required oninput="autofill()" />
+
+        <label for="city">City*</label>
+        <input type="text" id="city" name="city" readonly required />
+
+        <label for="state">State*</label>
+        <input type="text" id="state" name="state" readonly required />
+
+        <label for="pan">PAN Number*</label>
+        <input type="text" name="pan" id="pan" required />
+
+        <label for="aadhar">Aadhar Number (Optional)</label>
+        <input type="text" name="aadhar" id="aadhar" />
+
+        <label for="itr">Income Tax Return (ITR) Filed For*</label>
+        <select name="itr" id="itr" required>
+            <option value="">-- Select --</option>
+            <option>Last 3 Years</option>
+            <option>Last 2 Years</option>
+            <option>Last 1 Year</option>
+            <option>No ITR</option>
+        </select>
+
+        <label for="cibil">CIBIL Score (if known)</label>
+        <input type="number" name="cibil" id="cibil" min="0" max="900" />
+
+        <input type="submit" value="Submit Loan Request" style="margin-top: 20px; background-color:#004080; color:white; padding:10px; cursor:pointer; border:none; border-radius:5px;" />
+    </form>
+</div>
+{% endblock %}

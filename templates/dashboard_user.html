@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}User Dashboard{% endblock %}
+{% block content %}
+<div style="max-width: 900px; margin: 30px auto;">
+    <h2>Welcome, {{ first_name }}!</h2>
+
+    <p>Your dashboard content will appear here.</p>
+
+    <!-- Placeholder table - example -->
+    <table border="1" cellpadding="10" style="width: 100%; border-collapse: collapse; margin-top: 20px;">
+        <thead style="background-color:#004080; color: white;">
+            <tr>
+                <th>Loan ID</th>
+                <th>Loan Type</th>
+                <th>Amount Requested (₹)</th>
+                <th>Duration (Months)</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr><td>001</td><td>Personal</td><td>500000</td><td>24</td><td>Approved</td></tr>
+            <tr><td>002</td><td>Home</td><td>1500000</td><td>60</td><td>Pending</td></tr>
+        </tbody>
+    </table>
+</div>
+{% endblock %}

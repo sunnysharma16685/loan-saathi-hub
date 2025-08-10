@@ -1,147 +1,87 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content="Create your LoanSaathiHub profile and apply for loans online with ease.">
-  <meta name="keywords" content="LoanSaathiHub, Create Profile, Sign Up, Loan Application, Register">
-  <meta name="author" content="LoanSaathiHub">
-  <title>Create Profile | LoanSaathiHub</title>
-  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
-</head>
-<body>
+{% extends 'base.html' %}
 
-<div class="container">
-  <div class="login-form">
-    <h2>Create Your Profile</h2>
-    <p>Sign up to get started</p>
+{% block title %}Login - LoanSaathiHub{% endblock %}
 
-    <form method="POST" action="/create-profile">
-      {% if csrf_token %}
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+{% block content %}
+<div style="max-width: 400px; margin: 50px auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 3px 10px rgba(0,0,0,0.1);">
+
+    <h2 style="text-align:center; color:#004080; margin-bottom: 20px;">Login</h2>
+    <p style="text-align:center; color:#333; font-weight: bold; margin-bottom: 20px;">
+      Please select user type and login using User ID, Mobile Number or Email
+    </p>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div style="color: {% if category == 'danger' %}red{% elif category == 'success' %}green{% else %}black{% endif %}; margin-bottom:10px;">
+            {{ message }}
+          </div>
+        {% endfor %}
       {% endif %}
+    {% endwith %}
 
-      <label for="title">Title</label>
-      <select name="title" id="title" required>
-        <option value="">Select Title</option>
-        <option value="Mr.">Mr.</option>
-        <option value="Miss">Miss</option>
-        <option value="Other">Other</option>
-      </select>
+    <form method="POST" action="{{ url_for('login') }}">
+        <div style="text-align:center; margin-bottom: 20px;">
+            <button type="button" id="btnUser" style="background:#004080; color:#fff; border:none; padding:10px 20px; margin-right: 10px; border-radius:5px; cursor:pointer;">
+                User
+            </button>
+            <button type="button" id="btnAgent" style="background:#ccc; color:#000; border:none; padding:10px 20px; border-radius:5px; cursor:pointer;">
+                Agent
+            </button>
+        </div>
 
-      <label for="first_name">First Name</label>
-      <input type="text" name="first_name" id="first_name" required>
+        <input type="hidden" name="role" id="role" value="{{ request.form.get('role','user') }}">
 
-      <label for="last_name">Last Name</label>
-      <input type="text" name="last_name" id="last_name" required>
+        <label for="identifier">User ID / Mobile / Email:</label><br/>
+        <input type="text" id="identifier" name="identifier" placeholder="Enter User ID, Mobile Number or Email" value="{{ request.form.get('identifier','') }}" required style="width: 100%; padding:8px; margin:6px 0" /><br/>
 
-      <label for="mobile">Mobile Number</label>
-      <input type="tel" name="mobile" id="mobile" placeholder="10-digit mobile number" pattern="[0-9]{10}" required>
+        <label for="password">Password:</label><br/>
+        <input type="password" id="password" name="password" required style="width: 100%; padding:8px; margin:6px 0" /><br/>
 
-      <label for="email">Email Address</label>
-      <input type="email" name="email" id="email" required>
+        <div style="display:flex; justify-content:space-between; margin-top: 20px;">
 
-      <label for="password">Create Password</label>
-      <input type="password" name="password" id="password" required>
+            <button type="button" style="background:#ccc; border:none; padding:10px 20px; cursor:pointer; border-radius: 5px;"
+                onclick="window.location.href='{{ url_for('home') }}'">Back</button>
 
-      <label for="repeat_password">Repeat Password</label>
-      <input type="password" name="repeat_password" id="repeat_password" required>
+            <button type="submit" style="background:#004080; border:none; color:white; padding:10px 20px; cursor:pointer; border-radius:5px;">
+                Login
+            </button>
 
-      <button type="submit">Create Profile</button>
+        </div>
     </form>
-
-    <div class="extra-options">
-      <p>Already have an account? <a href="/login">Login</a></p>
-    </div>
-  </div>
 </div>
 
-<style>
-  body {
-      font-family: 'Segoe UI', sans-serif;
-      background: #f1f6f9;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-      margin: 0;
+<script>
+    // On page load, set selected role button style
+    const btnUser = document.getElementById('btnUser');
+    const btnAgent = document.getElementById('btnAgent');
+    const roleInput = document.getElementById('role');
+
+    function selectRole(role) {
+        roleInput.value = role;
+        if(role === 'user') {
+            btnUser.style.background = '#004080';
+            btnUser.style.color = '#fff';
+            btnAgent.style.background = '#ccc';
+            btnAgent.style.color = '#000';
+        } else {
+            btnAgent.style.background = '#004080';
+            btnAgent.style.color = '#fff';
+            btnUser.style.background = '#ccc';
+            btnUser.style.color = '#000';
+        }
     }
 
-    .container {
-      width: 100%;
-      max-width: 400px;
-      background: white;
-      padding: 30px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.15);
-      border-radius: 10px;
-    }
+    // Initialize on page load based on hidden input value
+    selectRole(roleInput.value);
 
-    .login-form h2 {
-      text-align: center;
-      margin-bottom: 10px;
-      color: #333;
-    }
+    btnUser.addEventListener('click', function() {
+        selectRole('user');
+    });
 
-    .login-form p {
-      text-align: center;
-      color: #666;
-      font-size: 14px;
-    }
+    btnAgent.addEventListener('click', function() {
+        selectRole('agent');
+    });
+</script>
 
-    form {
-      display: flex;
-      flex-direction: column;
-    }
-
-    label {
-      margin-top: 15px;
-      margin-bottom: 5px;
-      font-weight: bold;
-    }
-
-    input {
-      padding: 10px;
-      border: 1px solid #ccc;
-      border-radius: 5px;
-      font-size: 15px;
-    }
-
-    button {
-      margin-top: 20px;
-      padding: 10px;
-      background: #0275d8;
-      color: white;
-      border: none;
-      font-size: 16px;
-      border-radius: 5px;
-      cursor: pointer;
-    }
-
-    button:hover {
-      background: #025aa5;
-    }
-
-    .extra-options {
-      text-align: center;
-      margin-top: 20px;
-    }
-
-    .extra-options a {
-      color: #0275d8;
-      text-decoration: none;
-      font-size: 14px;
-    }
-
-    .extra-options a:hover {
-      text-decoration: underline;
-    }
-
-    @media (max-width: 480px) {
-      .container {
-        margin: 20px;
-      }
-    }
-</style>
-
-</body>
-</html>
+{% endblock %}

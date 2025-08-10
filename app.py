@@ -1,4 +1,11 @@
+import os
+from supabase import create_client
+
+SUPABASE_URL = os.environ.get("https://vdnbasxyyyeqpxtprpav.supabase.co")
+SUPABASE_KEY = os.environ.get("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZkbmJhc3h5eXllcXB4dHBycGF2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQ1NDU0NjUsImV4cCI6MjA3MDEyMTQ2NX0.1VmiedWObblpLWgoaIi60KBUOnMfJYrqhU15_9BU_Ps")
+
 supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
+
 
 # === Simple in-memory mock DB (still useful for quick registration flow) ===
 USERS = {}

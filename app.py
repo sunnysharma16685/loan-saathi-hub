@@ -1,21 +1,40 @@
 import os
+import random
+from flask import Flask, render_template, request, flash, redirect, url_for, session
 from supabase import create_client
 
-SUPABASE_URL = os.getenv("https://vdnbasxyyyeqpxtprpav.supabase.co")
-SUPABASE_KEY = os.getenv("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZkbmJhc3h5eXllcXB4dHBycGF2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQ1NDU0NjUsImV4cCI6MjA3MDEyMTQ2NX0.1VmiedWObblpLWgoaIi60KBUOnMfJYrqhU15_9BU_Ps")
+SUPABASE_URL = os.getenv("SUPABASE_URL", "https://vdnbasxyyyeqpxtprpav.supabase.co")
+SUPABASE_KEY = os.getenv("SUPABASE_KEY", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...")
 
 supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 
-from flask import Flask, render_template
-
 app = Flask(__name__)
-app.secret_key = os.getenv("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZkbmJhc3h5eXllcXB4dHBycGF2Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1NDU0NTQ2NSwiZXhwIjoyMDcwMTIxNDY1fQ.hRDZg4frXsGW5E5jAv80ctXz75yCI_lJDfaNllGKJcQ", "change_this_to_something_random")
+app.secret_key = os.getenv = os.getenv("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZkbmJhc3h5eXllcXB4dHBycGF2Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1NDU0NTQ2NSwiZXhwIjoyMDcwMTIxNDY1fQ.hRDZg4frXsGW5E5jAv80ctXz75yCI_lJDfaNllGKJcQ", "change_this_to_something_random")
+
 # === Routes ===
 
-@app.route('/')
-def homepage():
-    # by default show index; you may choose to redirect to login
-    return render_template('index.html')
+def generate_custom_id():
+    letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+    digits1 = "123456789"
+    digits2 = "0123456789"
+
+    part1 = "".join(random.choices(letters, k=4))
+    part2 = "".join(random.choices(digits1, k=4))
+    part3 = "".join(random.choices(digits2, k=3))
+    return f"{part1}{part2}{part3}"
+
+
+@app.route("/")
+def index():
+    if "user" in session:
+        user = session["user"]
+        if user["role"] == "user":
+            return redirect(url_for("dashboard_user"))
+        elif user["role"] == "agent":
+            return redirect(url_for("dashboard_agent"))
+        elif user["role"] == "admin":
+            return redirect(url_for("dashboard_admin"))
+    return render_template("index.html")
 
 # === Simple in-memory mock DB (still useful for quick registration flow) ===
 USERS = {}

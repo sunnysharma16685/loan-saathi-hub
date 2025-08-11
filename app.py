@@ -518,6 +518,9 @@ def download_full_pdf(loan_id):
     pdf_bytes = generate_pdf_for_loan(loan, full=True)
     return send_file(io.BytesIO(pdf_bytes), download_name=f"lead_{loan_id}_full.pdf", as_attachment=True, mimetype='application/pdf')
 
+@app.context_processor
+def inject_user():
+    return dict(user=session.get('user'))
 
 
 if __name__ == '__main__':

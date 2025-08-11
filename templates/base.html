@@ -1,160 +1,54 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>{% block title %}LoanSaathiHub{% endblock %}</title>
-    <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            margin: 0;
-            background: #f4f7fa;
-            color: #333;
-        }
-        header {
-            background-color: #004080;
-            padding: 15px 30px;
-            color: white;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-        }
-        .header-left {
-            display: flex;
-            flex-direction: column;
-        }
-        .header-left .logo {
-            font-size: 24px;
-            font-weight: 700;
-            letter-spacing: 1.4px;
-            user-select: none;
-        }
-        .header-left .tagline {
-            font-style: italic;
-            font-size: 14px;
-            opacity: 0.85;
-            margin-top: 3px;
-        }
-        .header-right a {
-            color: white;
-            font-weight: 600;
-            background-color: transparent;
-            border: 2px solid white;
-            padding: 8px 16px;
-            border-radius: 5px;
-            text-decoration: none;
-            margin-left: 10px;
-            transition: background-color 0.3s ease;
-            user-select: none;
-        }
-        .header-right a:hover {
-            background-color: white;
-            color: #004080;
-        }
-        /* Footer */
-        footer {
-            background: #004080;
-            color: white;
-            padding: 20px 30px;
-            text-align: center;
-            font-size: 14px;
-            margin-top: 50px;
-        }
-        footer nav a {
-            color: white;
-            margin: 0 10px;
-            text-decoration: underline;
-            font-weight: 600;
-        }
-        footer nav a:hover {
-            text-decoration: none;
-        }
-        /* Flash messages */
-        .flash {
-            width: 90%;
-            margin: 15px auto;
-            padding: 12px 20px;
-            border-radius: 5px;
-            font-weight: 600;
-            max-width: 600px;
-            box-sizing: border-box;
-        }
-        .flash.success {
-            background-color: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
-        }
-        .flash.error {
-            background-color: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
-        }
-        main {
-            max-width: 1100px;
-            margin: 25px auto;
-            padding: 0 15px;
-            background: white;
-            border-radius: 8px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-        }
-        nav.main-nav a {
-            color: white;
-            margin-left: 15px;
-            font-weight: 600;
-            text-decoration: none;
-            border: 2px solid white;
-            padding: 8px 16px;
-            border-radius: 5px;
-            transition: background-color 0.3s ease;
-        }
-        nav.main-nav a:hover {
-            background-color: white;
-            color: #004080;
-        }
-    </style>
-    {% block head %}{% endblock %}
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>{% block title %}LoanSaathiHub{% endblock %}</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
 </head>
-<body>
-<header>
-    <div class="header-left">
-        <div class="logo">Loan Saathi Hub</div>
-        <div class="tagline">Apke vishwas ka Saathi</div>
-    </div>
+<body class="d-flex flex-column min-vh-100">
 
-    <div class="header-right">
-        {% if session.get('user_id') %}
-            <a href="{{ url_for('homepage') }}">Home</a>
-            <a href="{{ url_for('logout') }}">Logout</a>
+  <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+    <div class="container">
+      <a class="navbar-brand" href="{{ url_for('index') }}">LoanSaathiHub</a>
+
+      <div class="d-flex ms-auto">
+        {% if session.get('user') %}
+          <span class="navbar-text text-white me-3">Hello, {{ session['user']['first_name'] }}</span>
+          <a class="btn btn-outline-light btn-sm" href="{{ url_for('logout') }}">Logout</a>
         {% else %}
-            <a href="{{ url_for('login') }}">Login</a>
+          <a class="btn btn-light btn-sm" href="{{ url_for('login') }}">Login</a>
         {% endif %}
+      </div>
     </div>
-</header>
+  </nav>
 
-{% with messages = get_flashed_messages(with_categories=true) %}
-  {% if messages %}
-    {% for category, message in messages %}
-      <div class="flash {{ category }}">{{ message }}</div>
-    {% endfor %}
-  {% endif %}
-{% endwith %}
+  <main class="container flex-grow-1 my-4">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+          </div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
 
-<main>
     {% block content %}{% endblock %}
-</main>
+  </main>
 
-<footer>
-    <nav>
-        <a href="{{ url_for('about') }}">About Us</a> |
-        <a href="{{ url_for('privacy') }}">Privacy Policy</a> |
-        <a href="{{ url_for('terms') }}">Terms & Conditions</a> |
-        <a href="{{ url_for('support') }}">Support</a> |
-        <a href="{{ url_for('contact') }}">Contact Us</a>
-    </nav>
-    <div style="margin-top: 10px;">© 2025 LoanSaathiHub. All rights reserved.</div>
-</footer>
+  <footer class="bg-light text-center text-muted py-3 mt-auto">
+    <div class="container">
+      <small>&copy; 2025 LoanSaathiHub. All rights reserved.</small> |
+      <a href="{{ url_for('about') }}">About Us</a> |
+      <a href="{{ url_for('privacy') }}">Privacy Policy</a> |
+      <a href="{{ url_for('terms') }}">Terms & Conditions</a> |
+      <a href="{{ url_for('support') }}">Support</a> |
+      <a href="{{ url_for('contact') }}">Contact Us</a>
+    </div>
+  </footer>
 
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

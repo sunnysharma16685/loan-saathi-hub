@@ -81,3 +81,49 @@
   {% endif %}
 </div>
 {% endblock %}
+{% extends "base.html" %}
+
+{% block title %}New Loan Request - LoanSaathiHub{% endblock %}
+
+{% block header_buttons %}
+<a href="{{ url_for('dashboard_user') }}" class="btn btn-sm btn-light me-2">Back to Dashboard</a>
+<a href="{{ url_for('logout') }}" class="btn btn-sm btn-danger">Logout</a>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+  <h3>New Loan Request</h3>
+  <form method="POST" action="{{ url_for('loan_request') }}">
+    <div class="mb-3">
+      <label for="loan_type" class="form-label">Loan Type</label>
+      <select class="form-select" id="loan_type" name="loan_type" required>
+        <option value="" selected disabled>Select Loan Type</option>
+        <option>Home Loan</option>
+        <option>Personal Loan</option>
+        <option>Vehicle Loan</option>
+        <option>Gold Loan</option>
+        <option>Mudra Loan</option>
+        <option>Business Loan</option>
+        <option>Overdraft (OD) Loan</option>
+      </select>
+    </div>
+
+    <div class="mb-3">
+      <label for="amount" class="form-label">Amount Requested (₹)</label>
+      <input type="number" class="form-control" id="amount" name="amount" min="1" required>
+    </div>
+
+    <div class="mb-3">
+      <label for="duration" class="form-label">Duration (Months)</label>
+      <input type="number" class="form-control" id="duration" name="duration" min="1" required>
+    </div>
+
+    <div class="mb-3">
+      <label for="remark" class="form-label">Reason for Loan</label>
+      <textarea class="form-control" id="remark" name="remark" rows="3" placeholder="Please describe your reason for this loan..." required></textarea>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Submit Loan Request</button>
+  </form>
+</div>
+{% endblock %}

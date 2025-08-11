@@ -1,76 +1,241 @@
 {% extends "base.html" %}
-{% block title %}Complete Profile - User{% endblock %}
-{% block head %}
-<script>
-    const pincodeData = {{ pincode_data | tojson }};
-    function autofill() {
-        const pin = document.getElementById("pincode").value;
-        if(pin in pincodeData){
-            document.getElementById("city").value = pincodeData[pin].city;
-            document.getElementById("state").value = pincodeData[pin].state;
-        }
-    }
-</script>
-{% endblock %}
+
+{% block title %}Complete Your Profile - LoanSaathiHub{% endblock %}
+
 {% block content %}
-<div style="max-width: 600px; margin: 30px auto; background: white; padding: 25px; border-radius: 8px; box-shadow: 0 3px 10px rgba(0,0,0,0.1);">
-    <h2 style="color:#004080; margin-bottom: 20px;">Complete Your Profile (User)</h2>
-    <form method="POST">
-        <label>Title*</label>
-        <input type="text" name="title" value="{{ user.title }}" readonly />
+<div class="container mt-4">
+  <h2>Complete Your Profile</h2>
+  <form method="POST" action="{{ url_for('complete_profile_user') }}">
+    <!-- Basic Info - Readonly -->
+    <div class="row mb-3">
+      <div class="col-md-6">
+        <label for="first_name" class="form-label">First Name</label>
+        <input type="text" class="form-control" id="first_name" name="first_name" value="{{ user.first_name }}" readonly>
+      </div>
+      <div class="col-md-6">
+        <label for="last_name" class="form-label">Last Name</label>
+        <input type="text" class="form-control" id="last_name" name="last_name" value="{{ user.last_name }}" readonly>
+      </div>
+    </div>
 
-        <label>Full Name*</label>
-        <input type="text" value="{{ user.first_name }} {{ user.last_name }}" readonly />
+    <div class="row mb-3">
+      <div class="col-md-6">
+        <label for="mobile" class="form-label">Mobile Number</label>
+        <input type="text" class="form-control" id="mobile" name="mobile" value="{{ user.mobile }}" readonly>
+      </div>
+      <div class="col-md-6">
+        <label for="email" class="form-label">Email ID</label>
+        <input type="email" class="form-control" id="email" name="email" value="{{ user.email }}" readonly>
+      </div>
+    </div>
 
-        <label>Mobile*</label>
-        <input type="tel" name="mobile" value="{{ user.mobile }}" readonly />
+    <!-- Address -->
+    <div class="mb-3">
+      <label for="address1" class="form-label">Address Line 1</label>
+      <input type="text" class="form-control" id="address1" name="address1" value="{{ user.address1 or '' }}" required>
+    </div>
 
-        <label>Email*</label>
-        <input type="email" name="email" value="{{ user.email }}" readonly />
+    <div class="mb-3">
+      <label for="address2" class="form-label">Address Line 2</label>
+      <input type="text" class="form-control" id="address2" name="address2" value="{{ user.address2 or '' }}">
+    </div>
 
-        <label for="loan_type">Loan Type*</label>
-        <select name="loan_type" id="loan_type" required>
-            <option value="">-- Select --</option>
-            <option>Personal</option>
-            <option>Home</option>
-            <option>Business</option>
-            <option>Vehicle</option>
+    <!-- PIN code -->
+    <div class="row mb-3">
+      <div class="col-md-4">
+        <label for="pincode" class="form-label">PIN Code <span class="text-danger">*</span></label>
+        <input type="text" class="form-control" id="pincode" name="pincode" maxlength="6" value="{{ user.pincode or '' }}" required>
+      </div>
+
+      <div class="col-md-4">
+        <label for="city" class="form-label">City <span class="text-danger">*</span></label>
+        <input type="text" class="form-control" id="city" name="city" value="{{ user.city or '' }}" required>
+      </div>
+
+      <div class="col-md-4">
+        <label for="state" class="form-label">State <span class="text-danger">*</span></label>
+        <input type="text" class="form-control" id="state" name="state" value="{{ user.state or '' }}" required>
+      </div>
+    </div>
+
+    <!-- Identity Proofs -->
+    <div class="mb-3">
+      <label for="pan" class="form-label">PAN Number <span class="text-danger">*</span></label>
+      <input type="text" pattern="[A-Z]{5}[0-9]{4}[A-Z]{1}" title="Enter valid PAN (e.g. ABCDE1234F)" class="form-control" id="pan" name="pan" value="{{ user.pan or '' }}" required>
+    </div>
+
+    <div class="mb-3">
+      <label for="aadhar" class="form-label">Aadhar Number</label>
+      <input type="text" pattern="\d{12}" title="Enter 12 digit Aadhar number" class="form-control" id="aadhar" name="aadhar" maxlength="12" value="{{ user.aadhar or '' }}">
+    </div>
+
+    <div class="mb-3">
+      <label for="itr" class="form-label">ITR Filed</label>
+      <select class="form-select" id="itr" name="itr" required>
+        <option value="" disabled {% if not user.itr %}selected{% endif %}>Select ITR Duration</option>
+        <option value="3 years" {% if user.itr == "3 years" %}selected{% endif %}>3 years</option>
+        <option value="2 years" {% if user.itr == "2 years" %}selected{% endif %}>2 years</option>
+        <option value="1 year" {% if user.itr == "1 year" %}selected{% endif %}>1 year</option>
+        <option value="No ITR" {% if user.itr == "No ITR" %}selected{% endif %}>No ITR</option>
+      </select>
+    </div>
+
+    <div class="mb-3">
+      <label for="cibil" class="form-label">CIBIL Score</label>
+      <input type="number" min="300" max="900" class="form-control" id="cibil" name="cibil" value="{{ user.cibil or '' }}">
+    </div>
+
+    <!-- Job or Business selection -->
+    <div class="mb-3">
+      <label class="form-label">Are you employed or do business?</label>
+      <div>
+        <input type="radio" id="job_radio" name="occupation" value="job" {% if user.occupation == "job" %}checked{% endif %} required>
+        <label for="job_radio">Job</label>
+
+        <input type="radio" id="business_radio" name="occupation" value="business" {% if user.occupation == "business" %}checked{% endif %} class="ms-3">
+        <label for="business_radio">Business</label>
+      </div>
+    </div>
+
+    <!-- Job Fields -->
+    <div id="job_fields" style="display: {% if user.occupation == 'job' %}block{% else %}none{% endif %};">
+      <div class="mb-3">
+        <label for="job_type" class="form-label">Job Type</label>
+        <select class="form-select" id="job_type" name="job_type">
+          <option value="" disabled selected>Select Job Type</option>
+          <option value="Full-time" {% if user.job_type == "Full-time" %}selected{% endif %}>Full-time</option>
+          <option value="Part-time" {% if user.job_type == "Part-time" %}selected{% endif %}>Part-time</option>
+          <option value="Temporary" {% if user.job_type == "Temporary" %}selected{% endif %}>Temporary</option>
+          <option value="Contract" {% if user.job_type == "Contract" %}selected{% endif %}>Contract</option>
+          <option value="Internship" {% if user.job_type == "Internship" %}selected{% endif %}>Internship</option>
         </select>
+      </div>
 
-        <label for="amount">Amount Required (₹)*</label>
-        <input type="number" name="amount" id="amount" min="1" required />
-
-        <label for="duration">Duration (in Months)*</label>
-        <input type="number" name="duration" id="duration" min="1" required />
-
-        <label for="pincode">PIN Code*</label>
-        <input type="text" id="pincode" name="pincode" maxlength="6" pattern="\d{6}" required oninput="autofill()" />
-
-        <label for="city">City*</label>
-        <input type="text" id="city" name="city" readonly required />
-
-        <label for="state">State*</label>
-        <input type="text" id="state" name="state" readonly required />
-
-        <label for="pan">PAN Number*</label>
-        <input type="text" name="pan" id="pan" required />
-
-        <label for="aadhar">Aadhar Number (Optional)</label>
-        <input type="text" name="aadhar" id="aadhar" />
-
-        <label for="itr">Income Tax Return (ITR) Filed For*</label>
-        <select name="itr" id="itr" required>
-            <option value="">-- Select --</option>
-            <option>Last 3 Years</option>
-            <option>Last 2 Years</option>
-            <option>Last 1 Year</option>
-            <option>No ITR</option>
+      <div class="mb-3">
+        <label for="employment_type" class="form-label">Employment Type</label>
+        <select class="form-select" id="employment_type" name="employment_type">
+          <option value="" disabled selected>Select Employment Type</option>
+          <option value="Govt" {% if user.employment_type == "Govt" %}selected{% endif %}>Government</option>
+          <option value="Pvt Ltd" {% if user.employment_type == "Pvt Ltd" %}selected{% endif %}>Private Ltd</option>
+          <option value="Limited" {% if user.employment_type == "Limited" %}selected{% endif %}>Limited</option>
+          <option value="LLP" {% if user.employment_type == "LLP" %}selected{% endif %}>LLP</option>
+          <option value="Proprietor" {% if user.employment_type == "Proprietor" %}selected{% endif %}>Proprietor</option>
         </select>
+      </div>
 
-        <label for="cibil">CIBIL Score (if known)</label>
-        <input type="number" name="cibil" id="cibil" min="0" max="900" />
+      <div class="mb-3">
+        <label for="company_name" class="form-label">Company Name</label>
+        <input type="text" class="form-control" id="company_name" name="company_name" value="{{ user.company_name or '' }}">
+      </div>
 
-        <input type="submit" value="Submit Loan Request" style="margin-top: 20px; background-color:#004080; color:white; padding:10px; cursor:pointer; border:none; border-radius:5px;" />
-    </form>
+      <div class="mb-3">
+        <label for="designation" class="form-label">Designation</label>
+        <input type="text" class="form-control" id="designation" name="designation" value="{{ user.designation or '' }}">
+      </div>
+
+      <div class="mb-3">
+        <label for="total_experience" class="form-label">Total Work Experience (years)</label>
+        <input type="number" min="0" step="0.1" class="form-control" id="total_experience" name="total_experience" value="{{ user.total_experience or '' }}">
+      </div>
+
+      <div class="mb-3">
+        <label for="current_experience" class="form-label">Current Company Experience (years)</label>
+        <input type="number" min="0" step="0.1" class="form-control" id="current_experience" name="current_experience" value="{{ user.current_experience or '' }}">
+      </div>
+
+      <div class="mb-3">
+        <label for="salary_mode" class="form-label">Mode of Salary</label>
+        <select class="form-select" id="salary_mode" name="salary_mode">
+          <option value="" disabled selected>Select Salary Mode</option>
+          <option value="Bank" {% if user.salary_mode == "Bank" %}selected{% endif %}>Bank</option>
+          <option value="Cash" {% if user.salary_mode == "Cash" %}selected{% endif %}>Cash</option>
+          <option value="Cheque" {% if user.salary_mode == "Cheque" %}selected{% endif %}>Cheque</option>
+        </select>
+      </div>
+
+      <div class="mb-3">
+        <label for="monthly_salary" class="form-label">Monthly Salary (₹)</label>
+        <input type="number" min="0" step="100" class="form-control" id="monthly_salary" name="monthly_salary" value="{{ user.monthly_salary or '' }}">
+      </div>
+
+      <div class="mb-3">
+        <label for="other_income" class="form-label">Other Income (Bonus, Incentives etc.)</label>
+        <textarea class="form-control" id="other_income" name="other_income" rows="2">{{ user.other_income or '' }}</textarea>
+      </div>
+    </div>
+
+    <!-- Business Fields -->
+    <div id="business_fields" style="display: {% if user.occupation == 'business' %}block{% else %}none{% endif %};">
+      <div class="mb-3">
+        <label for="business_turnover" class="form-label">Last Year Company Turnover (₹)</label>
+        <input type="number" min="0" step="1000" class="form-control" id="business_turnover" name="business_turnover" value="{{ user.business_turnover or '' }}">
+      </div>
+
+      <div class="mb-3">
+        <label for="business_designation" class="form-label">Designation</label>
+        <select class="form-select" id="business_designation" name="business_designation">
+          <option value="" disabled selected>Select Designation</option>
+          <option value="Director" {% if user.business_designation == "Director" %}selected{% endif %}>Director</option>
+          <option value="CEO" {% if user.business_designation == "CEO" %}selected{% endif %}>CEO</option>
+          <option value="Owner" {% if user.business_designation == "Owner" %}selected{% endif %}>Owner</option>
+          <option value="Proprietor" {% if user.business_designation == "Proprietor" %}selected{% endif %}>Proprietor</option>
+          <option value="Partner" {% if user.business_designation == "Partner" %}selected{% endif %}>Partner</option>
+        </select>
+      </div>
+    </div>
+
+    <button type="submit" class="btn btn-primary mt-4">Submit Profile</button>
+  </form>
 </div>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const jobRadio = document.getElementById("job_radio");
+    const businessRadio = document.getElementById("business_radio");
+    const jobFields = document.getElementById("job_fields");
+    const businessFields = document.getElementById("business_fields");
+    const pincodeInput = document.getElementById("pincode");
+    const cityInput = document.getElementById("city");
+    const stateInput = document.getElementById("state");
+
+    function toggleOccupationFields() {
+      if (jobRadio.checked) {
+        jobFields.style.display = "block";
+        businessFields.style.display = "none";
+      } else if (businessRadio.checked) {
+        jobFields.style.display = "none";
+        businessFields.style.display = "block";
+      }
+    }
+
+    jobRadio.addEventListener("change", toggleOccupationFields);
+    businessRadio.addEventListener("change", toggleOccupationFields);
+
+    // Optional: Auto-fill city and state by PIN code using API (Indian PIN code API example)
+    pincodeInput.addEventListener("blur", function () {
+      const pin = pincodeInput.value.trim();
+      if (pin.length === 6) {
+        fetch(`https://api.postalpincode.in/pincode/${pin}`)
+          .then(response => response.json())
+          .then(data => {
+            if (data[0].Status === "Success") {
+              const postOffice = data[0].PostOffice[0];
+              cityInput.value = postOffice.District;
+              stateInput.value = postOffice.State;
+            } else {
+              cityInput.value = "";
+              stateInput.value = "";
+            }
+          })
+          .catch(() => {
+            cityInput.value = "";
+            stateInput.value = "";
+          });
+      }
+    });
+
+    // Initial toggle based on prefilled data
+    toggleOccupationFields();
+  });
+</script>
 {% endblock %}

@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+{% block title %}Admin Dashboard - LoanSaathiHub{% endblock %}
+
+{% block header_buttons %}
+<a href="{{ url_for('logout') }}" class="btn btn-sm btn-danger">Logout</a>
+<a href="{{ url_for('index') }}" class="btn btn-sm btn-secondary ms-2">Home</a>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+  <h1>Admin Dashboard</h1>
+  <div class="row mb-4">
+    <div class="col">
+      <div class="card p-3 bg-light">
+        <h5>Total Users</h5>
+        <p>{{ total_users }}</p>
+      </div>
+    </div>
+    <div class="col">
+      <div class="card p-3 bg-light">
+        <h5>Total Agents</h5>
+        <p>{{ total_agents }}</p>
+      </div>
+    </div>
+    <div class="col">
+      <div class="card p-3 bg-light">
+        <h5>Total Loans Applied</h5>
+        <p>{{ total_loans_applied }}</p>
+      </div>
+    </div>
+    <div class="col">
+      <div class="card p-3 bg-light">
+        <h5>Total Loans Rejected</h5>
+        <p>{{ total_loans_rejected }}</p>
+      </div>
+    </div>
+    <div class="col">
+      <div class="card p-3 bg-light">
+        <h5>Total Loans Approved</h5>
+        <p>{{ total_loans_approved }}</p>
+      </div>
+    </div>
+    <div class="col">
+      <div class="card p-3 bg-light">
+        <h5>Total Payments Received</h5>
+        <p>₹{{ total_payments_received }}</p>
+      </div>
+    </div>
+  </div>
+
+  <h3>Users</h3>
+  <table class="table table-bordered table-striped">
+    <thead>
+      <tr>
+        <th>User ID</th>
+        <th>Full Name</th>
+        <th>Status</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for user in users %}
+      <tr>
+        <td>LSHU{{ "%04d"|format(user.id) }}</td>
+        <td>{{ user.first_name }} {{ user.last_name }}</td>
+        <td>{{ user.status or 'Inactive' }}</td>
+        <td>
+          <form method="POST" action="{{ url_for('update_user_status', user_id=user.id) }}" style="display:inline;">
+            <select name="action" class="form-select form-select-sm d-inline w-auto">
+              <option value="active">Active</option>
+              <option value="reactive">Reactive</option>
+              <option value="delete">Delete</option>
+            </select>
+            <button type="submit" class="btn btn-sm btn-primary">Apply</button>
+          </form>
+        </td>
+      </tr>
+      {% else %}
+      <tr><td colspan="4">No users found.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <h3>Agents</h3>
+  <table class="table table-bordered table-striped">
+    <thead>
+      <tr>
+        <th>Agent ID</th>
+        <th>Full Name</th>
+        <th>Status</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for agent in agents %}
+      <tr>
+        <td>LSHA{{ "%04d"|format(agent.id) }}</td>
+        <td>{{ agent.first_name }} {{ agent.last_name }}</td>
+        <td>{{ agent.status or 'Inactive' }}</td>
+        <td>
+          <form method="POST" action="{{ url_for('update_agent_status', agent_id=agent.id) }}" style="display:inline;">
+            <select name="action" class="form-select form-select-sm d-inline w-auto">
+              <option value="active">Active</option>
+              <option value="reactive">Reactive</option>
+              <option value="delete">Delete</option>
+            </select>
+            <button type="submit" class="btn btn-sm btn-primary">Apply</button>
+          </form>
+        </td>
+      </tr>
+      {% else %}
+      <tr><td colspan="4">No agents found.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

@@ -54,7 +54,36 @@
           {% if loan.status == 'approved' and not loan.payment_done %}
           <a href="{{ url_for('payment', loan_id=loan.loan_id) }}" class="btn btn-success btn-sm">Pay ₹99</a>
           {% elif loan.payment_done %}
-          <span class="text-success">Paid</span>
+          <span class="text-success">Paid</span>{% extends "base.html" %}
+
+{% block title %}Payment - LoanSaathiHub{% endblock %}
+
+{% block header_buttons %}
+<a href="{{ url_for('logout') }}" class="btn btn-sm btn-danger">Logout</a>
+<a href="{{ url_for('dashboard_agent') }}" class="btn btn-sm btn-secondary ms-2">Back to Dashboard</a>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+  <h3>Payment for Lead: {{ loan_id }}</h3>
+  <p>Amount to pay: <strong>₹99 + applicable taxes</strong></p>
+
+  <form method="POST">
+    <div class="mb-3">
+      <label for="payment_method" class="form-label">Payment Method</label>
+      <select id="payment_method" name="payment_method" class="form-select" required>
+        <option value="">Select Payment Method</option>
+        <option value="upi">UPI</option>
+        <option value="netbanking">Net Banking</option>
+        <option value="card">Credit/Debit Card</option>
+      </select>
+    </div>
+
+    <button type="submit" class="btn btn-success">Pay Now</button>
+  </form>
+</div>
+{% endblock %}
+
           {% else %}
           <span>-</span>
           {% endif %}

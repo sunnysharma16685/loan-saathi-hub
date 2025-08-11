@@ -1,99 +1,164 @@
 {% extends "base.html" %}
-{% block title %}Complete Your Profile - Agent{% endblock %}
 
-{% block head %}
-<script>
-    const pincodeData = {{ pincode_data | tojson }};
-    function autofill() {
-        const pin = document.getElementById("pincode").value;
-        if(pin.length === 6 && pin in pincodeData){
-            document.getElementById("city").value = pincodeData[pin].city;
-            document.getElementById("state").value = pincodeData[pin].state;
-        } else {
-            document.getElementById("city").value = '';
-            document.getElementById("state").value = '';
-        }
-    }
-</script>
-{% endblock %}
+{% block title %}Complete Agent Profile - LoanSaathiHub{% endblock %}
 
 {% block content %}
-<div style="max-width: 600px; margin: 30px auto; background: white; padding: 25px; border-radius: 8px; box-shadow: 0 3px 10px rgba(0,0,0,0.1);">
-    <h2 style="color:#004080; margin-bottom: 20px;">Complete Your Profile (Agent)</h2>
-    <form method="POST" novalidate>
-        <!-- Readonly Fields -->
-        <label>Title*</label>
-        <input type="text" name="title" value="{{ user.title }}" readonly required />
+<div class="container mt-4">
+  <h2>Complete Your Agent Profile</h2>
+  <form method="POST" action="{{ url_for('complete_profile_agent') }}">
+    <!-- Basic Info - Readonly -->
+    <div class="row mb-3">
+      <div class="col-md-6">
+        <label for="first_name" class="form-label">First Name</label>
+        <input type="text" class="form-control" id="first_name" name="first_name" value="{{ user.first_name }}" readonly>
+      </div>
+      <div class="col-md-6">
+        <label for="last_name" class="form-label">Last Name</label>
+        <input type="text" class="form-control" id="last_name" name="last_name" value="{{ user.last_name }}" readonly>
+      </div>
+    </div>
 
-        <label>Full Name*</label>
-        <input type="text" value="{{ user.first_name }} {{ user.last_name }}" readonly required />
+    <div class="row mb-3">
+      <div class="col-md-6">
+        <label for="mobile" class="form-label">Mobile Number</label>
+        <input type="text" class="form-control" id="mobile" name="mobile" value="{{ user.mobile }}" readonly>
+      </div>
+      <div class="col-md-6">
+        <label for="email" class="form-label">Email ID</label>
+        <input type="email" class="form-control" id="email" name="email" value="{{ user.email }}" readonly>
+      </div>
+    </div>
 
-        <label>Mobile*</label>
-        <input type="tel" name="mobile" value="{{ user.mobile }}" readonly required />
+    <!-- Agent Type -->
+    <div class="mb-3">
+      <label for="agent_type" class="form-label">Type of Agent</label>
+      <select class="form-select" id="agent_type" name="agent_type" required>
+        <option value="" disabled selected>Select Agent Type</option>
+        <option value="DSA" {% if user.agent_type == "DSA" %}selected{% endif %}>DSA</option>
+        <option value="Bank or Finance" {% if user.agent_type == "Bank or Finance" %}selected{% endif %}>Bank or Finance</option>
+        <option value="Private Firm" {% if user.agent_type == "Private Firm" %}selected{% endif %}>Private Firm</option>
+      </select>
+    </div>
 
-        <label>Email*</label>
-        <input type="email" name="email" value="{{ user.email }}" readonly required />
+    <!-- DSA fields -->
+    <div id="dsa_fields" style="display:none;">
+      <div class="mb-3">
+        <label for="dsa_code" class="form-label">DSA Code</label>
+        <input type="text" class="form-control" id="dsa_code" name="dsa_code" value="{{ user.dsa_code or '' }}">
+      </div>
+      <div class="mb-3">
+        <label for="dsa_bank_name" class="form-label">Bank Name</label>
+        <input type="text" class="form-control" id="dsa_bank_name" name="dsa_bank_name" value="{{ user.dsa_bank_name or '' }}">
+      </div>
+      <div class="mb-3">
+        <label for="dsa_branch" class="form-label">Branch</label>
+        <input type="text" class="form-control" id="dsa_branch" name="dsa_branch" value="{{ user.dsa_branch or '' }}">
+      </div>
+    </div>
 
-        <!-- Agent Specific Fields -->
-        <label for="loan_type">Loan Type*</label>
-        <select name="loan_type" id="loan_type" required>
-            <option value="">-- Select --</option>
-            <option>Personal</option>
-            <option>Home</option>
-            <option>Business</option>
-            <option>Vehicle</option>
-        </select>
+    <!-- Bank or Finance fields -->
+    <div id="bank_finance_fields" style="display:none;">
+      <div class="mb-3">
+        <label for="bf_branch" class="form-label">Branch Name</label>
+        <input type="text" class="form-control" id="bf_branch" name="bf_branch" value="{{ user.bf_branch or '' }}">
+      </div>
+      <div class="mb-3">
+        <label for="bf_name" class="form-label">Bank or Finance Name</label>
+        <input type="text" class="form-control" id="bf_name" name="bf_name" value="{{ user.bf_name or '' }}">
+      </div>
+      <div class="mb-3">
+        <label for="bf_designation" class="form-label">Designation</label>
+        <input type="text" class="form-control" id="bf_designation" name="bf_designation" value="{{ user.bf_designation or '' }}">
+      </div>
+    </div>
 
-        <label for="amount">Amount Required (₹)*</label>
-        <input type="number" name="amount" id="amount" min="1" required />
+    <!-- Private Firm fields -->
+    <div id="private_firm_fields" style="display:none;">
+      <div class="mb-3">
+        <label for="firm_name" class="form-label">Firm Name</label>
+        <input type="text" class="form-control" id="firm_name" name="firm_name" value="{{ user.firm_name or '' }}">
+      </div>
+      <div class="mb-3">
+        <label for="gst_number" class="form-label">GST Number</label>
+        <input type="text" class="form-control" id="gst_number" name="gst_number" value="{{ user.gst_number or '' }}">
+      </div>
+      <div class="mb-3">
+        <label for="firm_address" class="form-label">Firm Address</label>
+        <textarea class="form-control" id="firm_address" name="firm_address" rows="3">{{ user.firm_address or '' }}</textarea>
+      </div>
+    </div>
 
-        <label for="duration">Duration (in Months)*</label>
-        <input type="number" name="duration" id="duration" min="1" required />
+    <!-- Common Address Fields -->
+    <div class="row mb-3">
+      <div class="col-md-4">
+        <label for="pincode" class="form-label">PIN Code <span class="text-danger">*</span></label>
+        <input type="text" class="form-control" id="pincode" name="pincode" maxlength="6" value="{{ user.pincode or '' }}" required>
+      </div>
+      <div class="col-md-4">
+        <label for="city" class="form-label">City <span class="text-danger">*</span></label>
+        <input type="text" class="form-control" id="city" name="city" value="{{ user.city or '' }}" required>
+      </div>
+      <div class="col-md-4">
+        <label for="state" class="form-label">State <span class="text-danger">*</span></label>
+        <input type="text" class="form-control" id="state" name="state" value="{{ user.state or '' }}" required>
+      </div>
+    </div>
 
-        <label for="pincode">PIN Code*</label>
-        <input type="text" id="pincode" name="pincode" maxlength="6" pattern="\d{6}" required oninput="autofill()" />
-
-        <label for="city">City*</label>
-        <input type="text" id="city" name="city" readonly required />
-
-        <label for="state">State*</label>
-        <input type="text" id="state" name="state" readonly required />
-
-        <label for="pan">PAN Number*</label>
-        <input type="text" name="pan" id="pan" required />
-
-        <label for="aadhar">Aadhar Number</label>
-        <input type="text" name="aadhar" id="aadhar" />
-
-        <label for="agent_type">Agent Type*</label>
-        <select name="agent_type" id="agent_type" required>
-            <option value="">-- Select --</option>
-            <option>Finance Company</option>
-            <option>DSA</option>
-            <option>Bank</option>
-            <option>Individual</option>
-            <option>Private Bank</option>
-        </select>
-
-        <label for="firm_name">Firm Name*</label>
-        <input type="text" name="firm_name" id="firm_name" required />
-
-        <label for="firm_code">Code*</label>
-        <input type="text" name="firm_code" id="firm_code" required />
-
-        <label for="bank_name">Bank Name*</label>
-        <select name="bank_name" id="bank_name" required>
-            <option value="">-- Select --</option>
-            <option>State Bank of India</option>
-            <option>HDFC Bank</option>
-            <option>ICICI Bank</option>
-            <option>Axis Bank</option>
-            <option>Punjab National Bank</option>
-	    <option>Bajaj Finance</option>
-            <option>Home Credit</option>
-        </select>
-
-        <input type="submit" value="Submit Loan Request" style="margin-top: 20px; background-color:#004080; color:white; padding:10px; cursor:pointer; border:none; border-radius:5px;" />
-    </form>
+    <button type="submit" class="btn btn-primary mt-3">Submit Profile</button>
+  </form>
 </div>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const agentTypeSelect = document.getElementById("agent_type");
+    const dsaFields = document.getElementById("dsa_fields");
+    const bankFinanceFields = document.getElementById("bank_finance_fields");
+    const privateFirmFields = document.getElementById("private_firm_fields");
+    const pincodeInput = document.getElementById("pincode");
+    const cityInput = document.getElementById("city");
+    const stateInput = document.getElementById("state");
+
+    function toggleAgentFields() {
+      const val = agentTypeSelect.value;
+      dsaFields.style.display = "none";
+      bankFinanceFields.style.display = "none";
+      privateFirmFields.style.display = "none";
+
+      if (val === "DSA") {
+        dsaFields.style.display = "block";
+      } else if (val === "Bank or Finance") {
+        bankFinanceFields.style.display = "block";
+      } else if (val === "Private Firm") {
+        privateFirmFields.style.display = "block";
+      }
+    }
+
+    agentTypeSelect.addEventListener("change", toggleAgentFields);
+    toggleAgentFields();
+
+    // Auto-fill city and state by PIN code using Indian Postal API
+    pincodeInput.addEventListener("blur", function () {
+      const pin = pincodeInput.value.trim();
+      if (pin.length === 6) {
+        fetch(`https://api.postalpincode.in/pincode/${pin}`)
+          .then(response => response.json())
+          .then(data => {
+            if (data[0].Status === "Success") {
+              const postOffice = data[0].PostOffice[0];
+              cityInput.value = postOffice.District;
+              stateInput.value = postOffice.State;
+            } else {
+              cityInput.value = "";
+              stateInput.value = "";
+            }
+          })
+          .catch(() => {
+            cityInput.value = "";
+            stateInput.value = "";
+          });
+      }
+    });
+  });
+</script>
+
 {% endblock %}

@@ -67,16 +67,19 @@
     <div class="container small">
       &copy; 2025 LoanSaathiHub. All rights reserved.
       <span class="mx-2">|</span>
-      <!-- Safe url_for fallback with Jinja2 'default' filter -->
-      <a href="{{ url_for('about') if 'about' in globals() else '#' }}">About Us</a>
+      {# Replace below URLs with actual routes in your Flask app #}
+      <a href="{{ url_for('about') }}">About Us</a>
       <span class="mx-2">|</span>
-      <a href="{{ url_for('privacy') if 'privacy' in globals() else '#' }}">Privacy Policy</a>
+      <a href="{{ url_for('privacy') }}">Privacy Policy</a>
       <span class="mx-2">|</span>
-      <a href="{{ url_for('terms') if 'terms' in globals() else '#' }}">Terms & Conditions</a>
+      <a href="{{ url_for('terms') }}">Terms & Conditions</a>
       <span class="mx-2">|</span>
-      <a href="{{ url_for('support') if 'support' in globals() else '#' }}">Support</a>
+      <a href="{{ url_for('support') }}">Support</a>
       <span class="mx-2">|</span>
-      <a href="{{ url_for('contact') if 'contact' in globals() else '#' }}">Contact Us</a>
+      <a href="{{ url_for('contact') }}">Contact Us</a>
+
+      {# If routes are missing, you can replace above with static links like:
+         <a href="#">About Us</a> | <a href="#">Privacy Policy</a> | ... #}
     </div>
   </footer>
 

@@ -126,7 +126,7 @@ def complete_profile_user():
         flash('Profile created — please login', 'success')
         return redirect(url_for('login'))
 
-    return render_template('complete_profile_user.html', data=data)
+    return render_template('complete_profile_user', data=data)
 
 @app.route('/profile/agent', methods=['GET','POST'])
 def complete_profile_agent():
@@ -166,7 +166,7 @@ def complete_profile_agent():
         flash('Agent profile created — please login', 'success')
         return redirect(url_for('login'))
 
-    return render_template('complete_profile_agent.html', data=data)
+    return render_template('complete_profile_agent', data=data)
 
 @app.route('/login', methods=['GET','POST'])
 def login():

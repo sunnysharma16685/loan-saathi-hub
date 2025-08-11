@@ -3,13 +3,12 @@ import random
 from flask import Flask, render_template, request, flash, redirect, url_for, session
 from supabase import create_client
 
-SUPABASE_URL = os.getenv("SUPABASE_URL", "https://vdnbasxyyyeqpxtprpav.supabase.co")
-SUPABASE_KEY = os.getenv("SUPABASE_KEY", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...")
+SUPABASE_URL = os.getenv("SUPABASE_URL")
+SUPABASE_KEY = os.getenv("SUPABASE_KEY")
 
 supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 app = Flask(__name__)
-app.secret_key = os.getenv = os.getenv("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZkbmJhc3h5eXllcXB4dHBycGF2Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1NDU0NTQ2NSwiZXhwIjoyMDcwMTIxNDY1fQ.hRDZg4frXsGW5E5jAv80ctXz75yCI_lJDfaNllGKJcQ", "change_this_to_something_random")
 
 # === Routes ===
 

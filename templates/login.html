@@ -1,80 +1,77 @@
 {% extends 'base.html' %}
-
 {% block title %}Login - LoanSaathiHub{% endblock %}
 
 {% block content %}
-<div style="max-width: 400px; margin: 50px auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 3px 10px rgba(0,0,0,0.1);">
+<div class="mx-auto" style="max-width:420px">
+  <div class="card p-4 shadow-sm">
 
-    <h2 style="text-align:center; color:#004080; margin-bottom: 20px;">Login</h2>
-    <p style="text-align:center; color:#333; font-weight: bold; margin-bottom: 20px;">
+    <h4 class="text-center mb-3">Login</h4>
+    <p class="text-center text-muted small mb-4">
       Please select user type and login using User ID, Mobile Number or Email
     </p>
 
     {% with messages = get_flashed_messages(with_categories=true) %}
       {% if messages %}
         {% for category, message in messages %}
-          <div style="color: {% if category == 'danger' %}red{% elif category == 'success' %}green{% else %}black{% endif %}; margin-bottom:10px;">
+          <div class="mb-2 fw-bold text-{{ 'danger' if category == 'danger' else 'success' }}">
             {{ message }}
           </div>
         {% endfor %}
       {% endif %}
     {% endwith %}
 
-    <!-- Ensure this action points to the login route function name in app.py -->
+    <!-- Role Selection -->
+    <div class="text-center mb-3">
+      <button type="button" id="btnUser" class="btn btn-primary me-2">User</button>
+      <button type="button" id="btnAgent" class="btn btn-outline-secondary">Agent</button>
+    </div>
+
     <form method="POST" action="{{ url_for('login') }}">
-        <div style="text-align:center; margin-bottom: 20px;">
-            <button type="button" id="btnUser" style="background:#004080; color:#fff; border:none; padding:10px 20px; margin-right: 10px; border-radius:5px; cursor:pointer;">
-                User
-            </button>
-            <button type="button" id="btnAgent" style="background:#ccc; color:#000; border:none; padding:10px 20px; border-radius:5px; cursor:pointer;">
-                Agent
-            </button>
-        </div>
+      <input type="hidden" name="role" id="role" value="{{ request.form.get('role','user') }}">
 
-        <input type="hidden" name="role" id="role" value="{{ request.form.get('role','user') }}">
+      <div class="mb-2">
+        <label class="form-label">User ID / Mobile / Email</label>
+        <input class="form-control" name="identifier" placeholder="Enter User ID, Mobile Number or Email" 
+               value="{{ request.form.get('identifier','') }}" required>
+      </div>
 
-        <label for="identifier">User ID / Mobile / Email:</label><br/>
-        <input type="text" id="identifier" name="identifier" placeholder="Enter User ID, Mobile Number or Email" value="{{ request.form.get('identifier','') }}" required style="width: 100%; padding:8px; margin:6px 0" /><br/>
+      <div class="mb-3">
+        <label class="form-label">Password</label>
+        <input class="form-control" name="password" placeholder="Password" type="password" required>
+      </div>
 
-        <label for="password">Password:</label><br/>
-        <input type="password" id="password" name="password" required style="width: 100%; padding:8px; margin:6px 0" /><br/>
-
-        <div style="display:flex; justify-content:space-between; margin-top: 20px;">
-            <!-- CHANGE 'homepage' here if your function is named differently -->
-            <button type="button" style="background:#ccc; border:none; padding:10px 20px; cursor:pointer; border-radius: 5px;"
-                onclick="window.location.href='{{ url_for('homepage') }}'">Back</button>
-
-            <button type="submit" style="background:#004080; border:none; color:white; padding:10px 20px; cursor:pointer; border-radius:5px;">
-                Login
-            </button>
-        </div>
+      <div class="d-flex justify-content-between">
+        <button type="button" class="btn btn-secondary" onclick="window.location.href='{{ url_for('index') }}'">Back</button>
+        <button type="submit" class="btn btn-primary">Login</button>
+      </div>
     </form>
+  </div>
 </div>
 
 <script>
-    const btnUser = document.getElementById('btnUser');
-    const btnAgent = document.getElementById('btnAgent');
-    const roleInput = document.getElementById('role');
+  const btnUser = document.getElementById('btnUser');
+  const btnAgent = document.getElementById('btnAgent');
+  const roleInput = document.getElementById('role');
 
-    function selectRole(role) {
-        roleInput.value = role;
-        if (role === 'user') {
-            btnUser.style.background = '#004080';
-            btnUser.style.color = '#fff';
-            btnAgent.style.background = '#ccc';
-            btnAgent.style.color = '#000';
-        } else {
-            btnAgent.style.background = '#004080';
-            btnAgent.style.color = '#fff';
-            btnUser.style.background = '#ccc';
-            btnUser.style.color = '#000';
-        }
+  function selectRole(role) {
+    roleInput.value = role;
+    if (role === 'user') {
+      btnUser.classList.remove('btn-outline-secondary');
+      btnUser.classList.add('btn-primary');
+      btnAgent.classList.remove('btn-primary');
+      btnAgent.classList.add('btn-outline-secondary');
+    } else {
+      btnAgent.classList.remove('btn-outline-secondary');
+      btnAgent.classList.add('btn-primary');
+      btnUser.classList.remove('btn-primary');
+      btnUser.classList.add('btn-outline-secondary');
     }
+  }
 
-    // Initialize on page load
-    selectRole(roleInput.value);
+  // Initialize
+  selectRole(roleInput.value);
 
-    btnUser.addEventListener('click', () => selectRole('user'));
-    btnAgent.addEventListener('click', () => selectRole('agent'));
+  btnUser.addEventListener('click', () => selectRole('user'));
+  btnAgent.addEventListener('click', () => selectRole('agent'));
 </script>
 {% endblock %}

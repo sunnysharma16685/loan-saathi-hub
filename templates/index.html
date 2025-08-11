@@ -1,61 +1,27 @@
 {% extends "base.html" %}
-{% block title %}Home - Loan Saathi Hub{% endblock %}
-
+{% block title %}Home - LoanSaathiHub{% endblock %}
 {% block content %}
-<div class="container mt-4">
+<div class="row">
+  <div class="col-md-6">
+    <div class="big-ad border rounded p-5 text-center">Big Advertisement</div>
+    <div class="mt-3 running-ads p-2 bg-warning"><marquee>Running ads... Apply now!</marquee></div>
+  </div>
 
-  <h1 class="mb-4">Welcome to Loan Saathi Hub</h1>
-
-  <div class="row">
-    <!-- Left Side Ads -->
-    <div class="col-md-6">
-      <div class="big-ad p-4 border rounded bg-light text-center d-flex align-items-center justify-content-center" 
-           style="height: 300px; font-weight: 700; font-size: 1.5rem; color: #555;">
-        Big Advertisement Here
+  <div class="col-md-6">
+    <div class="card p-4 shadow-sm">
+      <h4>Select Register</h4>
+      <div class="mb-3">
+        <button id="btnUser" class="btn btn-primary me-2">User</button>
+        <button id="btnAgent" class="btn btn-outline-secondary">Agent</button>
       </div>
-      <div class="running-ads mt-3 p-2 bg-warning text-dark border rounded" style="height: 100px; overflow: hidden;">
-        <marquee behavior="scroll" direction="left" scrollamount="6" style="font-weight: 600;">
-          Running ads: Get instant loans with low interest! Apply now! &nbsp;&nbsp;|&nbsp;&nbsp; Best loan offers available today! &nbsp;&nbsp;|&nbsp;&nbsp; Trusted by thousands of users!
-        </marquee>
-      </div>
-    </div>
-
-    <!-- Right Side User/Agent Buttons and Form -->
-    <div class="col-md-6">
-      <div class="card shadow-sm p-4">
-        <h4>Select Register</h4>
-        <div class="mb-3">
-          <button id="btnUser" class="btn btn-primary me-2 active">User</button>
-          <button id="btnAgent" class="btn btn-outline-secondary">Agent</button>
-        </div>
-
-        <!-- Basic Profile Form -->
-        <form id="basicProfileForm" method="POST" action="{{ url_for('register_basic') }}">
-          <input type="hidden" name="user_type" id="user_type" value="user" />
-
-          <div class="mb-3">
-            <label for="first_name" class="form-label">First Name *</label>
-            <input type="text" class="form-control" name="first_name" id="first_name" required />
-          </div>
-
-          <div class="mb-3">
-            <label for="last_name" class="form-label">Last Name *</label>
-            <input type="text" class="form-control" name="last_name" id="last_name" required />
-          </div>
-
-          <div class="mb-3">
-            <label for="mobile" class="form-label">Mobile Number *</label>
-            <input type="tel" class="form-control" name="mobile" id="mobile" required pattern="[0-9]{10}" />
-          </div>
-
-          <div class="mb-3">
-            <label for="email" class="form-label">Email *</label>
-            <input type="email" class="form-control" name="email" id="email" required />
-          </div>
-
-          <button type="submit" class="btn btn-success w-100">Next</button>
-        </form>
-      </div>
+      <form id="basicProfileForm" method="POST" action="{{ url_for('register_basic') }}">
+        <input type="hidden" name="user_type" id="user_type" value="user">
+        <div class="mb-2"><input class="form-control" name="first_name" placeholder="First name" required></div>
+        <div class="mb-2"><input class="form-control" name="last_name" placeholder="Last name" required></div>
+        <div class="mb-2"><input class="form-control" name="mobile" placeholder="Mobile" pattern="[0-9]{10}" required></div>
+        <div class="mb-2"><input class="form-control" name="email" placeholder="Email" type="email" required></div>
+        <button class="btn btn-success w-100">Next</button>
+      </form>
     </div>
   </div>
 </div>
@@ -66,23 +32,14 @@
   const userTypeInput = document.getElementById('user_type');
 
   btnUser.addEventListener('click', () => {
-    btnUser.classList.add('btn-primary');
-    btnUser.classList.remove('btn-outline-secondary');
-    btnUser.classList.add('active');
-
-    btnAgent.classList.remove('btn-primary', 'active');
-    btnAgent.classList.add('btn-outline-secondary');
-
+    btnUser.classList.add('btn-primary'); btnUser.classList.remove('btn-outline-secondary');
+    btnAgent.classList.remove('btn-primary'); btnAgent.classList.add('btn-outline-secondary');
     userTypeInput.value = 'user';
   });
 
   btnAgent.addEventListener('click', () => {
-    btnAgent.classList.add('btn-primary', 'active');
-    btnAgent.classList.remove('btn-outline-secondary');
-
-    btnUser.classList.remove('btn-primary', 'active');
-    btnUser.classList.add('btn-outline-secondary');
-
+    btnAgent.classList.add('btn-primary'); btnAgent.classList.remove('btn-outline-secondary');
+    btnUser.classList.remove('btn-primary'); btnUser.classList.add('btn-outline-secondary');
     userTypeInput.value = 'agent';
   });
 </script>

@@ -1,67 +1,25 @@
 {% extends "base.html" %}
-
 {% block title %}Home - Loan Saathi Hub{% endblock %}
 
 {% block content %}
-
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Loan Saathi Hub - Home</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
-  <style>
-    body {
-      padding-top: 70px; /* for fixed navbar */
-    }
-    .big-ad {
-      background-color: #f8f9fa;
-      border: 2px solid #ddd;
-      height: 300px;
-      margin-bottom: 15px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: bold;
-      font-size: 1.5rem;
-      color: #555;
-    }
-    .running-ads {
-      background-color: #fff3cd;
-      border: 1px solid #ffeeba;
-      height: 100px;
-      overflow: hidden;
-      padding: 10px;
-      font-size: 1rem;
-      color: #856404;
-    }
-  </style>
-</head>
-<body>
-
-<!-- Header/Navbar -->
-<nav class="navbar navbar-expand-lg navbar-light bg-light fixed-top shadow-sm">
-  <div class="container">
-    <a class="navbar-brand" href="#">Loan Saathi Hub</a>
-    <div class="d-flex">
-      <a href="{{ url_for('login') }}" class="btn btn-outline-primary">Login</a>
-    </div>
-  </div>
-</nav>
+<!--
+  Note: Jinja template me do baar <html>, <head>, <body> nahi dalna hota kyunki base.html me woh sab hota hai.
+  Isliye yeh sirf content block hai jo base.html ke andar render hoga.
+-->
 
 <!-- Main Content -->
-<div class="container">
+<div class="container mt-4">
+
   <h1 class="mb-4">Welcome to Loan Saathi Hub</h1>
 
   <div class="row">
     <!-- Left Side Ads -->
     <div class="col-md-6">
-      <div class="big-ad">
+      <div class="big-ad p-4 border rounded bg-light text-center d-flex align-items-center justify-content-center" style="height: 300px; font-weight: 700; font-size: 1.5rem; color: #555;">
         Big Advertisement Here
       </div>
-      <div class="running-ads">
-        <marquee behavior="scroll" direction="left" scrollamount="6">
+      <div class="running-ads mt-3 p-2 bg-warning text-dark border rounded" style="height: 100px; overflow: hidden;">
+        <marquee behavior="scroll" direction="left" scrollamount="6" style="font-weight: 600;">
           Running ads: Get instant loans with low interest! Apply now! &nbsp;&nbsp;|&nbsp;&nbsp; Best loan offers available today! &nbsp;&nbsp;|&nbsp;&nbsp; Trusted by thousands of users!
         </marquee>
       </div>
@@ -69,60 +27,68 @@
 
     <!-- Right Side User/Agent Buttons and Form -->
     <div class="col-md-6">
-      <div class="card p-4 shadow-sm">
-        <h4>Select Role & Register</h4>
+      <div class="card shadow-sm p-4">
+        <h4>Select Register</h4>
         <div class="mb-3">
-          <button id="btnUser" class="btn btn-primary me-2">User</button>
-          <button id="btnAgent" class="btn btn-secondary">Agent</button>
+          <button id="btnUser" class="btn btn-primary me-2 active">User</button>
+          <button id="btnAgent" class="btn btn-outline-secondary">Agent</button>
         </div>
 
         <!-- Basic Profile Form -->
-        <form id="basicProfileForm" method="POST" action="/register/user">
-          <input type="hidden" name="role" id="roleInput" value="user" />
+        <form id="basicProfileForm" method="POST" action="{{ url_for('register_basic') }}">
+          <input type="hidden" name="user_type" id="user_type" value="user" />
+
           <div class="mb-3">
             <label for="first_name" class="form-label">First Name *</label>
             <input type="text" class="form-control" name="first_name" id="first_name" required />
           </div>
+
           <div class="mb-3">
             <label for="last_name" class="form-label">Last Name *</label>
             <input type="text" class="form-control" name="last_name" id="last_name" required />
           </div>
+
           <div class="mb-3">
             <label for="mobile" class="form-label">Mobile Number *</label>
             <input type="tel" class="form-control" name="mobile" id="mobile" required pattern="[0-9]{10}" />
-            <!-- OTP logic can be added later -->
           </div>
+
           <div class="mb-3">
             <label for="email" class="form-label">Email *</label>
             <input type="email" class="form-control" name="email" id="email" required />
           </div>
-          <button type="submit" class="btn btn-success">Next</button>
+
+          <button type="submit" class="btn btn-success w-100">Next</button>
         </form>
       </div>
     </div>
   </div>
 </div>
 
-<!-- Footer -->
-<footer class="bg-light text-center py-3 mt-5 border-top">
-  <div class="container">
-    &copy; 2025 Loan Saathi Hub. All rights reserved.
-  </div>
-</footer>
-
 <script>
-  // Switch form action and role based on button clicked
-  document.getElementById('btnUser').addEventListener('click', function () {
-    document.getElementById('roleInput').value = 'user';
-    document.getElementById('basicProfileForm').action = '/register/user';
+  const btnUser = document.getElementById('btnUser');
+  const btnAgent = document.getElementById('btnAgent');
+  const userTypeInput = document.getElementById('user_type');
+
+  btnUser.addEventListener('click', () => {
+    btnUser.classList.add('btn-primary');
+    btnUser.classList.remove('btn-outline-secondary');
+    btnUser.classList.add('active');
+
+    btnAgent.classList.remove('btn-primary', 'active');
+    btnAgent.classList.add('btn-outline-secondary');
+
+    userTypeInput.value = 'user';
   });
-  document.getElementById('btnAgent').addEventListener('click', function () {
-    document.getElementById('roleInput').value = 'agent';
-    document.getElementById('basicProfileForm').action = '/register/agent';
+
+  btnAgent.addEventListener('click', () => {
+    btnAgent.classList.add('btn-primary', 'active');
+    btnAgent.classList.remove('btn-outline-secondary');
+
+    btnUser.classList.remove('btn-primary', 'active');
+    btnUser.classList.add('btn-outline-secondary');
+
+    userTypeInput.value = 'agent';
   });
 </script>
-
-</body>
-</html>
-
 {% endblock %}

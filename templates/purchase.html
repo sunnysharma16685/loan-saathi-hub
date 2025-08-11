@@ -1,0 +1,18 @@
+{% extends 'base.html' %}
+{% block title %}Purchase Lead{% endblock %}
+{% block content %}
+<div class="mx-auto" style="max-width:600px">
+  <h4>Purchase lead for Loan: {{ loan.id }}</h4>
+  <p>Amount: ₹{{ amount }}</p>
+  <form method="POST">
+    <div class="mb-2">
+      <select name="provider" class="form-control">
+        <option value="mock">Mock Payment (testing)</option>
+        <option value="razorpay">Razorpay</option>
+      </select>
+    </div>
+    <button class="btn btn-primary">Pay Now</button>
+    <a class="btn btn-secondary" href="{{ url_for('dashboard_agent') }}">Cancel</a>
+  </form>
+</div>
+{% endblock %}

@@ -1,359 +1,524 @@
-# app.py
+from fpdf import FPDF
+import io
+from flask import send_file
+from datetime import datetime
+
 import os
-from functools import wraps
-from dotenv import load_dotenv
+import random
 from flask import Flask, render_template, request, redirect, url_for, session, flash
 from supabase import create_client
+from dotenv import load_dotenv
+from functools import wraps
 
+from io import BytesIO
+from reportlab.lib.pagesizes import A4
+from reportlab.pdfgen import canvas
+import decimal
+# optional if using Razorpay
+import razorpay
+
+
+# load .env locally
 load_dotenv()
 
-SUPABASE_URL = os.getenv("SUPABASE_URL")
-SUPABASE_KEY = os.getenv("SUPABASE_KEY")
-SECRET_KEY = os.getenv("SECRET_KEY", "dev-secret")
+SUPABASE_URL = os.getenv('SUPABASE_URL')
+SUPABASE_KEY = os.getenv('SUPABASE_KEY')
+SECRET_KEY = os.getenv('SECRET_KEY', 'dev-secret')
 
 if not SUPABASE_URL or not SUPABASE_KEY:
-    raise RuntimeError("Set SUPABASE_URL and SUPABASE_KEY in .env")
+    raise RuntimeError('SUPABASE_URL and SUPABASE_KEY must be set (see .env)')
 
 supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 app = Flask(__name__)
 app.secret_key = SECRET_KEY
 
-# ---------------------------
-# Helpers & decorators
-# ---------------------------
+# --- helpers ---
 def login_required(role=None):
     def wrapper(fn):
         @wraps(fn)
-        def inner(*args, **kwargs):
-            if "user" not in session:
-                flash("Please login first.", "error")
-                return redirect(url_for("login"))
-            if role and session["user"].get("role") != role:
-                flash("Unauthorized.", "error")
-                return redirect(url_for("index"))
+        def decorated(*args, **kwargs):
+            if 'user' not in session:
+                flash('Please login first.', 'warning')
+                return redirect(url_for('login'))
+            if role and session['user'].get('role') != role:
+                flash('Unauthorized', 'danger')
+                return redirect(url_for('index'))
             return fn(*args, **kwargs)
-        return inner
+        return decorated
     return wrapper
 
-def exists_in_table(table, email=None, mobile=None):
-    # Check email
-    if email:
-        res = supabase.table(table).select("id").eq("email", email).execute()
-        if res and getattr(res, "data", None):
-            return True
-    if mobile:
-        res = supabase.table(table).select("id").eq("mobile", mobile).execute()
-        if res and getattr(res, "data", None):
-            return True
-    return False
-
-# ---------------------------
-# Routes
-# ---------------------------
-@app.route("/")
+# --- routes ---
+@app.route('/')
 def index():
-    # If logged in, redirect to respective dashboard
-    if "user" in session:
-        role = session["user"].get("role")
-        if role == "user":
-            return redirect(url_for("dashboard_user"))
-        if role == "agent":
-            return redirect(url_for("dashboard_agent"))
-        if role == "admin":
-            return redirect(url_for("dashboard_admin"))
-    return render_template("index.html")
+    return render_template('index.html')
 
-
-# Basic registration (index form posts here)
-@app.route("/register/basic", methods=["POST"])
+@app.route('/register/basic', methods=['POST'])
 def register_basic():
-    user_type = request.form.get("user_type")  # user or agent
-    first_name = request.form.get("first_name", "").strip()
-    last_name = request.form.get("last_name", "").strip()
-    mobile = request.form.get("mobile", "").strip()
-    email = request.form.get("email", "").strip()
+    # Basic registration form (from index)
+    user_type = request.form.get('user_type') or request.form.get('role') or 'user'
+    first_name = request.form.get('first_name')
+    last_name = request.form.get('last_name')
+    mobile = request.form.get('mobile')
+    email = request.form.get('email')
 
-    if not (first_name and last_name and mobile and email and user_type):
-        flash("Please fill all fields.", "error")
-        return redirect(url_for("index"))
+    if not (first_name and mobile and email):
+        flash('Please fill required fields', 'danger')
+        return redirect(url_for('index'))
 
-    # Check duplicates in users or agents
-    for t in ("users", "agents"):
-        if exists_in_table(t, email=email, mobile=mobile):
-            flash(f"Already registered (found in {t}). Please login.", "error")
-            return redirect(url_for("index"))
+    # store minimal in session and proceed to complete profile
+    session['basic_profile'] = {
+        'user_type': user_type,
+        'first_name': first_name,
+        'last_name': last_name,
+        'mobile': mobile,
+        'email': email
+    }
 
-    session["basic_profile"] = dict(
-        user_type=user_type,
-        first_name=first_name,
-        last_name=last_name,
-        mobile=mobile,
-        email=email,
-    )
+    if user_type == 'agent':
+        return redirect(url_for('complete_profile_agent'))
+    return redirect(url_for('complete_profile_user'))
 
-    if user_type == "user":
-        return redirect(url_for("complete_profile_user"))
-    else:
-        return redirect(url_for("complete_profile_agent"))
-
-
-# Complete profile - User
-@app.route("/profile/user", methods=["GET", "POST"])
+@app.route('/profile/user', methods=['GET','POST'])
 def complete_profile_user():
-    bp = session.get("basic_profile")
-    if not bp or bp.get("user_type") != "user":
-        flash("Start from the home page registration.", "error")
-        return redirect(url_for("index"))
+    data = session.get('basic_profile')
+    if not data or data.get('user_type') != 'user':
+        flash('Start registration first.', 'warning')
+        return redirect(url_for('index'))
 
-    if request.method == "POST":
-        # Collect profile details
-        profile_data = {
-            "first_name": bp["first_name"],
-            "last_name": bp["last_name"],
-            "email": bp["email"],
-            "mobile": bp["mobile"],
-            "address1": request.form.get("address1"),
-            "address2": request.form.get("address2"),
-            "pin_code": request.form.get("pin_code"),
-            "city": request.form.get("city"),
-            "state": request.form.get("state"),
-            "pan_number": request.form.get("pan_number"),
-            "aadhar_number": request.form.get("aadhar_number"),
-            "itr": request.form.get("itr"),
-            "cibil_score": request.form.get("cibil_score"),
-            "job_or_business": request.form.get("job_or_business"),
-            "job_type": request.form.get("job_type"),
-            "employment_type": request.form.get("employment_type"),
-            "company_name": request.form.get("company_name"),
-            "designation": request.form.get("designation"),
-            "total_experience": request.form.get("total_experience"),
-            "current_company_experience": request.form.get("current_company_experience"),
-            "salary_mode": request.form.get("salary_mode"),
-            "monthly_salary": request.form.get("monthly_salary"),
-            "other_income": request.form.get("other_income"),
-            "business_turnover": request.form.get("business_turnover"),
-            "business_designation": request.form.get("business_designation"),
+    if request.method == 'POST':
+        payload = {
+            'first_name': data['first_name'],
+            'last_name': data['last_name'],
+            'mobile': data['mobile'],
+            'email': data['email'],
+            'address1': request.form.get('address1'),
+            'address2': request.form.get('address2'),
+            'pin_code': request.form.get('pin_code'),
+            'city': request.form.get('city'),
+            'state': request.form.get('state'),
+            'pan_number': request.form.get('pan_number'),
+            'aadhar_number': request.form.get('aadhar_number'),
+            'itr': request.form.get('itr'),
+            'cibil_score': request.form.get('cibil_score'),
+            'job_or_business': request.form.get('job_or_business'),
+            'job_type': request.form.get('job_type'),
+            'employment_type': request.form.get('employment_type'),
+            'company_name': request.form.get('company_name'),
+            'designation': request.form.get('designation'),
+            'total_experience': request.form.get('total_experience'),
+            'current_company_experience': request.form.get('current_company_experience'),
+            'salary_mode': request.form.get('salary_mode'),
+            'monthly_salary': request.form.get('monthly_salary'),
+            'other_income': request.form.get('other_income'),
+            'business_turnover': request.form.get('business_turnover'),
+            'business_designation': request.form.get('business_designation')
         }
-        res = supabase.table("users").insert(profile_data).execute()
-        inserted = getattr(res, "data", None)
-        if inserted:
-            user_row = inserted[0]
-            # create session user
-            session["user"] = dict(
-                id=user_row.get("id"),
-                first_name=user_row.get("first_name"),
-                email=user_row.get("email"),
-                role="user",
-            )
-            session.pop("basic_profile", None)
-            flash("Profile created — welcome!", "success")
-            return redirect(url_for("dashboard_user"))
-        else:
-            flash("Error saving profile. Try again.", "error")
-            return redirect(url_for("complete_profile_user"))
+        # insert to supabase
+        try:
+            supabase.table('users').insert(payload).execute()
+        except Exception as e:
+            app.logger.error('Supabase insert failed: %s', e)
+            flash('Error saving profile', 'danger')
+            return redirect(url_for('complete_profile_user'))
 
-    # GET: render with pre-filled basic data
-    return render_template("complete_profile_user.html", data=bp)
+        session.pop('basic_profile', None)
+        flash('Profile created — please login', 'success')
+        return redirect(url_for('login'))
 
+    return render_template('complete_profile_user.html', data=data)
 
-# Complete profile - Agent
-@app.route("/profile/agent", methods=["GET", "POST"])
+@app.route('/profile/agent', methods=['GET','POST'])
 def complete_profile_agent():
-    bp = session.get("basic_profile")
-    if not bp or bp.get("user_type") != "agent":
-        flash("Start from the home page registration.", "error")
-        return redirect(url_for("index"))
+    data = session.get('basic_profile')
+    if not data or data.get('user_type') != 'agent':
+        flash('Start registration first.', 'warning')
+        return redirect(url_for('index'))
 
-    if request.method == "POST":
-        profile_data = {
-            "first_name": bp["first_name"],
-            "last_name": bp["last_name"],
-            "email": bp["email"],
-            "mobile": bp["mobile"],
-            "agent_type": request.form.get("agent_type"),
-            "dsa_code": request.form.get("dsa_code"),
-            "bank_name": request.form.get("bank_name"),
-            "branch": request.form.get("branch"),
-            "bank_finance_name": request.form.get("bank_finance_name"),
-            "bank_finance_branch": request.form.get("bank_finance_branch"),
-            "designation": request.form.get("designation"),
-            "firm_name": request.form.get("firm_name"),
-            "gst_number": request.form.get("gst_number"),
-            "firm_address": request.form.get("firm_address"),
-            "pin_code": request.form.get("pin_code"),
-            "city": request.form.get("city"),
-            "state": request.form.get("state"),
+    if request.method == 'POST':
+        payload = {
+            'first_name': data['first_name'],
+            'last_name': data['last_name'],
+            'mobile': data['mobile'],
+            'email': data['email'],
+            'agent_type': request.form.get('agent_type'),
+            'dsa_code': request.form.get('dsa_code'),
+            'bank_name': request.form.get('bank_name'),
+            'branch': request.form.get('branch'),
+            'bank_finance_name': request.form.get('bank_finance_name'),
+            'bank_finance_branch': request.form.get('bank_finance_branch'),
+            'designation': request.form.get('designation'),
+            'firm_name': request.form.get('firm_name'),
+            'gst_number': request.form.get('gst_number'),
+            'firm_address': request.form.get('firm_address'),
+            'pin_code': request.form.get('pin_code'),
+            'city': request.form.get('city'),
+            'state': request.form.get('state')
         }
-        res = supabase.table("agents").insert(profile_data).execute()
-        inserted = getattr(res, "data", None)
-        if inserted:
-            agent_row = inserted[0]
-            session["user"] = dict(
-                id=agent_row.get("id"),
-                first_name=agent_row.get("first_name"),
-                email=agent_row.get("email"),
-                role="agent",
-            )
-            session.pop("basic_profile", None)
-            flash("Agent profile created — welcome!", "success")
-            return redirect(url_for("dashboard_agent"))
-        else:
-            flash("Error saving agent profile. Try again.", "error")
-            return redirect(url_for("complete_profile_agent"))
+        try:
+            supabase.table('agents').insert(payload).execute()
+        except Exception as e:
+            app.logger.error('Supabase insert failed: %s', e)
+            flash('Error saving profile', 'danger')
+            return redirect(url_for('complete_profile_agent'))
 
-    return render_template("complete_profile_agent.html", data=bp)
+        session.pop('basic_profile', None)
+        flash('Agent profile created — please login', 'success')
+        return redirect(url_for('login'))
 
+    return render_template('complete_profile_agent.html', data=data)
 
-# Login (user/agent/admin)
-@app.route("/login", methods=["GET", "POST"])
+@app.route('/login', methods=['GET','POST'])
 def login():
-    if request.method == "POST":
-        login_id = request.form.get("identifier", "").strip()
-        password = request.form.get("password", "").strip()  # plaintext for demo (not secure)
-        # Try admins, agents, users (in that order)
-        for table, role in (("admins", "admin"), ("agents", "agent"), ("users", "user")):
-            # first try by email
-            res = supabase.table(table).select("*").eq("email", login_id).execute()
-            data = getattr(res, "data", None)
-            if not data:
-                # try by mobile
-                res = supabase.table(table).select("*").eq("mobile", login_id).execute()
-                data = getattr(res, "data", None)
-            if data:
-                row = data[0]
-                # NOTE: using plaintext passwords for demo. In prod, compare hashed password.
-                if (row.get("password") or "") == password:
-                    session["user"] = dict(
-                        id=row.get("id"),
-                        first_name=row.get("first_name"),
-                        email=row.get("email"),
-                        role=role
-                    )
-                    flash("Login successful.", "success")
-                    if role == "admin":
-                        return redirect(url_for("dashboard_admin"))
-                    elif role == "agent":
-                        return redirect(url_for("dashboard_agent"))
+    if request.method == 'POST':
+        identifier = request.form.get('identifier')
+        password = request.form.get('password')
+
+        # Search users then agents then admins
+        for table, role in [('users','user'), ('agents','agent')]:
+            try:
+                res = supabase.table(table).select('*').eq('email', identifier).execute()
+                row = res.data[0] if res.data else None
+                if not row:
+                    res = supabase.table(table).select('*').eq('mobile', identifier).execute()
+                    row = res.data[0] if res.data else None
+                if row:
+                    # NOTE: this assumes you store plain password column (change to hashed in prod)
+                    if row.get('password') and row.get('password') == password:
+                        session['user'] = {
+                            'id': row.get('id'),
+                            'first_name': row.get('first_name'),
+                            'role': role,
+                            'email': row.get('email')
+                        }
+                        flash('Logged in', 'success')
+                        if role == 'user':
+                            return redirect(url_for('dashboard_user'))
+                        return redirect(url_for('dashboard_agent'))
                     else:
-                        return redirect(url_for("dashboard_user"))
-                else:
-                    flash("Incorrect password.", "error")
-                    return redirect(url_for("login"))
-        flash("User not found.", "error")
-    return render_template("login.html")
+                        flash('Invalid credentials', 'danger')
+                        return redirect(url_for('login'))
+            except Exception:
+                continue
+        flash('User not found', 'warning')
+    return render_template('login.html')
 
-
-@app.route("/logout")
+@app.route('/logout')
 def logout():
     session.clear()
-    flash("Logged out.", "success")
-    return redirect(url_for("index"))
+    flash('Logged out', 'success')
+    return redirect(url_for('index'))
 
-
-# User dashboard
-@app.route("/dashboard/user")
-@login_required(role="user")
+@app.route('/dashboard/user')
+@login_required(role='user')
 def dashboard_user():
-    user_id = session["user"]["id"]
-    # fetch user row (optional)
-    user_row = supabase.table("users").select("*").eq("id", user_id).single().execute().data
-    loans = supabase.table("loan_requests").select("*").eq("user_id", user_id).order("created_at", desc=True).execute().data or []
-    return render_template("dashboard_user.html", user=user_row, loans=loans)
+    # fetch user loans
+    user_id = session['user']['id']
+    loans = supabase.table('loan_requests').select('*').eq('user_id', user_id).execute().data or []
+    return render_template('dashboard_user.html', loans=loans)
 
-
-# Agent dashboard
-@app.route("/dashboard/agent")
-@login_required(role="agent")
+@app.route('/dashboard/agent')
+@login_required(role='agent')
 def dashboard_agent():
-    agent_id = session["user"]["id"]
-    agent_row = supabase.table("agents").select("*").eq("id", agent_id).single().execute().data
-    # Show all pending loans (you can filter by city etc)
-    loans = supabase.table("loan_requests").select("*").order("created_at", desc=True).execute().data or []
-    return render_template("dashboard_agent.html", agent=agent_row, loans=loans)
+    # agent view: show pending loans (simple)
+    loans = supabase.table('loan_requests').select('*').eq('status','Pending').execute().data or []
+    return render_template('dashboard_agent.html', loans=loans)
 
-
-# Loan request (user)
-@app.route("/loan-request", methods=["GET", "POST"])
-@login_required(role="user")
-def loan_request():
-    if request.method == "POST":
-        user_id = session["user"]["id"]
-        loan_type = request.form.get("loan_type")
-        amount = request.form.get("amount")
-        duration = request.form.get("duration")
-        reason = request.form.get("reason")
+# Loan request
+@app.route('/loan-request', methods=['GET','POST'])
+@login_required(role='user')
+def loan_request_route():
+    if request.method == 'POST':
         payload = {
-            "user_id": user_id,
-            "loan_type": loan_type,
-            "amount": amount,
-            "duration": duration,
-            "reason": reason,
-            "status": "Pending"
+            'user_id': session['user']['id'],
+            'loan_type': request.form.get('loan_type'),
+            'amount': request.form.get('amount'),
+            'duration': request.form.get('duration'),
+            'reason': request.form.get('reason'),
+            'status': 'Pending'
         }
-        supabase.table("loan_requests").insert(payload).execute()
-        flash("Loan request submitted.", "success")
-        return redirect(url_for("dashboard_user"))
-    return render_template("loan_request.html")
+        supabase.table('loan_requests').insert(payload).execute()
+        flash('Loan requested', 'success')
+        return redirect(url_for('dashboard_user'))
+    return render_template('loan_request.html')
 
+def generate_loan_pdf(loan):
+    """
+    loan: dict with loan details + user info
+    returns BytesIO of PDF
+    """
+    buffer = BytesIO()
+    p = canvas.Canvas(buffer, pagesize=A4)
+    width, height = A4
+    x = 40
+    y = height - 60
+    p.setFont("Helvetica-Bold", 16)
+    p.drawString(x, y, "Loan Profile - LoanSaathiHub")
+    y -= 30
+    p.setFont("Helvetica", 11)
+    p.drawString(x, y, f"Loan ID: {loan.get('id') or loan.get('loan_id')}")
+    y -= 20
+    p.drawString(x, y, f"Loan Type: {loan.get('loan_type')}")
+    y -= 20
+    p.drawString(x, y, f"Amount: {loan.get('amount')}")
+    y -= 20
+    p.drawString(x, y, f"Duration (months): {loan.get('duration')}")
+    y -= 30
 
-# Agent opens loan -> view profile (mark Active)
-@app.route("/loan/<int:loan_id>/view")
-@login_required(role="agent")
-def view_loan(loan_id):
+    # user info if present
+    user = loan.get('user') or {}
+    p.setFont("Helvetica-Bold", 12)
+    p.drawString(x, y, "Applicant Details:")
+    y -= 20
+    p.setFont("Helvetica", 11)
+    p.drawString(x, y, f"Name: {user.get('first_name','') } {user.get('last_name','')}")
+    y -= 18
+    p.drawString(x, y, f"Email: {user.get('email','')}")
+    y -= 18
+    p.drawString(x, y, f"Mobile: {user.get('mobile','')}")
+    y -= 18
+    p.drawString(x, y, f"Address: {user.get('address1','')} {user.get('address2','')}, {user.get('city','')} - {user.get('pin_code','')}")
+    y -= 30
+
+    p.setFont("Helvetica-Oblique", 9)
+    p.drawString(x, y, f"Generated by LoanSaathiHub on {str(datetime.datetime.utcnow())[:19]} UTC")
+    p.showPage()
+    p.save()
+    buffer.seek(0)
+    return buffer
+
+@app.route('/loan/<loan_id>/pdf')
+@login_required(role='agent')
+def loan_pdf(loan_id):
     # fetch loan and user
-    loan_res = supabase.table("loan_requests").select("*").eq("id", loan_id).single().execute()
-    loan = getattr(loan_res, "data", None)
-    if not loan:
-        flash("Loan not found.", "error")
-        return redirect(url_for("dashboard_agent"))
+    loan_res = supabase.table('loan_requests').select('*').eq('id', loan_id).single().execute()
     loan = loan_res.data
-    user_row = supabase.table("users").select("*").eq("id", loan.get("user_id")).single().execute().data
-    # mark active and attach agent
-    supabase.table("loan_requests").update({"status": "Active", "agent_id": session["user"]["id"]}).eq("id", loan_id).execute()
-    return render_template("loan_profile_view.html", loan=loan, user=user_row)
+    if not loan:
+        flash('Loan not found', 'danger')
+        return redirect(url_for('dashboard_agent'))
+    # fetch user record
+    user_res = supabase.table('users').select('*').eq('id', loan.get('user_id')).single().execute()
+    loan['user'] = user_res.data if user_res and user_res.data else {}
+    pdf_buffer = generate_loan_pdf(loan)
+    # mark loan as Active if not already (agent opened profile)
+    try:
+        supabase.table('loan_requests').update({'status':'Active'}).eq('id', loan_id).execute()
+    except Exception:
+        pass
+    return send_file(pdf_buffer, as_attachment=False, download_name=f"loan_{loan_id}.pdf", mimetype='application/pdf')
+
+@app.route('/purchase/<loan_id>', methods=['GET','POST'])
+@login_required(role='agent')
+def purchase_lead(loan_id):
+    # display payment page
+    loan_res = supabase.table('loan_requests').select('*').eq('id', loan_id).single().execute()
+    loan = loan_res.data
+    if not loan:
+        flash('Loan not found', 'danger')
+        return redirect(url_for('dashboard_agent'))
+
+    amount = 99.00  # INR 99
+    if request.method == 'POST':
+        provider = request.form.get('provider','mock')
+        # create payment row pending
+        payment_payload = {
+            'loan_request_id': loan_id,
+            'agent_id': session['user']['id'],
+            'amount': decimal.Decimal(str(amount)),
+            'provider': provider,
+            'status': 'pending'
+        }
+        pay_res = supabase.table('payments').insert(payment_payload).execute()
+        payment_row = pay_res.data[0] if pay_res and pay_res.data else None
+
+        if provider == 'razorpay' and razorpay_client:
+            # create razorpay order
+            order = razorpay_client.order.create(dict(amount=int(amount*100), currency='INR', receipt=str(payment_row.get('id'))))
+            # pass order id to template to complete checkout in frontend (Razorpay checkout)
+            return render_template('payment.html', loan=loan, provider='razorpay', order=order, amount=amount)
+        else:
+            # mock success: update payment and loan status
+            supabase.table('payments').update({'status':'success', 'provider_payment_id': 'MOCK123'}).eq('id', payment_row['id']).execute()
+            supabase.table('loan_requests').update({'status':'Approved'}).eq('id', loan_id).execute()
+            flash('Payment successful (mock). Lead unlocked.', 'success')
+            return redirect(url_for('dashboard_agent'))
+
+    return render_template('purchase.html', loan=loan, amount=amount)
+
+def generate_pdf_for_loan(loan, full=False):
+    """
+    loan: dict from loan_requests containing user info (we try to fetch user by user_id)
+    full: if False => hide mobile, email, address; if True => show all
+    returns bytes
+    """
+    # fetch user info
+    user = None
+    try:
+        user_res = supabase.table("users").select("*").eq("id", loan.get("user_id")).single().execute()
+        user = user_res.data if user_res and user_res.data else {}
+    except Exception:
+        user = {}
+
+    pdf = FPDF()
+    pdf.add_page()
+    pdf.set_font("Arial", size=12)
+
+    pdf.cell(0, 10, "LoanSaathiHub - Lead Details", ln=True, align="C")
+    pdf.ln(4)
+    pdf.set_font("Arial", size=11)
+    pdf.cell(50, 8, "Loan ID:", ln=0)
+    pdf.cell(0, 8, str(loan.get("id") or loan.get("loan_id", "")), ln=True)
+
+    pdf.cell(50, 8, "Loan Type:", ln=0)
+    pdf.cell(0, 8, str(loan.get("loan_type", "")), ln=True)
+
+    pdf.cell(50, 8, "Amount:", ln=0)
+    pdf.cell(0, 8, str(loan.get("amount", "")), ln=True)
+
+    pdf.cell(50, 8, "Duration (months):", ln=0)
+    pdf.cell(0, 8, str(loan.get("duration", "")), ln=True)
+    pdf.ln(6)
+
+    pdf.cell(0, 8, "Applicant Details:", ln=True)
+    pdf.ln(2)
+
+    pdf.cell(50, 8, "Name:", ln=0)
+    pdf.cell(0, 8, f"{user.get('first_name','')} {user.get('last_name','')}", ln=True)
+
+    # Contact fields: hide if partial
+    if full:
+        pdf.cell(50, 8, "Mobile:", ln=0)
+        pdf.cell(0, 8, user.get('mobile', 'N/A'), ln=True)
+
+        pdf.cell(50, 8, "Email:", ln=0)
+        pdf.cell(0, 8, user.get('email', 'N/A'), ln=True)
+
+        pdf.cell(50, 8, "Address:", ln=0)
+        addr = ", ".join(filter(None, [user.get('address1'), user.get('address2'), user.get('city'), user.get('state'), user.get('pin_code')]))
+        pdf.multi_cell(0, 6, addr or "N/A")
+    else:
+        pdf.cell(50, 8, "Mobile:", ln=0)
+        pdf.cell(0, 8, "****", ln=True)
+
+        pdf.cell(50, 8, "Email:", ln=0)
+        pdf.cell(0, 8, "****", ln=True)
+
+        pdf.cell(50, 8, "Address:", ln=0)
+        pdf.cell(0, 8, "****", ln=True)
+
+    pdf.ln(6)
+    pdf.cell(0, 8, "Note: This is a generated PDF from LoanSaathiHub", ln=True)
+    # Return bytes
+    out = pdf.output(dest='S').encode('latin-1')
+    return out
+
+@app.route('/agent/leads')
+@login_required(role='agent')
+def agent_leads():
+    # list leads (Pending/Active etc.)
+    try:
+        loans_res = supabase.table("loan_requests").select("*").order("created_at", desc=True).execute()
+        loans = loans_res.data if loans_res and loans_res.data else []
+    except Exception as e:
+        app.logger.error("Error fetching leads: %s", e)
+        loans = []
+
+    # fetch payments for this agent to know what is purchased
+    agent_email = session['user'].get('email')
+    try:
+        payments_res = supabase.table("payments").select("*").eq("agent_email", agent_email).execute()
+        payments = payments_res.data if payments_res and payments_res.data else []
+        purchased_loan_ids = {p.get('loan_id') for p in payments}
+    except Exception:
+        purchased_loan_ids = set()
+
+    return render_template('agent_leads.html', loans=loans, purchased_loan_ids=purchased_loan_ids)
+
+@app.route('/loan/<loan_id>/partial-pdf')
+@login_required(role='agent')
+def partial_pdf(loan_id):
+    try:
+        res = supabase.table("loan_requests").select("*").eq("id", loan_id).single().execute()
+        loan = res.data if res and res.data else None
+    except Exception as e:
+        app.logger.error("Error fetching loan: %s", e)
+        loan = None
+
+    if not loan:
+        flash("Lead not found", "error")
+        return redirect(url_for('agent_leads'))
+
+    pdf_bytes = generate_pdf_for_loan(loan, full=False)
+    return send_file(io.BytesIO(pdf_bytes), download_name=f"lead_{loan_id}_partial.pdf", as_attachment=True, mimetype='application/pdf')
+
+@app.route('/loan/<loan_id>/buy', methods=['GET','POST'])
+@login_required(role='agent')
+def buy_lead(loan_id):
+    # Simple mock payment: GET shows details + Pay button, POST simulates successful payment
+    try:
+        res = supabase.table("loan_requests").select("*").eq("id", loan_id).single().execute()
+        loan = res.data if res and res.data else None
+    except Exception as e:
+        app.logger.error("Error fetching loan: %s", e)
+        loan = None
+
+    if not loan:
+        flash("Lead not found", "error")
+        return redirect(url_for('agent_leads'))
+
+    if request.method == 'POST':
+        # create payment record
+        payment_payload = {
+            "loan_id": loan_id,
+            "agent_email": session['user'].get('email'),
+            "amount": 99.0,  # fixed price
+            "currency": "INR",
+            "status": "success",
+            "paid_at": datetime.utcnow().isoformat()
+        }
+        try:
+            supabase.table("payments").insert(payment_payload).execute()
+        except Exception as e:
+            app.logger.error("Error recording payment: %s", e)
+            flash("Payment failed to be recorded", "danger")
+            return redirect(url_for('agent_leads'))
+
+        flash("Payment successful — full lead unlocked", "success")
+        return redirect(url_for('download_full_pdf', loan_id=loan_id))
+
+    return render_template('buy_lead.html', loan=loan)
+
+@app.route('/loan/<loan_id>/full-pdf')
+@login_required(role='agent')
+def download_full_pdf(loan_id):
+    # check payment exists
+    agent_email = session['user'].get('email')
+    try:
+        pay_res = supabase.table("payments").select("*").eq("loan_id", loan_id).eq("agent_email", agent_email).execute()
+        paid = bool(pay_res and pay_res.data)
+    except Exception as e:
+        app.logger.error("Payment check error: %s", e)
+        paid = False
+
+    if not paid:
+        flash("You must purchase the lead to download full details.", "warning")
+        return redirect(url_for('buy_lead', loan_id=loan_id))
+
+    try:
+        res = supabase.table("loan_requests").select("*").eq("id", loan_id).single().execute()
+        loan = res.data if res and res.data else None
+    except Exception as e:
+        app.logger.error("Error fetching loan: %s", e)
+        loan = None
+
+    if not loan:
+        flash("Lead not found", "error")
+        return redirect(url_for('agent_leads'))
+
+    pdf_bytes = generate_pdf_for_loan(loan, full=True)
+    return send_file(io.BytesIO(pdf_bytes), download_name=f"lead_{loan_id}_full.pdf", as_attachment=True, mimetype='application/pdf')
 
 
-# Agent approve or reject (with remark)
-@app.route("/loan/<int:loan_id>/action", methods=["POST"])
-@login_required(role="agent")
-def loan_action(loan_id):
-    action = request.form.get("action")  # approve or reject
-    remark = request.form.get("remark")
-    update_payload = {"remark": remark}
-    if action == "approve":
-        update_payload["status"] = "Approved"
-    elif action == "reject":
-        update_payload["status"] = "Rejected"
-    supabase.table("loan_requests").update(update_payload).eq("id", loan_id).execute()
-    flash("Action saved.", "success")
-    return redirect(url_for("dashboard_agent"))
 
-
-# Admin dashboard (counts)
-@app.route("/dashboard/admin")
-@login_required(role="admin")
-def dashboard_admin():
-    users = supabase.table("users").select("id").execute().data or []
-    agents = supabase.table("agents").select("id").execute().data or []
-    loans = supabase.table("loan_requests").select("id,status").execute().data or []
-    payments = supabase.table("payments").select("amount").execute().data or []
-
-    total_users = len(users)
-    total_agents = len(agents)
-    total_loans = len(loans)
-    total_rejected = len([l for l in loans if l.get("status") == "Rejected"])
-    total_approved = len([l for l in loans if l.get("status") == "Approved"])
-    total_payments = sum([p.get("amount", 0) for p in payments])
-
-    return render_template("dashboard_admin.html",
-                           total_users=total_users,
-                           total_agents=total_agents,
-                           total_loans=total_loans,
-                           total_rejected=total_rejected,
-                           total_approved=total_approved,
-                           total_payments=total_payments)
-
-
-if __name__ == "__main__":
-    app.run(debug=True, host="0.0.0.0")
+if __name__ == '__main__':
+    app.run(debug=True)

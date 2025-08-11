@@ -2,7 +2,7 @@ Flask>=2.2
 python-dotenv>=1.0
 supabase>=0.2.8
 psycopg2-binary>=2.9
-gunicornreportlab>=4.0
-# If you use Razorpay (real payments)
+gunicorn>=20.1.0
+reportlab>=4.0
 razorpay>=1.0.0
 fpdf2>=2.5.7

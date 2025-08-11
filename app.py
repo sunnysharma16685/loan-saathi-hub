@@ -311,6 +311,26 @@ def update_agent_status(agent_id):
         flash("Agent activated/reactivated.", "success")
     return redirect(url_for('dashboard_admin'))
 
+@app.route("/about")
+def about():
+    return render_template("about.html")
+@app.route("/privacy")
+def privacy():
+    return render_template("privacy.html")
+
+@app.route("/terms")
+def terms():
+    return render_template("terms.html")
+
+@app.route("/support")
+def support():
+    return render_template("support.html")
+
+@app.route("/contact")
+def contact():
+    return render_template("contact.html")
+
+
 # Run app
 if __name__ == "__main__":
     app.run(debug=True)

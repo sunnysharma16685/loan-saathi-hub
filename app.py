@@ -75,11 +75,14 @@ def register_basic():
         'email': email
     }
 
-    if user_type == 'agent':
-        return redirect(url_for('complete_profile_agent'))
-    return redirect(url_for('complete_profile_user'))
+    if user_type == 'user':
+        return render_template('complete_profile_user', data=data)
 
-@app.route('/profile/user', methods=['GET','POST'])
+    if user_type == 'agent':
+    return render_template('complete_profile_agent.html', data=data)
+
+
+@app.route('/profile/user', methods=['GET', 'POST'])
 def complete_profile_user():
     data = session.get('basic_profile')
     if not data or data.get('user_type') != 'user':
@@ -114,7 +117,6 @@ def complete_profile_user():
             'business_turnover': request.form.get('business_turnover'),
             'business_designation': request.form.get('business_designation')
         }
-        # insert to supabase
         try:
             supabase.table('users').insert(payload).execute()
         except Exception as e:
@@ -126,9 +128,10 @@ def complete_profile_user():
         flash('Profile created — please login', 'success')
         return redirect(url_for('login'))
 
-    return render_template('complete_profile_user', data=data)
+    return render_template('complete_profile_user.html', data=data)  # ✅ Fixed
 
-@app.route('/profile/agent', methods=['GET','POST'])
+
+@app.route('/profile/agent', methods=['GET', 'POST'])
 def complete_profile_agent():
     data = session.get('basic_profile')
     if not data or data.get('user_type') != 'agent':
@@ -166,7 +169,7 @@ def complete_profile_agent():
         flash('Agent profile created — please login', 'success')
         return redirect(url_for('login'))
 
-    return render_template('complete_profile_agent', data=data)
+    return render_template('complete_profile_agent.html', data=data)  # ✅ Fixed
 
 @app.route('/login', methods=['GET','POST'])
 def login():

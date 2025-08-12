@@ -59,17 +59,19 @@ def register_basic():
     user_type = request.form.get('user_type') or request.form.get('role') or 'user'
     first_name = request.form.get('first_name')
     last_name = request.form.get('last_name')
-    mobile = request.form.get('mobile')
-    email = request.form.get('email')
-    password = request.form.get('password')
-    password2 = request.form.get('password2')
+  mobile = request.form.get('mobile')
+email = request.form.get('email')
+password = request.form.get('password')
+password2 = request.form.get('password2')
 
-    if not (first_name and mobile and email):
-        flash('Please fill required fields', 'danger')
-        return redirect(url_for('index'))
-    if not password or password != password2:
+if not (first_name and mobile and email):
+    flash('Please fill required fields', 'danger')
+    return redirect(url_for('index'))
+
+if not password or password != password2:
     flash('Passwords do not match or empty', 'danger')
     return redirect(url_for('index'))
+
 
     # store minimal in session and proceed to complete profile
     session['basic_profile'] = {

@@ -89,7 +89,6 @@ def register_basic():
     if user_type == 'agent':
         return render_template('complete_profile_agent.html', data=data)
 
-
 @app.route('/profile/user', methods=['GET', 'POST'])
 def complete_profile_user():
     data = session.get('basic_profile')
@@ -102,7 +101,7 @@ def complete_profile_user():
             'first_name': data['first_name'],
             'last_name': data['last_name'],
             'mobile': data['mobile'],
-            'password': data['password'],
+            'password_hash': data['password'],
             'email': data['email'],
             'address1': request.form.get('address1'),
             'address2': request.form.get('address2'),
@@ -137,7 +136,7 @@ def complete_profile_user():
         flash('Profile created — please login', 'success')
         return redirect(url_for('login'))
 
-    return render_template('complete_profile_user.html', data=data)  # ✅ Fixed
+    return render_template('complete_profile_user.html', data=data)
 
 
 @app.route('/profile/agent', methods=['GET', 'POST'])
@@ -152,7 +151,7 @@ def complete_profile_agent():
             'first_name': data['first_name'],
             'last_name': data['last_name'],
             'mobile': data['mobile'],
-            'password': data['password'],
+            'password_hash': data['password'],
             'email': data['email'],
             'agent_type': request.form.get('agent_type'),
             'dsa_code': request.form.get('dsa_code'),
@@ -179,7 +178,7 @@ def complete_profile_agent():
         flash('Agent profile created — please login', 'success')
         return redirect(url_for('login'))
 
-    return render_template('complete_profile_agent.html', data=data)  # ✅ Fixed
+    return render_template('complete_profile_agent.html', data=data)
 
 @app.route('/login', methods=['GET','POST'])
 def login():

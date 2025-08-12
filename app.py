@@ -61,19 +61,25 @@ def register_basic():
     last_name = request.form.get('last_name')
     mobile = request.form.get('mobile')
     email = request.form.get('email')
+    password = request.form.get('password')
+    password2 = request.form.get('password2')
 
     if not (first_name and mobile and email):
         flash('Please fill required fields', 'danger')
         return redirect(url_for('index'))
+    if not password or password != password2:
+    flash('Passwords do not match or empty', 'danger')
+    return redirect(url_for('index'))
 
     # store minimal in session and proceed to complete profile
     session['basic_profile'] = {
-        'user_type': user_type,
-        'first_name': first_name,
-        'last_name': last_name,
-        'mobile': mobile,
-        'email': email
-    }
+    'user_type': user_type,
+    'first_name': first_name,
+    'last_name': last_name,
+    'mobile': mobile,
+    'email': email,
+    'password': password  # Abcd@123
+}
 
     data = session.get('basic_profile')
 
@@ -96,6 +102,7 @@ def complete_profile_user():
             'first_name': data['first_name'],
             'last_name': data['last_name'],
             'mobile': data['mobile'],
+	    'password': data['password'],
             'email': data['email'],
             'address1': request.form.get('address1'),
             'address2': request.form.get('address2'),
@@ -145,6 +152,7 @@ def complete_profile_agent():
             'first_name': data['first_name'],
             'last_name': data['last_name'],
             'mobile': data['mobile'],
+	    'password': data['password'],
             'email': data['email'],
             'agent_type': request.form.get('agent_type'),
             'dsa_code': request.form.get('dsa_code'),

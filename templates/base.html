@@ -11,7 +11,8 @@
 <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
   <div class="container">
     <a class="navbar-brand" href="{{ url_for('index') }}">LoanSaathiHub</a>
-    <div class="ms-auto">
+    <div class="ms-auto d-flex align-items-center gap-2">
+      <a class="btn btn-outline-light btn-sm" href="{{ url_for('index') }}">Home</a>
       {% if session.get('user') %}
         <span class="text-white me-2">Hi {{ session['user']['first_name'] }}</span>
         <a class="btn btn-outline-light btn-sm" href="{{ url_for('logout') }}">Logout</a>

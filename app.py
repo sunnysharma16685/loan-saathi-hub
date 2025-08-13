@@ -1,3 +1,6 @@
+# app.py (top of file, after imports)
+dummy_otp_store = {}  # Mobile -> OTP mapping for temporary storage
+
 from fpdf import FPDF
 import io
 from flask import send_file

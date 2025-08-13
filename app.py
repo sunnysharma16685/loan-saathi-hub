@@ -67,9 +67,6 @@ def register_basic():
     password = request.form.get('password')
     password2 = request.form.get('password2')
 
-        flash("Registration successful!", "success")
-        return redirect(url_for("index"))    
-
     if not (first_name and mobile and email):
         flash('Please fill required fields', 'danger')
         return redirect(url_for('index'))

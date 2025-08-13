@@ -52,8 +52,9 @@
   <table class="table table-bordered table-striped">
     <thead>
       <tr>
-        <th>User ID</th>
+        <th>Mobile</th>
         <th>Full Name</th>
+        <th>Address</th>
         <th>Status</th>
         <th>Actions</th>
       </tr>
@@ -61,11 +62,14 @@
     <tbody>
       {% for user in users %}
       <tr>
-        <td>LSHU{{ "%04d"|format(user.id) }}</td>
+        <td>{{ user.mobile }}</td>
         <td>{{ user.first_name }} {{ user.last_name }}</td>
+        <td>
+          {{ user.address1 }}, {{ user.address2 }}, {{ user.city }}, {{ user.state }}, {{ user.pin_code }}
+        </td>
         <td>{{ user.status or 'Inactive' }}</td>
         <td>
-          <form method="POST" action="{{ url_for('update_user_status', user_id=user.id) }}" style="display:inline;">
+          <form method="POST" action="{{ url_for('update_user_status', mobile=user.mobile) }}" style="display:inline;">
             <select name="action" class="form-select form-select-sm d-inline w-auto">
               <option value="active">Active</option>
               <option value="reactive">Reactive</option>
@@ -76,7 +80,7 @@
         </td>
       </tr>
       {% else %}
-      <tr><td colspan="4">No users found.</td></tr>
+      <tr><td colspan="5">No users found.</td></tr>
       {% endfor %}
     </tbody>
   </table>
@@ -85,8 +89,10 @@
   <table class="table table-bordered table-striped">
     <thead>
       <tr>
-        <th>Agent ID</th>
+        <th>Email</th>
         <th>Full Name</th>
+        <th>Mobile</th>
+        <th>Address</th>
         <th>Status</th>
         <th>Actions</th>
       </tr>
@@ -94,11 +100,13 @@
     <tbody>
       {% for agent in agents %}
       <tr>
-        <td>LSHA{{ "%04d"|format(agent.id) }}</td>
+        <td>{{ agent.email }}</td>
         <td>{{ agent.first_name }} {{ agent.last_name }}</td>
+        <td>{{ agent.mobile }}</td>
+        <td>{{ agent.firm_address }}, {{ agent.city }}, {{ agent.state }}, {{ agent.pin_code }}</td>
         <td>{{ agent.status or 'Inactive' }}</td>
         <td>
-          <form method="POST" action="{{ url_for('update_agent_status', agent_id=agent.id) }}" style="display:inline;">
+          <form method="POST" action="{{ url_for('update_agent_status', email=agent.email) }}" style="display:inline;">
             <select name="action" class="form-select form-select-sm d-inline w-auto">
               <option value="active">Active</option>
               <option value="reactive">Reactive</option>
@@ -109,7 +117,7 @@
         </td>
       </tr>
       {% else %}
-      <tr><td colspan="4">No agents found.</td></tr>
+      <tr><td colspan="6">No agents found.</td></tr>
       {% endfor %}
     </tbody>
   </table>

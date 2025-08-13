@@ -225,8 +225,8 @@ def logout():
 @login_required(role='user')
 def dashboard_user():
     # fetch user loans
-    user_id = session['user']['id']
-    loans = supabase.table('loan_requests').select('*').eq('user_id', user_id).execute().data or []
+    user_mobile = session['user']['mobile']
+    loans = supabase.table('loan_requests').select('*').eq('user_mobile', user_mobile).execute().data or []
     return render_template('dashboard_user.html', loans=loans)
 
 @app.route('/dashboard/agent')
@@ -241,16 +241,37 @@ def dashboard_agent():
 @login_required(role='user')
 def loan_request_route():
     if request.method == 'POST':
+        # Generate unique loan_id
+        try:
+            res = supabase.table('loan_requests').select('loan_id').order('created_at', desc=True).limit(1).execute()
+            last_loan = res.data[0] if res.data else None
+            if last_loan and last_loan.get('loan_id'):
+                last_num = int(last_loan['loan_id'].replace('LSH',''))
+                new_num = last_num + 1
+            else:
+                new_num = 1
+            loan_id = f"LSH{str(new_num).zfill(4)}"
+        except Exception as e:
+            app.logger.error("Loan ID generation failed: %s", e)
+            loan_id = "LSH0001"
+
         payload = {
-            'user_id': session['user']['id'],
+            'loan_id': loan_id,
+            'user_mobile': session['user']['mobile'],  # user identification by mobile
             'loan_type': request.form.get('loan_type'),
             'amount': request.form.get('amount'),
             'duration': request.form.get('duration'),
             'reason': request.form.get('reason'),
             'status': 'Pending'
         }
-        supabase.table('loan_requests').insert(payload).execute()
-        flash('Loan requested', 'success')
+
+        try:
+            supabase.table('loan_requests').insert(payload).execute()
+            flash(f'Loan requested successfully. Your Loan ID is {loan_id}', 'success')
+        except Exception as e:
+            app.logger.error("Loan request insert failed: %s", e)
+            flash('Error requesting loan', 'danger')
+
         return redirect(url_for('dashboard_user'))
     return render_template('loan_request.html')
 
@@ -335,7 +356,7 @@ def purchase_lead(loan_id):
         # create payment row pending
         payment_payload = {
             'loan_request_id': loan_id,
-            'agent_id': session['user']['id'],
+            'agent_email': session['user']['email'],
             'amount': decimal.Decimal(str(amount)),
             'provider': provider,
             'status': 'pending'
@@ -366,7 +387,7 @@ def generate_pdf_for_loan(loan, full=False):
     # fetch user info
     user = None
     try:
-        user_res = supabase.table("users").select("*").eq("id", loan.get("user_id")).single().execute()
+        user_res = supabase.table("users").select("*").eq("mobile", loan.get("user_mobile")).single().execute()
         user = user_res.data if user_res and user_res.data else {}
     except Exception:
         user = {}
@@ -450,7 +471,7 @@ def agent_leads():
 @login_required(role='agent')
 def partial_pdf(loan_id):
     try:
-        res = supabase.table("loan_requests").select("*").eq("id", loan_id).single().execute()
+        user_res = supabase.table('users').select('*').eq('mobile', loan.get('user_mobile')).single().execute()
         loan = res.data if res and res.data else None
     except Exception as e:
         app.logger.error("Error fetching loan: %s", e)

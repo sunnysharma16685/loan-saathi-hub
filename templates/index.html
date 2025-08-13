@@ -16,14 +16,41 @@
       </div>
       <form id="basicProfileForm" method="POST" action="{{ url_for('register_basic') }}">
         <input type="hidden" name="user_type" id="user_type" value="user">
+        
+        <!-- First and Last Name -->
         <div class="mb-2"><input class="form-control" name="first_name" placeholder="First name" required></div>
         <div class="mb-2"><input class="form-control" name="last_name" placeholder="Last name" required></div>
-        <div class="mb-2"><input class="form-control" name="mobile" placeholder="Mobile" pattern="[0-9]{10}" required>
-	<div class="mb-2"><input type="password" name="password" placeholder="Create password" required />
-	<div class="mb-2"><input type="password" name="password2" placeholder="Confirm password" required />
+        
+        <!-- Mobile + Send OTP button -->
+        <div class="row g-2 mb-2">
+          <div class="col-8">
+            <input class="form-control" name="mobile" id="mobile" placeholder="Mobile" pattern="[0-9]{10}" required>
+          </div>
+          <div class="col-4">
+            <button type="button" class="btn btn-outline-primary w-100" onclick="sendOTP()">Send OTP</button>
+          </div>
+        </div>
 
-</div>
-        <div class="mb-2"><input class="form-control" name="email" placeholder="Email" type="email" required></div>
+        <!-- OTP input -->
+        <div class="mb-2">
+          <input class="form-control" name="otp" id="otp" placeholder="Enter OTP" required>
+        </div>
+
+        <!-- Password and Confirm Password same row -->
+        <div class="row g-2 mb-2">
+          <div class="col-6">
+            <input type="password" class="form-control" name="password" placeholder="Create password" required />
+          </div>
+          <div class="col-6">
+            <input type="password" class="form-control" name="password2" placeholder="Confirm password" required />
+          </div>
+        </div>
+
+        <!-- Email -->
+        <div class="mb-2">
+          <input class="form-control" name="email" placeholder="Email" type="email" required>
+        </div>
+
         <button class="btn btn-success w-100">Next</button>
       </form>
     </div>
@@ -46,5 +73,14 @@
     btnUser.classList.remove('btn-primary'); btnUser.classList.add('btn-outline-secondary');
     userTypeInput.value = 'agent';
   });
+
+  function sendOTP() {
+    let mobile = document.getElementById("mobile").value;
+    if (!mobile || mobile.length < 10) {
+      alert("Please enter a valid mobile number");
+      return;
+    }
+    alert("OTP sent to " + mobile + " (Dummy OTP: 123456)");
+  }
 </script>
 {% endblock %}

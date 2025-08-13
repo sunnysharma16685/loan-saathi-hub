@@ -59,9 +59,18 @@ def register_basic():
     user_type = request.form.get('user_type') or request.form.get('role') or 'user'
     first_name = request.form.get('first_name')
     mobile = request.form.get('mobile')
+    otp = request.form.get("otp")
     email = request.form.get('email')
     password = request.form.get('password')
     password2 = request.form.get('password2')
+
+        # OTP match check
+    if mobile not in dummy_otp_store or otp != dummy_otp_store[mobile]:
+        flash("Invalid OTP. Please try again.", "danger")
+        return redirect(url_for("index"))
+        
+        flash("Registration successful!", "success")
+        return redirect(url_for("index"))    
 
     if not (first_name and mobile and email):
         flash('Please fill required fields', 'danger')
@@ -88,6 +97,16 @@ def register_basic():
 
     if user_type == 'agent':
         return render_template('complete_profile_agent.html', data=data)
+
+@app.route("/send_otp", methods=["POST"])
+def send_otp():
+    mobile = request.form.get("mobile")
+    if not mobile or len(mobile) != 10:
+        return {"status": "error", "message": "Invalid mobile number"}, 400
+
+    otp = "123456"  # dummy OTP
+    dummy_otp_store[mobile] = otp
+    return {"status": "success", "otp": otp}
 
 @app.route('/profile/user', methods=['GET', 'POST'])
 def complete_profile_user():

@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+{% extends "base.html" %} 
 {% block title %}Home - LoanSaathiHub{% endblock %}
 {% block content %}
 <div class="row">
@@ -16,40 +16,33 @@
       </div>
       <form id="basicProfileForm" method="POST" action="{{ url_for('register_basic') }}">
         <input type="hidden" name="user_type" id="user_type" value="user">
-        
-        <!-- First and Last Name -->
         <div class="mb-2"><input class="form-control" name="first_name" placeholder="First name" required></div>
         <div class="mb-2"><input class="form-control" name="last_name" placeholder="Last name" required></div>
-        
+
         <!-- Mobile + Send OTP -->
-<div class="mb-2">
-  <div class="input-group">
-    <input class="form-control" name="mobile" placeholder="Mobile" pattern="[0-9]{10}" required>
-    <button type="button" class="btn btn-outline-secondary" id="sendOtpBtn">Send OTP</button>
-  </div>
-</div>
-
-<!-- OTP input (hidden until OTP is sent) -->
-<div class="mb-2" id="otpWrap" style="display:none;">
-  <input class="form-control" name="otp" placeholder="Enter OTP" required>
-</div>
-
-<!-- Password + Confirm Password in same row -->
-<div class="row">
-  <div class="col-md-6 mb-2">
-    <input class="form-control" type="password" name="password" placeholder="Create password" required>
-  </div>
-  <div class="col-md-6 mb-2">
-    <input class="form-control" type="password" name="password2" placeholder="Confirm password" required>
-  </div>
-</div>
-
-
-        <!-- Email -->
         <div class="mb-2">
-          <input class="form-control" name="email" placeholder="Email" type="email" required>
+          <div class="input-group">
+            <input class="form-control" name="mobile" id="mobileInput" placeholder="Mobile" pattern="[0-9]{10}" required>
+            <button type="button" class="btn btn-outline-secondary" id="sendOtpBtn">Send OTP</button>
+          </div>
         </div>
 
+        <!-- OTP input hidden initially -->
+        <div class="mb-2" id="otpWrap" style="display:none;">
+          <input class="form-control" name="otp" placeholder="Enter OTP" required>
+        </div>
+
+        <!-- Password & Confirm Password -->
+        <div class="row mb-2">
+          <div class="col">
+            <input type="password" class="form-control" name="password" placeholder="Create password" required>
+          </div>
+          <div class="col">
+            <input type="password" class="form-control" name="password2" placeholder="Confirm password" required>
+          </div>
+        </div>
+
+        <div class="mb-2"><input class="form-control" name="email" placeholder="Email" type="email" required></div>
         <button class="btn btn-success w-100">Next</button>
       </form>
     </div>
@@ -57,38 +50,29 @@
 </div>
 
 <script>
-  const btnUser = document.getElementById('btnUser');
-  const btnAgent = document.getElementById('btnAgent');
-  const userTypeInput = document.getElementById('user_type');
+  document.addEventListener("DOMContentLoaded", function () {
+    const btnUser = document.getElementById('btnUser');
+    const btnAgent = document.getElementById('btnAgent');
+    const userTypeInput = document.getElementById('user_type');
 
-  btnUser.addEventListener('click', () => {
-    btnUser.classList.add('btn-primary'); btnUser.classList.remove('btn-outline-secondary');
-    btnAgent.classList.remove('btn-primary'); btnAgent.classList.add('btn-outline-secondary');
-    userTypeInput.value = 'user';
-  });
+    btnUser.addEventListener('click', () => {
+      btnUser.classList.add('btn-primary'); btnUser.classList.remove('btn-outline-secondary');
+      btnAgent.classList.remove('btn-primary'); btnAgent.classList.add('btn-outline-secondary');
+      userTypeInput.value = 'user';
+    });
 
-  btnAgent.addEventListener('click', () => {
-    btnAgent.classList.add('btn-primary'); btnAgent.classList.remove('btn-outline-secondary');
-    btnUser.classList.remove('btn-primary'); btnUser.classList.add('btn-outline-secondary');
-    userTypeInput.value = 'agent';
-  });
+    btnAgent.addEventListener('click', () => {
+      btnAgent.classList.add('btn-primary'); btnAgent.classList.remove('btn-outline-secondary');
+      btnUser.classList.remove('btn-primary'); btnUser.classList.add('btn-outline-secondary');
+      userTypeInput.value = 'agent';
+    });
 
-  function sendOTP() {
-    let mobile = document.getElementById("mobile").value;
-    if (!mobile || mobile.length < 10) {
-      alert("Please enter a valid mobile number");
-      return;
-    }
-    alert("OTP sent to " + mobile + " (Dummy OTP: 123456)");
-  }
-<script>
-  // Send OTP handler
-  const sendBtn = document.getElementById('sendOtpBtn');
-  const otpWrap = document.getElementById('otpWrap');
+    // OTP Send logic
+    const sendBtn = document.getElementById('sendOtpBtn');
+    const otpWrap = document.getElementById('otpWrap');
+    const mobileEl = document.getElementById('mobileInput');
 
-  if (sendBtn) {
     sendBtn.addEventListener('click', async () => {
-      const mobileEl = document.querySelector('input[name="mobile"]');
       const mobile = (mobileEl.value || '').trim();
 
       if (!/^\d{10}$/.test(mobile)) {
@@ -107,8 +91,7 @@
 
         if (data.ok) {
           otpWrap.style.display = 'block';
-          // Demo ke liye alert me OTP dikha rahe hain (prod me mat dikhaiyega)
-          alert(data.message);
+          alert("Your OTP (demo): " + data.otp); // demo ke liye
         } else {
           alert(data.message || 'Failed to send OTP');
         }
@@ -116,6 +99,6 @@
         alert('Network error while sending OTP');
       }
     });
-  }
+  });
 </script>
 {% endblock %}

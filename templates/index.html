@@ -21,30 +21,29 @@
         <div class="mb-2"><input class="form-control" name="first_name" placeholder="First name" required></div>
         <div class="mb-2"><input class="form-control" name="last_name" placeholder="Last name" required></div>
         
-        <!-- Mobile + Send OTP button -->
-        <div class="row g-2 mb-2">
-          <div class="col-8">
-            <input class="form-control" name="mobile" id="mobile" placeholder="Mobile" pattern="[0-9]{10}" required>
-          </div>
-          <div class="col-4">
-            <button type="button" class="btn btn-outline-primary w-100" onclick="sendOTP()">Send OTP</button>
-          </div>
-        </div>
+        <!-- Mobile + Send OTP -->
+<div class="mb-2">
+  <div class="input-group">
+    <input class="form-control" name="mobile" placeholder="Mobile" pattern="[0-9]{10}" required>
+    <button type="button" class="btn btn-outline-secondary" id="sendOtpBtn">Send OTP</button>
+  </div>
+</div>
 
-        <!-- OTP input -->
-        <div class="mb-2">
-          <input class="form-control" name="otp" id="otp" placeholder="Enter OTP" required>
-        </div>
+<!-- OTP input (hidden until OTP is sent) -->
+<div class="mb-2" id="otpWrap" style="display:none;">
+  <input class="form-control" name="otp" placeholder="Enter OTP" required>
+</div>
 
-        <!-- Password and Confirm Password same row -->
-        <div class="row g-2 mb-2">
-          <div class="col-6">
-            <input type="password" class="form-control" name="password" placeholder="Create password" required />
-          </div>
-          <div class="col-6">
-            <input type="password" class="form-control" name="password2" placeholder="Confirm password" required />
-          </div>
-        </div>
+<!-- Password + Confirm Password in same row -->
+<div class="row">
+  <div class="col-md-6 mb-2">
+    <input class="form-control" type="password" name="password" placeholder="Create password" required>
+  </div>
+  <div class="col-md-6 mb-2">
+    <input class="form-control" type="password" name="password2" placeholder="Confirm password" required>
+  </div>
+</div>
+
 
         <!-- Email -->
         <div class="mb-2">
@@ -81,6 +80,42 @@
       return;
     }
     alert("OTP sent to " + mobile + " (Dummy OTP: 123456)");
+  }
+<script>
+  // Send OTP handler
+  const sendBtn = document.getElementById('sendOtpBtn');
+  const otpWrap = document.getElementById('otpWrap');
+
+  if (sendBtn) {
+    sendBtn.addEventListener('click', async () => {
+      const mobileEl = document.querySelector('input[name="mobile"]');
+      const mobile = (mobileEl.value || '').trim();
+
+      if (!/^\d{10}$/.test(mobile)) {
+        alert('Please enter a valid 10-digit mobile');
+        mobileEl.focus();
+        return;
+      }
+
+      try {
+        const res = await fetch('/send_otp', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: 'mobile=' + encodeURIComponent(mobile)
+        });
+        const data = await res.json();
+
+        if (data.ok) {
+          otpWrap.style.display = 'block';
+          // Demo ke liye alert me OTP dikha rahe hain (prod me mat dikhaiyega)
+          alert(data.message);
+        } else {
+          alert(data.message || 'Failed to send OTP');
+        }
+      } catch (e) {
+        alert('Network error while sending OTP');
+      }
+    });
   }
 </script>
 {% endblock %}

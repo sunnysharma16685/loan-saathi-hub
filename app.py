@@ -1,5 +1,5 @@
-# app.py (top of file, after imports)
-dummy_otp_store = {}  # Mobile -> OTP mapping for temporary storage
+from flask import jsonify
+dummy_otp_store = {}
 
 from fpdf import FPDF
 import io
@@ -62,16 +62,11 @@ def register_basic():
     user_type = request.form.get('user_type') or request.form.get('role') or 'user'
     first_name = request.form.get('first_name')
     mobile = request.form.get('mobile')
-    otp = request.form.get("otp")
+    otp = (request.form.get('otp') or "").strip()         # <- read OTP
     email = request.form.get('email')
     password = request.form.get('password')
     password2 = request.form.get('password2')
 
-        # OTP match check
-    if mobile not in dummy_otp_store or otp != dummy_otp_store[mobile]:
-        flash("Invalid OTP. Please try again.", "danger")
-        return redirect(url_for("index"))
-        
         flash("Registration successful!", "success")
         return redirect(url_for("index"))    
 
@@ -83,6 +78,13 @@ def register_basic():
         flash('Passwords do not match or empty', 'danger')
         return redirect(url_for('index'))
 
+    if mobile not in dummy_otp_store or dummy_otp_store[mobile] != otp:
+        flash("Invalid OTP. Please try again.", "danger")
+        return redirect(url_for("index"))
+
+    # OTP success - one-time use
+    dummy_otp_store.pop(mobile, None)
+
     # store minimal in session and proceed to complete profile
     session['basic_profile'] = {
         'user_type': user_type,
@@ -90,7 +92,7 @@ def register_basic():
         'last_name': request.form.get('last_name'),
         'mobile': mobile,
         'email': email,
-        'password': password  # Abcd@123
+        'password': password  # dev only; prod me hash karo
     }
 
     data = session.get('basic_profile')
@@ -103,13 +105,16 @@ def register_basic():
 
 @app.route("/send_otp", methods=["POST"])
 def send_otp():
-    mobile = request.form.get("mobile")
-    if not mobile or len(mobile) != 10:
-        return {"status": "error", "message": "Invalid mobile number"}, 400
+    mobile = (request.form.get("mobile") or "").strip()
+    if not (mobile.isdigit() and len(mobile) == 10):
+        return jsonify(ok=False, message="Invalid mobile number"), 400
 
-    otp = "123456"  # dummy OTP
+    # Dummy OTP (dev only)
+    otp = str(random.randint(100000, 999999))
     dummy_otp_store[mobile] = otp
-    return {"status": "success", "otp": otp}
+
+    # NOTE: Prod me OTP ko kabhi response me na bhejein. Yahan demo ke liye dikha rahe hain.
+    return jsonify(ok=True, message=f"OTP sent (dummy): {otp}", otp=otp)
 
 @app.route('/profile/user', methods=['GET', 'POST'])
 def complete_profile_user():

@@ -84,13 +84,12 @@ def register_basic():
         return redirect(url_for("index"))
 
     # OTP success - one-time use
-dummy_otp_store.pop(mobile, None)
+    dummy_otp_store.pop(mobile, None)
 
-# Hash the password
-password_hash = hashlib.sha256(password.encode()).hexdigest()
+    # Hash the password
+    password_hash = hashlib.sha256(password.encode()).hexdigest()
 
-
-    # Prepare data
+    # Prepare basic data
     basic_data = {
         'user_type': user_type,
         'first_name': first_name,
@@ -110,10 +109,12 @@ password_hash = hashlib.sha256(password.encode()).hexdigest()
     except Exception as e:
         print("Supabase insert error:", e)
 
- if user_type == 'user':
-    return redirect(url_for('complete_profile_user'))
-else:
-    return redirect(url_for('complete_profile_agent'))
+    # Redirect to complete profile page
+    if user_type == 'user':
+        return redirect(url_for('complete_profile_user'))
+    else:
+        return redirect(url_for('complete_profile_agent'))
+
 
 
 @app.route("/send_otp", methods=["POST"])

@@ -89,9 +89,10 @@ def register_basic():
         'last_name': request.form.get('last_name'),
         'mobile': mobile,
         'email': email,
-        'password': password  # dev only; prod me hash karo
+        'password': password,  # dev only; prod me hash karo
         'created_at': datetime.utcnow().isoformat()
     }
+	session['basic_profile'] = basic_data
 
      # Insert into Supabase safely
     try:

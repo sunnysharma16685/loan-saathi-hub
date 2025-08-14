@@ -58,11 +58,10 @@ def index():
 
 @app.route('/register/basic', methods=['POST'])
 def register_basic():
-    # Basic registration form (from index)
     user_type = request.form.get('user_type') or request.form.get('role') or 'user'
     first_name = request.form.get('first_name')
     mobile = request.form.get('mobile')
-    otp = (request.form.get('otp') or "").strip()         # <- read OTP
+    otp = (request.form.get('otp') or "").strip()
     email = request.form.get('email')
     password = request.form.get('password')
     password2 = request.form.get('password2')
@@ -82,8 +81,8 @@ def register_basic():
     # OTP success - one-time use
     dummy_otp_store.pop(mobile, None)
 
-    # store minimal in session and proceed to complete profile
-    session['basic_profile'] = {
+    # Prepare data
+    basic_data = {
         'user_type': user_type,
         'first_name': first_name,
         'last_name': request.form.get('last_name'),
@@ -92,36 +91,22 @@ def register_basic():
         'password': password,  # dev only; prod me hash karo
         'created_at': datetime.utcnow().isoformat()
     }
-	session['basic_profile'] = basic_data
 
-     # Insert into Supabase safely
+    session['basic_profile'] = basic_data
+
+    # Insert into Supabase safely
     try:
-        if user_type == 'user':
-            table_name = "users_basic"
-        else:
-            table_name = "agents_basic"
-
+        table_name = "users_basic" if user_type == 'user' else "agents_basic"
         insert_result = supabase.table(table_name).insert(basic_data).execute()
-
-        if insert_result.get("status_code") not in (200, 201):
-            flash(f"Database error: {insert_result.get('message', 'Unknown error')}", "danger")
-            return redirect(url_for('index'))
-
     except Exception as e:
-        flash(f"Supabase insert failed: {str(e)}", "danger")
-        return redirect(url_for('index'))
+        print("Supabase insert error:", e)
 
-    # Save in session
-    session['basic_profile'] = {
-        'user_type': user_type,
-        **basic_data
-    }
-
+    # Redirect to complete profile page
     if user_type == 'user':
-        return render_template('complete_profile_user.html', data=data)
+        return render_template('complete_profile_user.html', data=basic_data)
+    else:
+        return render_template('complete_profile_agent.html', data=basic_data)
 
-    if user_type == 'agent':
-        return render_template('complete_profile_agent.html', data=data)
 
 @app.route("/send_otp", methods=["POST"])
 def send_otp():
@@ -144,6 +129,7 @@ def complete_profile_user():
         return redirect(url_for('index'))
 
     if request.method == 'POST':
+        # Basic + Complete profile payload
         payload = {
             'first_name': data['first_name'],
             'last_name': data['last_name'],
@@ -160,18 +146,20 @@ def complete_profile_user():
             'itr': request.form.get('itr'),
             'cibil_score': request.form.get('cibil_score'),
             'job_or_business': request.form.get('job_or_business'),
-            'job_type': request.form.get('job_type'),
-            'employment_type': request.form.get('employment_type'),
-            'company_name': request.form.get('company_name'),
-            'designation': request.form.get('designation'),
-            'total_experience': request.form.get('total_experience'),
-            'current_company_experience': request.form.get('current_company_experience'),
-            'salary_mode': request.form.get('salary_mode'),
-            'monthly_salary': request.form.get('monthly_salary'),
-            'other_income': request.form.get('other_income'),
-            'business_turnover': request.form.get('business_turnover'),
-            'business_designation': request.form.get('business_designation')
+            # Safe job/business handling
+            'job_type': request.form.get('job_type') if request.form.get('job_or_business') == 'job' else None,
+            'employment_type': request.form.get('employment_type') if request.form.get('job_or_business') == 'job' else None,
+            'company_name': request.form.get('company_name') if request.form.get('job_or_business') == 'job' else None,
+            'designation': request.form.get('designation') if request.form.get('job_or_business') == 'job' else None,
+            'total_experience': request.form.get('total_experience') if request.form.get('job_or_business') == 'job' else None,
+            'current_company_experience': request.form.get('current_company_experience') if request.form.get('job_or_business') == 'job' else None,
+            'salary_mode': request.form.get('salary_mode') if request.form.get('job_or_business') == 'job' else None,
+            'monthly_salary': request.form.get('monthly_salary') if request.form.get('job_or_business') == 'job' else None,
+            'other_income': request.form.get('other_income') if request.form.get('job_or_business') == 'job' else None,
+            'business_turnover': request.form.get('business_turnover') if request.form.get('job_or_business') == 'business' else None,
+            'business_designation': request.form.get('business_designation') if request.form.get('job_or_business') == 'business' else None
         }
+
         try:
             supabase.table('users').insert(payload).execute()
         except Exception as e:
@@ -226,6 +214,7 @@ def complete_profile_agent():
         return redirect(url_for('login'))
 
     return render_template('complete_profile_agent.html', data=data)
+
 
 @app.route('/login', methods=['GET','POST'])
 def login():

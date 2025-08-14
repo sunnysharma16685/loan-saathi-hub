@@ -1,33 +1,33 @@
 {% extends "base.html" %}
-
-{% block title %}Complete Agent Profile - LoanSaathiHub{% endblock %}
+{% block title %}Complete Your Profile - LoanSaathiHub{% endblock %}
 
 {% block content %}
 <div class="container mt-4">
-   <h2>Welcome Agent Please Complete Your Profile</h2>
-  <form method="POST" action="{{ url_for('complete_profile_agent') }}">
-    <!-- Basic Info - Readonly -->
-    <div class="row mb-3">
-      <div class="col-md-6">
-        <label for="first_name" class="form-label">First Name</label>
-        <input type="text" class="form-control" id="first_name" name="first_name" value="{{ user.first_name }}" readonly>
-      </div>
-      <div class="col-md-6">
-        <label for="last_name" class="form-label">Last Name</label>
-        <input type="text" class="form-control" id="last_name" name="last_name" value="{{ user.last_name }}" readonly>
-      </div>
-    </div>
+    <h2>Welcome Agent Please Complete Your Profile</h2>
+    <form method="POST" action="{{ url_for('complete_profile_agent') }}">
+        
+        <!-- Basic Info - Readonly -->
+        <div class="row mb-3">
+            <div class="col-md-6">
+                <label for="first_name" class="form-label">First Name</label>
+                <input type="text" class="form-control" id="first_name" name="first_name" value="{{ agent.first_name }}" readonly>
+            </div>
+            <div class="col-md-6">
+                <label for="last_name" class="form-label">Last Name</label>
+                <input type="text" class="form-control" id="last_name" name="last_name" value="{{ agent.last_name }}" readonly>
+            </div>
+        </div>
 
-    <div class="row mb-3">
-      <div class="col-md-6">
-        <label for="mobile" class="form-label">Mobile Number</label>
-        <input type="text" class="form-control" id="mobile" name="mobile" value="{{ user.mobile }}" readonly>
-      </div>
-      <div class="col-md-6">
-        <label for="email" class="form-label">Email ID</label>
-        <input type="email" class="form-control" id="email" name="email" value="{{ user.email }}" readonly>
-      </div>
-    </div>
+        <div class="row mb-3">
+            <div class="col-md-6">
+                <label for="mobile" class="form-label">Mobile Number</label>
+                <input type="text" class="form-control" id="mobile" name="mobile" value="{{ agent.mobile }}" readonly>
+            </div>
+            <div class="col-md-6">
+                <label for="email" class="form-label">Email ID</label>
+                <input type="email" class="form-control" id="email" name="email" value="{{ agent.email }}" readonly>
+            </div>
+        </div>
 
     <!-- Agent Type -->
     <div class="mb-3">
@@ -165,4 +165,8 @@
   });
 </script>
 
+{% include "partials/complete_profile_agent_fields.html" %}
+        
+    </form>
+</div>
 {% endblock %}

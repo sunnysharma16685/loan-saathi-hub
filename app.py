@@ -90,9 +90,31 @@ def register_basic():
         'mobile': mobile,
         'email': email,
         'password': password  # dev only; prod me hash karo
+        'created_at': datetime.utcnow().isoformat()
     }
 
-    data = session.get('basic_profile')
+     # Insert into Supabase safely
+    try:
+        if user_type == 'user':
+            table_name = "users_basic"
+        else:
+            table_name = "agents_basic"
+
+        insert_result = supabase.table(table_name).insert(basic_data).execute()
+
+        if insert_result.get("status_code") not in (200, 201):
+            flash(f"Database error: {insert_result.get('message', 'Unknown error')}", "danger")
+            return redirect(url_for('index'))
+
+    except Exception as e:
+        flash(f"Supabase insert failed: {str(e)}", "danger")
+        return redirect(url_for('index'))
+
+    # Save in session
+    session['basic_profile'] = {
+        'user_type': user_type,
+        **basic_data
+    }
 
     if user_type == 'user':
         return render_template('complete_profile_user.html', data=data)

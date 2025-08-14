@@ -81,6 +81,9 @@ def register_basic():
     # OTP success - one-time use
     dummy_otp_store.pop(mobile, None)
 
+   # Hash the password
+    password_hash = hashlib.sha256(password.encode()).hexdigest()
+
     # Prepare data
     basic_data = {
         'user_type': user_type,
@@ -88,7 +91,7 @@ def register_basic():
         'last_name': request.form.get('last_name'),
         'mobile': mobile,
         'email': email,
-        'password': password,  # dev only; prod me hash karo
+        'password_hash': password_hash,
         'created_at': datetime.utcnow().isoformat()
     }
 

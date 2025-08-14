@@ -1,6 +1,7 @@
 import hashlib
+import random
 from datetime import datetime
-from flask import Flask, session, request, redirect, url_for, flash, render_template
+from flask import Flask, request, redirect, url_for, flash, session, render_template, jsonify
 
 from flask import jsonify
 dummy_otp_store = {}
@@ -83,10 +84,11 @@ def register_basic():
         return redirect(url_for("index"))
 
     # OTP success - one-time use
-    dummy_otp_store.pop(mobile, None)
+dummy_otp_store.pop(mobile, None)
 
-   # Hash the password
-    password_hash = hashlib.sha256(password.encode()).hexdigest()
+# Hash the password
+password_hash = hashlib.sha256(password.encode()).hexdigest()
+
 
     # Prepare data
     basic_data = {
@@ -108,11 +110,10 @@ def register_basic():
     except Exception as e:
         print("Supabase insert error:", e)
 
-    # Redirect to complete profile page
-    if user_type == 'user':
-        return render_template('complete_profile_user.html', data=basic_data)
-    else:
-        return render_template('complete_profile_agent.html', data=basic_data)
+ if user_type == 'user':
+    return redirect(url_for('complete_profile_user'))
+else:
+    return redirect(url_for('complete_profile_agent'))
 
 
 @app.route("/send_otp", methods=["POST"])
@@ -127,6 +128,7 @@ def send_otp():
 
     # NOTE: Prod me OTP ko kabhi response me na bhejein. Yahan demo ke liye dikha rahe hain.
     return jsonify(ok=True, message=f"OTP sent (dummy): {otp}", otp=otp)
+
 
 @app.route('/profile/user', methods=['GET', 'POST'])
 def complete_profile_user():

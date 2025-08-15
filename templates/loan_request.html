@@ -1,129 +1,161 @@
-{% extends "base.html" %}
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>New Loan Request - LoanSaathiHub</title>
 
-{% block title %}User Dashboard - LoanSaathiHub{% endblock %}
+    <!-- Google Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
 
-{% block header_buttons %}
-<!-- Top right buttons -->
-<a href="{{ url_for('index') }}" class="btn btn-sm btn-light me-2">Home</a>
-<a href="{{ url_for('logout') }}" class="btn btn-sm btn-danger">Logout</a>
-{% endblock %}
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #f8f9fa;
+            margin: 0;
+            padding: 0;
+        }
+        header {
+            background-color: #0d6efd;
+            padding: 15px 20px;
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        header h1 {
+            margin: 0;
+            font-size: 20px;
+        }
+        header a {
+            color: white;
+            text-decoration: none;
+            margin-left: 15px;
+            font-weight: 500;
+        }
+        .form-container {
+            max-width: 600px;
+            background: #fff;
+            margin: 40px auto;
+            padding: 30px;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+        }
+        h2 {
+            text-align: center;
+            color: #0d6efd;
+            margin-bottom: 20px;
+            font-weight: 600;
+        }
+        label {
+            display: block;
+            font-weight: 500;
+            margin-bottom: 6px;
+            color: #333;
+        }
+        input, select, textarea {
+            width: 100%;
+            padding: 10px 14px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            font-size: 14px;
+            margin-bottom: 16px;
+            font-family: inherit;
+        }
+        input:focus, select:focus, textarea:focus {
+            border-color: #0d6efd;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(13,110,253,0.15);
+        }
+        button {
+            width: 48%;
+            background-color: #0d6efd;
+            color: #fff;
+            padding: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+        button:hover {
+            background-color: #0b5ed7;
+        }
+        .btn-back {
+            background-color: #6c757d;
+        }
+        .btn-back:hover {
+            background-color: #5a6268;
+        }
+        .btn-group {
+            display: flex;
+            justify-content: space-between;
+        }
+    </style>
+</head>
+<body>
 
-{% block content %}
-<div class="container mt-4">
-  <h3>Welcome, {{ user.first_name }}!</h3>
-  <p>Your dashboard content will appear here.</p>
+<header>
+    <h1>LoanSaathiHub</h1>
+    <div>
+        <a href="{% url 'dashboard_user' %}">Home</a>
+        <a href="{% url 'logout' %}">Logout</a>
+    </div>
+</header>
 
-  <div class="d-flex justify-content-between align-items-center mb-3">
-    <h4>Your Loan Requests</h4>
-    <a href="{{ url_for('loan_request') }}" class="btn btn-primary">New Loan</a>
-  </div>
+<div class="form-container">
+    <h2>Apply for New Loan</h2>
+    <form method="POST" action="{% url 'dashboard_user' %}">
+        {% csrf_token %}
+        
+        <label for="loanType">Loan Type</label>
+        <select id="loanType" name="loanType" required>
+            <option value="">-- Select Loan Type --</option>
+            <option value="Personal Loan">Personal Loan</option>
+            <option value="Home Loan">Home Loan</option>
+            <option value="Business Loan">Business Loan</option>
+            <option value="Vehicle Loan">Vehicle Loan</option>
+            <option value="Agriculture Loan">Agriculture Loan</option>
+            <option value="Mudra Loan">Mudra Loan</option>
+            <option value="Overdraft Loan">Overdraft Loan</option>
+        </select>
 
-  {% if loans %}
-  <div class="table-responsive">
-    <table class="table table-bordered table-striped">
-      <thead class="table-light">
-        <tr>
-          <th>Loan ID</th>
-          <th>Loan Type</th>
-          <th>Amount Requested</th>
-          <th>Duration (Months)</th>
-          <th>Status</th>
-          <th>Remarks</th>
-          <th>Agent Details</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for loan in loans %}
-        <tr>
-          <td>{{ loan.loan_id }}</td>
-          <td>{{ loan.loan_type }}</td>
-          <td>₹ {{ loan.amount }}</td>
-          <td>{{ loan.duration }}</td>
-          <td>
-            {% if loan.status == "pending" %}
-              <span class="badge bg-warning text-dark">Pending</span>
-            {% elif loan.status == "active" %}
-              <span class="badge bg-info text-dark">Active</span>
-            {% elif loan.status == "rejected" %}
-              <span class="badge bg-danger">Rejected</span>
-            {% elif loan.status == "approved" %}
-              <span class="badge bg-success">Approved</span>
-            {% else %}
-              {{ loan.status }}
-            {% endif %}
-          </td>
-          <td>
-            {% if loan.status == "rejected" %}
-              {{ loan.remark or "No reason provided" }}
-            {% elif loan.status == "approved" %}
-              {{ loan.remark or "No remark" }}
-            {% else %}
-              -
-            {% endif %}
-          </td>
-          <td>
-            {% if loan.status == "approved" %}
-              <strong>{{ loan.agent_name }}</strong><br/>
-              Mobile: {{ loan.agent_mobile }}<br/>
-              Type: {{ loan.agent_type }}<br/>
-              {{ loan.agent_other_details or "" }}
-            {% else %}
-              -
-            {% endif %}
-          </td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  </div>
-  {% else %}
-    <p>No loan requests found.</p>
-  {% endif %}
+        <label for="amount">Amount Requested (₹)</label>
+        <input type="number" id="amount" name="amount" min="1" required>
+
+        <label for="duration">Duration (in months)</label>
+        <input type="number" id="duration" name="duration" min="1" required>
+
+        <label for="interest">Preferred Rate of Interest</label>
+        <select id="interest" name="interest" required>
+            <option value="">-- Select ROI --</option>
+            <option value="7% - 15%">7% - 15%</option>
+            <option value="15% - 25%">15% - 25%</option>
+            <option value="25% - 36%">25% - 36%</option>
+            <option value="36% above">36% above</option>
+        </select>
+
+        <label for="reason">Reason for Loan</label>
+        <select id="reason" name="reason" required>
+            <option value="">-- Select Reason --</option>
+            <option value="Marriage">Marriage</option>
+            <option value="Medical">Medical</option>
+            <option value="Home Renovate">Home Renovate</option>
+            <option value="Personal">Personal</option>
+            <option value="Others">Others</option>
+        </select>
+
+        <label for="otherReason">If Others, please specify</label>
+        <input type="text" id="otherReason" name="otherReason">
+
+        <div class="btn-group">
+            <button type="button" class="btn-back" onclick="window.location.href='{% url 'dashboard_user' %}'">Back</button>
+            <button type="submit">Submit</button>
+        </div>
+    </form>
 </div>
-{% endblock %}
-{% extends "base.html" %}
 
-{% block title %}New Loan Request - LoanSaathiHub{% endblock %}
-
-{% block header_buttons %}
-<a href="{{ url_for('dashboard_user') }}" class="btn btn-sm btn-light me-2">Back to Dashboard</a>
-<a href="{{ url_for('logout') }}" class="btn btn-sm btn-danger">Logout</a>
-{% endblock %}
-
-{% block content %}
-<div class="container mt-4">
-  <h3>New Loan Request</h3>
-  <form method="POST" action="{{ url_for('loan_request') }}">
-    <div class="mb-3">
-      <label for="loan_type" class="form-label">Loan Type</label>
-      <select class="form-select" id="loan_type" name="loan_type" required>
-        <option value="" selected disabled>Select Loan Type</option>
-        <option>Home Loan</option>
-        <option>Personal Loan</option>
-        <option>Vehicle Loan</option>
-        <option>Gold Loan</option>
-        <option>Mudra Loan</option>
-        <option>Business Loan</option>
-        <option>Overdraft (OD) Loan</option>
-      </select>
-    </div>
-
-    <div class="mb-3">
-      <label for="amount" class="form-label">Amount Requested (₹)</label>
-      <input type="number" class="form-control" id="amount" name="amount" min="1" required>
-    </div>
-
-    <div class="mb-3">
-      <label for="duration" class="form-label">Duration (Months)</label>
-      <input type="number" class="form-control" id="duration" name="duration" min="1" required>
-    </div>
-
-    <div class="mb-3">
-      <label for="remark" class="form-label">Reason for Loan</label>
-      <textarea class="form-control" id="remark" name="remark" rows="3" placeholder="Please describe your reason for this loan..." required></textarea>
-    </div>
-
-    <button type="submit" class="btn btn-primary">Submit Loan Request</button>
-  </form>
-</div>
-{% endblock %}
+</body>
+</html>

@@ -2,19 +2,14 @@ services:
   - type: web
     name: loan-saathi-hub
     env: python
-    region: singapore  # Update based on your hosting provider support
-    buildCommand: pip install --upgrade pip && pip install -r requirements.txt
-    startCommand: gunicorn app:app --timeout 120 --workers 3
-    envVars:
-      - key: SECRET_KEY
-        value: your-secure-secret-key-here
-      - key: SUPABASE_URL
-        value: your-supabase-url
-      - key: SUPABASE_KEY
-        value: your-supabase-anon-key
-      - key: PYTHON_VERSION
-        value: 3.10
-      - key: FLASK_ENV
-        value: production
-    autoDeploy: true
     plan: free
+    buildCommand: |
+      pip install -r requirements.txt
+      python manage.py collectstatic --noinput
+      python manage.py migrate
+    startCommand: gunicorn loan_saathi_hub.wsgi
+    envVars:
+      - key: DJANGO_SETTINGS_MODULE
+        value: loan_saathi_hub.settings
+      - key: SECRET_KEY
+        generateValue: true

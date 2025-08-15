@@ -1,62 +1,46 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8" />
-    <title>About Us - Loan Saathi Hub</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About Us | Loan Saathi Hub</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
     <style>
-        body { font-family: Arial, sans-serif; margin: 20px; line-height: 1.6; }
-        h1,h2 { color: #007BFF; }
-        .contact-info { margin-top: 30px; background: #f1f1f1; padding: 15px; border-radius: 8px; max-width: 600px;}
-        a { color: #007BFF; text-decoration: none;}
-        a:hover {text-decoration: underline;}
-        nav a { margin-right: 10px; color: #007BFF; text-decoration: none;}
-        nav a:hover { text-decoration: underline; }
-        footer { margin-top: 40px; font-size: 14px; color: #555; }
+        body { font-family: 'Poppins', sans-serif; margin: 0; padding: 0; background: #f8f9fa; color: #333; }
+        header, footer { background: #0d6efd; color: white; padding: 15px 20px; }
+        header a, footer a { color: white; text-decoration: none; margin-left: 15px; }
+        header a:hover, footer a:hover { text-decoration: underline; }
+        .container { max-width: 900px; margin: auto; padding: 30px; background: white; border-radius: 10px; margin-top: 30px; }
+        h1 { color: #0d6efd; }
     </style>
 </head>
 <body>
+    <header>
+        <span style="font-weight:600;">Loan Saathi Hub</span>
+        <span style="float:right;">
+            <a href="index.html">Home</a>
+        </span>
+    </header>
 
-<nav>
-    <a href="{{ url_for('about') }}">About Us</a> |
-    <a href="{{ url_for('privacy') }}">Privacy Policy</a> |
-    <a href="{{ url_for('terms') }}">Terms & Conditions</a> |
-    <a href="{{ url_for('support') }}">Support</a> |
-    <a href="{{ url_for('contact') }}">Contact Us</a>
-</nav>
+    <div class="container">
+        <h1>About Us</h1>
+        <p><strong>Loan Saathi Hub</strong> is your trusted partner in making financial dreams a reality. Whether it’s funding your business, renovating your home, or covering personal expenses, we connect you with the right lenders at competitive rates.</p>
+        <p>Founded by <strong>S M Enterprises</strong>, our mission is to make loan processes simple, transparent, and quick. We believe that everyone deserves fair access to credit with clear terms and trustworthy service.</p>
+        <h2>Our Vision</h2>
+        <p>To become India’s most reliable and customer-friendly loan assistance platform.</p>
+        <h2>Our Mission</h2>
+        <p>Empowering individuals and businesses through easy access to financial solutions, ensuring transparency and trust at every step.</p>
+    </div>
 
-<h1>About Loan Saathi Hub</h1>
-
-<p>
-Loan Saathi Hub is a trusted financial services platform dedicated to providing tailored loan advisory services to individuals and businesses all across India. Our mission is to empower our clients by simplifying the loan application process and helping them access the best loan products suited to their needs.
-</p>
-
-<p>
-Founded by Ms. Mayuri S Sharma, Loan Saathi Hub combines technology and personalized consultancy to guide borrowers through every step of their loan journey. We aim to be "Apke Vishwas ka Saathi" - your most reliable partner in financial growth and security.
-</p>
-
-<p>Our core values include:</p>
-<ul>
-    <li><strong>Integrity:</strong> Transparent and honest dealings with all clients.</li>
-    <li><strong>Customer Centricity:</strong> Focusing on your needs and convenience.</li>
-    <li><strong>Expertise:</strong> Leveraging years of experience in financial markets.</li>
-    <li><strong>Innovation:</strong> Utilizing latest technology for seamless loan processing.</li>
-</ul>
-
-<h2>Founder & Owner</h2>
-<p><strong>Ms. Mayuri S Sharma</strong> leads Loan Saathi Hub with passion and dedication towards financial empowerment.</p>
-
-<div class="contact-info">
-    <h3>Contact Information</h3>
-    <p><strong>Mobile:</strong> <a href="tel:+919662131087">9662131087</a></p>
-    <p><strong>Email:</strong> <a href="mailto:mayuri.luhar@gmail.com">mayuri.luhar@gmail.com</a></p>
-    <p><strong>Address:</strong> 113, Pra. Srushti,<br />
-    Gotri, Vadodara - 390016,<br />
-    Gujarat, INDIA</p>
-</div>
-
-<footer>
-    &copy; 2025 LoanSaathiHub. All rights reserved.
-</footer>
-
+    <footer>
+        © 2025 LoanSaathiHub. All rights reserved. |
+        <a href="about.html">About us</a> |
+        <a href="terms.html">Terms & Conditions</a> |
+        <a href="privacy.html">Privacy Policy</a> |
+        <a href="faq.html">FAQ</a> |
+        <a href="support.html">Support</a> |
+        <a href="contacts.html">Contacts</a> |
+        <a href="feedback.html">Feedback</a>
+    </footer>
 </body>
 </html>

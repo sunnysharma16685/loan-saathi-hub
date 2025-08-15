@@ -1,55 +1,51 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8" />
-    <title>Terms & Conditions - Loan Saathi Hub</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Terms & Conditions | Loan Saathi Hub</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
     <style>
-        body { font-family: Arial, sans-serif; margin: 20px; line-height: 1.6; }
-        h1,h2 { color: #007BFF; }
-        nav a { margin-right: 10px; color: #007BFF; text-decoration: none;}
-        nav a:hover { text-decoration: underline; }
-        footer { margin-top: 40px; font-size: 14px; color: #555; }
+        body { font-family: 'Poppins', sans-serif; margin: 0; padding: 0; background: #f8f9fa; color: #333; }
+        header, footer { background: #0d6efd; color: white; padding: 15px 20px; }
+        header a, footer a { color: white; text-decoration: none; margin-left: 15px; }
+        header a:hover, footer a:hover { text-decoration: underline; }
+        .container { max-width: 900px; margin: auto; padding: 30px; background: white; border-radius: 10px; margin-top: 30px; }
+        h1 { color: #0d6efd; }
+        ul { padding-left: 20px; }
     </style>
 </head>
 <body>
+    <header>
+        <span style="font-weight:600;">Loan Saathi Hub</span>
+        <span style="float:right;">
+            <a href="index.html">Home</a>
+        </span>
+    </header>
 
-<nav>
-    <a href="{{ url_for('about') }}">About Us</a> |
-    <a href="{{ url_for('privacy') }}">Privacy Policy</a> |
-    <a href="{{ url_for('terms') }}">Terms & Conditions</a> |
-    <a href="{{ url_for('support') }}">Support</a> |
-    <a href="{{ url_for('contact') }}">Contact Us</a>
-</nav>
+    <div class="container">
+        <h1>Terms & Conditions</h1>
+        <p>By accessing or using Loan Saathi Hub, you agree to comply with the following terms and conditions:</p>
+        <ul>
+            <li>Loan Saathi Hub acts as an intermediary between borrowers and lenders. We do not directly provide loans.</li>
+            <li>All loan approvals are subject to lender’s eligibility criteria and discretion.</li>
+            <li>Information provided by you must be accurate and truthful.</li>
+            <li>Loan Saathi Hub is not responsible for delays, rejection, or terms of the loan provided by the lender.</li>
+            <li>Fees, if applicable, will be communicated before payment.</li>
+            <li>By applying for a loan, you consent to sharing your information with potential lenders.</li>
+            <li>We reserve the right to modify these terms at any time.</li>
+        </ul>
+    </div>
 
-<h1>Terms & Conditions</h1>
-
-<p>Welcome to Loan Saathi Hub. By accessing or using our services, you agree to comply with and be bound by the following terms and conditions:</p>
-
-<h2>Use of Services</h2>
-<ul>
-    <li>You must provide accurate and complete information during registration and loan application.</li>
-    <li>Use our services for lawful purposes only, without violating any laws or regulations.</li>
-    <li>Loan Saathi Hub is a facilitator and does not guarantee loan approval or terms.</li>
-</ul>
-
-<h2>User Responsibilities</h2>
-<ul>
-    <li>Keep your login credentials confidential and notify us immediately of unauthorized use.</li>
-    <li>Ensure that any information submitted is truthful and up-to-date.</li>
-</ul>
-
-<h2>Limitation of Liability</h2>
-<p>Loan Saathi Hub shall not be liable for any direct or indirect losses arising from use of our website or services, including loan defaults or financial damages.</p>
-
-<h2>Modifications of Terms</h2>
-<p>We reserve the right to update or modify these terms at any time without prior notice. Continued use of services constitutes acceptance of changes.</p>
-
-<h2>Governing Law</h2>
-<p>These terms shall be governed by and construed in accordance with the laws of India.</p>
-
-<footer>
-    &copy; 2025 LoanSaathiHub. All rights reserved.
-</footer>
-
+    <footer>
+        © 2025 LoanSaathiHub. All rights reserved. |
+        <a href="about.html">About us</a> |
+        <a href="terms.html">Terms & Conditions</a> |
+        <a href="privacy.html">Privacy Policy</a> |
+        <a href="faq.html">FAQ</a> |
+        <a href="support.html">Support</a> |
+        <a href="contacts.html">Contacts</a> |
+        <a href="feedback.html">Feedback</a>
+    </footer>
 </body>
 </html>

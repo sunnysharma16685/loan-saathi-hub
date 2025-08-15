@@ -1,125 +1,199 @@
-{% extends "base.html" %}
-{% block title %}Admin Dashboard - LoanSaathiHub{% endblock %}
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - Loan Saathi Hub</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <style>
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin-bottom: 40px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: center;
+        }
+        th {
+            background-color: #0d6efd;
+            color: white;
+        }
+        select {
+            padding: 5px;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+        }
+        button {
+            padding: 5px 10px;
+            border-radius: 4px;
+            border: none;
+            cursor: pointer;
+        }
+        .btn-approve { background: #198754; color: white; }
+        .btn-reject { background: #dc3545; color: white; }
+    </style>
+</head>
+<body style="font-family: 'Poppins', sans-serif; background-color: #f8f9fa;">
 
-{% block header_buttons %}
-<a href="{{ url_for('logout') }}" class="btn btn-sm btn-danger">Logout</a>
-<a href="{{ url_for('index') }}" class="btn btn-sm btn-secondary ms-2">Home</a>
-{% endblock %}
+    <!-- Header -->
+    <header style="background-color: #0d6efd; padding: 15px; display: flex; justify-content: space-between; align-items: center; color: #fff;">
+        <h2 style="margin: 0;">Loan Saathi Hub - Admin Dashboard</h2>
+        <div>
+            <a href="{% url 'home' %}" style="color: white; margin-right: 20px; text-decoration: none;">Home</a>
+            <a href="{% url 'admin_login' %}" style="color: white; text-decoration: none;">Logout</a>
+        </div>
+    </header>
 
-{% block content %}
-<div class="container mt-4">
-  <h1>Admin Dashboard</h1>
-  <div class="row mb-4">
-    <div class="col">
-      <div class="card p-3 bg-light">
-        <h5>Total Users</h5>
-        <p>{{ total_users }}</p>
-      </div>
-    </div>
-    <div class="col">
-      <div class="card p-3 bg-light">
-        <h5>Total Agents</h5>
-        <p>{{ total_agents }}</p>
-      </div>
-    </div>
-    <div class="col">
-      <div class="card p-3 bg-light">
-        <h5>Total Loans Applied</h5>
-        <p>{{ total_loans_applied }}</p>
-      </div>
-    </div>
-    <div class="col">
-      <div class="card p-3 bg-light">
-        <h5>Total Loans Rejected</h5>
-        <p>{{ total_loans_rejected }}</p>
-      </div>
-    </div>
-    <div class="col">
-      <div class="card p-3 bg-light">
-        <h5>Total Loans Approved</h5>
-        <p>{{ total_loans_approved }}</p>
-      </div>
-    </div>
-    <div class="col">
-      <div class="card p-3 bg-light">
-        <h5>Total Payments Received</h5>
-        <p>₹{{ total_payments_received }}</p>
-      </div>
-    </div>
-  </div>
+    <div style="padding: 20px;">
+        <h3>Welcome, Admin</h3>
 
-  <h3>Users</h3>
-  <table class="table table-bordered table-striped">
-    <thead>
-      <tr>
-        <th>Mobile</th>
-        <th>Full Name</th>
-        <th>Address</th>
-        <th>Status</th>
-        <th>Actions</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for user in users %}
-      <tr>
-        <td>{{ user.mobile }}</td>
-        <td>{{ user.first_name }} {{ user.last_name }}</td>
-        <td>
-          {{ user.address1 }}, {{ user.address2 }}, {{ user.city }}, {{ user.state }}, {{ user.pin_code }}
-        </td>
-        <td>{{ user.status or 'Inactive' }}</td>
-        <td>
-          <form method="POST" action="{{ url_for('update_user_status', mobile=user.mobile) }}" style="display:inline;">
-            <select name="action" class="form-select form-select-sm d-inline w-auto">
-              <option value="active">Active</option>
-              <option value="reactive">Reactive</option>
-              <option value="delete">Delete</option>
-            </select>
-            <button type="submit" class="btn btn-sm btn-primary">Apply</button>
-          </form>
-        </td>
-      </tr>
-      {% else %}
-      <tr><td colspan="5">No users found.</td></tr>
-      {% endfor %}
-    </tbody>
-  </table>
+        <!-- Loan Requests Table -->
+        <h4>All Loan Requests</h4>
+        <table>
+            <thead>
+                <tr>
+                    <th>Sl No.</th>
+                    <th>Loan ID</th>
+                    <th>User Name</th>
+                    <th>Loan Type</th>
+                    <th>Amount</th>
+                    <th>Duration</th>
+                    <th>Rate of Interest</th>
+                    <th>Status</th>
+                    <th>Agent Assigned</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>1</td>
+                    <td>LSH0001</td>
+                    <td>Ravi Kumar</td>
+                    <td>Personal Loan</td>
+                    <td>₹5,00,000</td>
+                    <td>24 months</td>
+                    <td>15%</td>
+                    <td>Pending</td>
+                    <td>Agent 3</td>
+                    <td>
+                        <button class="btn-approve">Approve</button>
+                        <button class="btn-reject">Reject</button>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
 
-  <h3>Agents</h3>
-  <table class="table table-bordered table-striped">
-    <thead>
-      <tr>
-        <th>Email</th>
-        <th>Full Name</th>
-        <th>Mobile</th>
-        <th>Address</th>
-        <th>Status</th>
-        <th>Actions</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for agent in agents %}
-      <tr>
-        <td>{{ agent.email }}</td>
-        <td>{{ agent.first_name }} {{ agent.last_name }}</td>
-        <td>{{ agent.mobile }}</td>
-        <td>{{ agent.firm_address }}, {{ agent.city }}, {{ agent.state }}, {{ agent.pin_code }}</td>
-        <td>{{ agent.status or 'Inactive' }}</td>
-        <td>
-          <form method="POST" action="{{ url_for('update_agent_status', email=agent.email) }}" style="display:inline;">
-            <select name="action" class="form-select form-select-sm d-inline w-auto">
-              <option value="active">Active</option>
-              <option value="reactive">Reactive</option>
-              <option value="delete">Delete</option>
-            </select>
-            <button type="submit" class="btn btn-sm btn-primary">Apply</button>
-          </form>
-        </td>
-      </tr>
-      {% else %}
-      <tr><td colspan="6">No agents found.</td></tr>
-      {% endfor %}
-    </tbody>
-  </table>
-</div>
-{% endblock %}
+        <!-- Users Table -->
+        <h4>All Users</h4>
+        <table>
+            <thead>
+                <tr>
+                    <th>Sl No.</th>
+                    <th>Full Name</th>
+                    <th>Email</th>
+                    <th>Mobile</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>1</td>
+                    <td>Amit Sharma</td>
+                    <td>amit@example.com</td>
+                    <td>9876543210</td>
+                    <td>
+                        <select>
+                            <option value="active">Active</option>
+                            <option value="inactive" selected>Inactive</option>
+                        </select>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+
+        <!-- Agents Table -->
+        <h4>All Agents</h4>
+        <table>
+            <thead>
+                <tr>
+                    <th>Sl No.</th>
+                    <th>Full Name</th>
+                    <th>Business Type</th>
+                    <th>Mobile</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>1</td>
+                    <td>Rajesh Verma</td>
+                    <td>Proprietor</td>
+                    <td>9123456780</td>
+                    <td>
+                        <select>
+                            <option value="active" selected>Active</option>
+                            <option value="inactive">Inactive</option>
+                        </select>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+
+        <!-- Payments Table -->
+        <h4>All Payments</h4>
+        <table>
+            <thead>
+                <tr>
+                    <th>Sl No.</th>
+                    <th>Payment ID</th>
+                    <th>Loan ID</th>
+                    <th>Agent Name</th>
+                    <th>Amount</th>
+                    <th>Method</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>1</td>
+                    <td>PAY12345</td>
+                    <td>LSH0001</td>
+                    <td>Rajesh Verma</td>
+                    <td>₹500</td>
+                    <td>UPI</td>
+                    <td>Success</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <!-- Reports Table -->
+        <h4>Loan Reports</h4>
+        <table>
+            <thead>
+                <tr>
+                    <th>Loan Type</th>
+                    <th>Total Applications</th>
+                    <th>Approved</th>
+                    <th>Rejected</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Personal Loan</td>
+                    <td>15</td>
+                    <td>10</td>
+                    <td>5</td>
+                </tr>
+            </tbody>
+        </table>
+
+    </div>
+
+    <!-- Footer -->
+    {% include 'footer.html' %}
+</body>
+</html>

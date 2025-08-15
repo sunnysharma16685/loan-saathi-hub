@@ -1,172 +1,520 @@
-{% extends "base.html" %}
-{% block title %}Complete Your Profile - LoanSaathiHub{% endblock %}
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Complete Profile (Agent) - LoanSaathiHub</title>
 
-{% block content %}
-<div class="container mt-4">
-    <h2>Welcome Agent Please Complete Your Profile</h2>
-    <form method="POST" action="{{ url_for('complete_profile_agent') }}">
-        
-        <!-- Basic Info - Readonly -->
-        <div class="row mb-3">
-            <div class="col-md-6">
-                <label for="first_name" class="form-label">First Name</label>
-                <input type="text" class="form-control" id="first_name" name="first_name" value="{{ agent.first_name }}" readonly>
-            </div>
-            <div class="col-md-6">
-                <label for="last_name" class="form-label">Last Name</label>
-                <input type="text" class="form-control" id="last_name" name="last_name" value="{{ agent.last_name }}" readonly>
-            </div>
-        </div>
+  <!-- Same Google Font as user page -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
 
-        <div class="row mb-3">
-            <div class="col-md-6">
-                <label for="mobile" class="form-label">Mobile Number</label>
-                <input type="text" class="form-control" id="mobile" name="mobile" value="{{ agent.mobile }}" readonly>
-            </div>
-            <div class="col-md-6">
-                <label for="email" class="form-label">Email ID</label>
-                <input type="email" class="form-control" id="email" name="email" value="{{ agent.email }}" readonly>
-            </div>
-        </div>
-
-    <!-- Agent Type -->
-    <div class="mb-3">
-      <label for="agent_type" class="form-label">Type of Agent</label>
-      <select class="form-select" id="agent_type" name="agent_type" required>
-        <option value="" disabled selected>Select Agent Type</option>
-        <option value="DSA" {% if user.agent_type == "DSA" %}selected{% endif %}>DSA</option>
-        <option value="Bank or Finance" {% if user.agent_type == "Bank or Finance" %}selected{% endif %}>Bank or Finance</option>
-        <option value="Private Firm" {% if user.agent_type == "Private Firm" %}selected{% endif %}>Private Firm</option>
-      </select>
-    </div>
-
-    <!-- DSA fields -->
-    <div id="dsa_fields" style="display:none;">
-      <div class="mb-3">
-        <label for="dsa_code" class="form-label">DSA Code</label>
-        <input type="text" class="form-control" id="dsa_code" name="dsa_code" value="{{ user.dsa_code or '' }}">
-      </div>
-      <div class="mb-3">
-        <label for="dsa_bank_name" class="form-label">Bank Name</label>
-        <input type="text" class="form-control" id="dsa_bank_name" name="dsa_bank_name" value="{{ user.dsa_bank_name or '' }}">
-      </div>
-      <div class="mb-3">
-        <label for="dsa_branch" class="form-label">Branch</label>
-        <input type="text" class="form-control" id="dsa_branch" name="dsa_branch" value="{{ user.dsa_branch or '' }}">
-      </div>
-    </div>
-
-    <!-- Bank or Finance fields -->
-    <div id="bank_finance_fields" style="display:none;">
-      <div class="mb-3">
-        <label for="bf_branch" class="form-label">Branch Name</label>
-        <input type="text" class="form-control" id="bf_branch" name="bf_branch" value="{{ user.bf_branch or '' }}">
-      </div>
-      <div class="mb-3">
-        <label for="bf_name" class="form-label">Bank or Finance Name</label>
-        <input type="text" class="form-control" id="bf_name" name="bf_name" value="{{ user.bf_name or '' }}">
-      </div>
-      <div class="mb-3">
-        <label for="bf_designation" class="form-label">Designation</label>
-        <input type="text" class="form-control" id="bf_designation" name="bf_designation" value="{{ user.bf_designation or '' }}">
-      </div>
-    </div>
-
-    <!-- Private Firm fields -->
-    <div id="private_firm_fields" style="display:none;">
-      <div class="mb-3">
-        <label for="firm_name" class="form-label">Firm Name</label>
-        <input type="text" class="form-control" id="firm_name" name="firm_name" value="{{ user.firm_name or '' }}">
-      </div>
-      <div class="mb-3">
-        <label for="gst_number" class="form-label">GST Number</label>
-        <input type="text" class="form-control" id="gst_number" name="gst_number" value="{{ user.gst_number or '' }}">
-      </div>
-      <div class="mb-3">
-        <label for="firm_address" class="form-label">Firm Address</label>
-        <textarea class="form-control" id="firm_address" name="firm_address" rows="3">{{ user.firm_address or '' }}</textarea>
-      </div>
-    </div>
-
-    <!-- Common Address Fields -->
-    <div class="row mb-3">
-      <div class="col-md-4">
-        <label for="pincode" class="form-label">PIN Code <span class="text-danger">*</span></label>
-        <input type="text" class="form-control" id="pincode" name="pincode" maxlength="6" value="{{ user.pincode or '' }}" required>
-      </div>
-      <div class="col-md-4">
-        <label for="city" class="form-label">City <span class="text-danger">*</span></label>
-        <input type="text" class="form-control" id="city" name="city" value="{{ user.city or '' }}" required>
-      </div>
-      <div class="col-md-4">
-        <label for="state" class="form-label">State <span class="text-danger">*</span></label>
-        <input type="text" class="form-control" id="state" name="state" value="{{ user.state or '' }}" required>
-      </div>
-    </div>
-
-    <button type="submit" class="btn btn-primary mt-3">Submit Profile</button>
-    <div class="d-flex justify-content-between align-items-center mt-3">
-  <button type="button" onclick="history.back()" class="btn btn-secondary">Back</button>
-  </div>
-
-  </form>
-</div>
-
-<script>
-  document.addEventListener("DOMContentLoaded", function () {
-    const agentTypeSelect = document.getElementById("agent_type");
-    const dsaFields = document.getElementById("dsa_fields");
-    const bankFinanceFields = document.getElementById("bank_finance_fields");
-    const privateFirmFields = document.getElementById("private_firm_fields");
-    const pincodeInput = document.getElementById("pincode");
-    const cityInput = document.getElementById("city");
-    const stateInput = document.getElementById("state");
-
-    function toggleAgentFields() {
-      const val = agentTypeSelect.value;
-      dsaFields.style.display = "none";
-      bankFinanceFields.style.display = "none";
-      privateFirmFields.style.display = "none";
-
-      if (val === "DSA") {
-        dsaFields.style.display = "block";
-      } else if (val === "Bank or Finance") {
-        bankFinanceFields.style.display = "block";
-      } else if (val === "Private Firm") {
-        privateFirmFields.style.display = "block";
-      }
+  <style>
+    :root{
+      --primary:#0d6efd;
+      --primary-dark:#0b5ed7;
+      --text:#212529;
+      --muted:#6c757d;
+      --bg:#f8f9fa;
+      --card:#ffffff;
+      --success:#28a745;
+      --danger:#dc3545;
+      --border:#e9ecef;
+      --radius:16px;
+    }
+    *{box-sizing:border-box}
+    body{
+      font-family:'Poppins',sans-serif;
+      background:var(--bg);
+      color:var(--text);
+      margin:0;
     }
 
-    agentTypeSelect.addEventListener("change", toggleAgentFields);
-    toggleAgentFields();
+    /* Header (same as user) */
+    .top-bar{
+      background:#fff;
+      padding:14px 20px;
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      border-bottom:1px solid var(--border);
+      position:sticky;
+      top:0; z-index:10;
+    }
+    .brand{
+      display:flex; align-items:center; gap:10px;
+      font-weight:700; font-size:20px; color:var(--text);
+      text-decoration:none;
+    }
+    .brand img{height:40px; border-radius:8px}
+    .top-actions{display:flex; gap:10px}
+    .btn{
+      display:inline-flex; align-items:center; justify-content:center;
+      padding:10px 16px; border-radius:10px; font-weight:600;
+      border:1px solid transparent; cursor:pointer; text-decoration:none;
+    }
+    .btn-primary{background:var(--primary); color:#fff}
+    .btn-primary:hover{background:var(--primary-dark)}
+    .btn-light{background:#fff; color:var(--primary); border-color:var(--primary)}
+    .btn-light:hover{background:#f0f6ff}
 
-    // Auto-fill city and state by PIN code using Indian Postal API
-    pincodeInput.addEventListener("blur", function () {
-      const pin = pincodeInput.value.trim();
-      if (pin.length === 6) {
-        fetch(`https://api.postalpincode.in/pincode/${pin}`)
-          .then(response => response.json())
-          .then(data => {
-            if (data[0].Status === "Success") {
-              const postOffice = data[0].PostOffice[0];
-              cityInput.value = postOffice.District;
-              stateInput.value = postOffice.State;
-            } else {
-              cityInput.value = "";
-              stateInput.value = "";
-            }
-          })
-          .catch(() => {
-            cityInput.value = "";
-            stateInput.value = "";
-          });
+    .container{max-width:1000px; margin:30px auto; padding:0 16px}
+
+    /* Stepper */
+    .stepper{
+      display:flex; gap:16px; justify-content:center; align-items:center;
+      margin-bottom:20px; flex-wrap:wrap;
+    }
+    .step{
+      display:flex; align-items:center; gap:10px;
+      padding:10px 14px; background:#fff; border:1px solid var(--border);
+      border-radius:12px; min-width:220px;
+    }
+    .step .badge{
+      width:28px; height:28px; border-radius:50%; display:grid; place-items:center;
+      background:#e9f2ff; color:var(--primary); font-weight:700;
+      border:1px solid #d7e6ff;
+    }
+    .step.active{border-color:var(--primary)}
+    .step.active .badge{background:var(--primary); color:#fff; border-color:var(--primary)}
+    .step.done{opacity:.8}
+    .step small{color:var(--muted); font-weight:500}
+
+    /* Card */
+    .card{
+      background:var(--card);
+      border-radius:var(--radius);
+      box-shadow:0 6px 24px rgba(0,0,0,.06);
+      padding:24px;
+      border:1px solid var(--border);
+    }
+
+    h2{margin:0 0 6px 0; color:var(--primary); font-weight:700; font-size:22px}
+    .sub{color:var(--muted); margin-bottom:18px}
+
+    /* Grids */
+    .grid{display:grid; grid-template-columns:1fr 1fr; gap:16px}
+    .grid-1{grid-template-columns:1fr}
+    @media (max-width:720px){ .grid{grid-template-columns:1fr} }
+
+    label{font-weight:600; font-size:13px; color:#333}
+    input, select, textarea{
+      width:100%; padding:12px 14px; border:1px solid #ced4da; border-radius:10px;
+      font-size:14px; outline:none; background:#fff;
+    }
+    textarea{min-height:96px; resize:vertical}
+    input:focus, select:focus, textarea:focus{
+      border-color:var(--primary); box-shadow:0 0 0 3px rgba(13,110,253,.15);
+    }
+    .hint{font-size:12px; color:var(--muted); margin-top:4px}
+
+    .inline{display:flex; gap:8px; align-items:center; flex-wrap:wrap}
+    .actions{display:flex; gap:10px; justify-content:flex-end; margin-top:10px; flex-wrap:wrap}
+    .btn-secondary{background:#fff; color:#333; border:1px solid var(--border)}
+    .btn-success{background:var(--success); color:#fff}
+    .status{
+      padding:6px 10px; border-radius:8px; font-size:12px; font-weight:600;
+      background:#eef7ff; color:var(--primary); border:1px solid #d7e6ff;
+    }
+    .status.ok{background:#eaf7ee; color:#1e7e34; border-color:#cfead6}
+    .status.bad{background:#fdecec; color:#b02a37; border-color:#f5c2c7}
+
+    .hidden{display:none}
+
+    /* Footer (same vibe as user page you shared) */
+    footer{margin:40px 0 20px; text-align:center; color:#6c757d; font-size:13px}
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <header class="top-bar">
+    <a class="brand" href="/">
+      <img src="{% static 'logo.png' %}" alt="LoanSaathiHub Logo"/>
+      <span>LoanSaathiHub</span>
+    </a>
+    <div class="top-actions">
+      <a class="btn btn-light" href="/">Home</a>
+      <a class="btn btn-primary" href="/login">Login</a>
+    </div>
+  </header>
+
+  <main class="container">
+    <!-- Stepper -->
+    <div class="stepper" id="stepper">
+      <div class="step active" data-step="1">
+        <div class="badge">1</div>
+        <div>
+          <div><strong>Basic Profile</strong></div>
+          <small>Title, Name, Mobile OTP, Email & Password</small>
+        </div>
+      </div>
+      <div class="step" data-step="2">
+        <div class="badge">2</div>
+        <div>
+          <div><strong>Personal Profile</strong></div>
+          <small>DOB, Address, PAN</small>
+        </div>
+      </div>
+      <div class="step" data-step="3">
+        <div class="badge">3</div>
+        <div>
+          <div><strong>Job & Business</strong></div>
+          <small>Business type, GST/DSA, Turnover</small>
+        </div>
+      </div>
+    </div>
+
+    <form id="agentForm" class="card" autocomplete="off">
+      <!-- STEP 1: Basic Profile -->
+      <section id="step-1">
+        <h2>Step 1: Basic Profile</h2>
+        <div class="sub">Please fill your basic details and verify mobile via OTP (demo mode).</div>
+
+        <div class="grid">
+          <div>
+            <label for="title">Title</label>
+            <select id="title" required>
+              <option value="">Select</option>
+              <option>Mr</option>
+              <option>Ms</option>
+              <option>Mrs</option>
+              <option>Dr</option>
+            </select>
+          </div>
+          <div>
+            <label for="firstName">First Name</label>
+            <input id="firstName" type="text" required placeholder="Enter first name"/>
+          </div>
+          <div>
+            <label for="lastName">Last Name</label>
+            <input id="lastName" type="text" required placeholder="Enter last name"/>
+          </div>
+          <div>
+            <label for="mobile">Mobile (10 digits)</label>
+            <div class="inline">
+              <input id="mobile" type="tel" pattern="^[0-9]{10}$" maxlength="10" placeholder="e.g. 9876543210" required/>
+              <button type="button" class="btn btn-light" id="sendOtpBtn">Send OTP</button>
+            </div>
+            <div class="hint" id="otpInfo">OTP not sent yet.</div>
+          </div>
+
+          <div class="grid-1" style="grid-column:1/-1">
+            <label for="otp">Enter OTP (demo)</label>
+            <div class="inline">
+              <input id="otp" type="text" inputmode="numeric" maxlength="6" placeholder="6-digit OTP"/>
+              <button type="button" class="btn btn-secondary" id="verifyOtpBtn">Verify OTP</button>
+              <span id="otpStatus" class="status">Not verified</span>
+            </div>
+          </div>
+
+          <div>
+            <label for="email">Email</label>
+            <input id="email" type="email" required placeholder="name@example.com"/>
+          </div>
+          <div>
+            <label for="password">Create Password</label>
+            <input id="password" type="password" minlength="8" required placeholder="Min 8 characters"/>
+          </div>
+          <div>
+            <label for="confirmPassword">Reconfirm Password</label>
+            <input id="confirmPassword" type="password" minlength="8" required placeholder="Re-enter password"/>
+          </div>
+          <input type="hidden" id="password_hash" name="password_hash" />
+        </div>
+
+        <div class="actions">
+          <button type="button" class="btn btn-primary" id="next1">Save & Next</button>
+        </div>
+      </section>
+
+      <!-- STEP 2: Personal Profile (Aadhaar/ITR/CIBIL removed) -->
+      <section id="step-2" class="hidden">
+        <h2>Step 2: Personal Profile</h2>
+        <div class="sub">Enter your personal information.</div>
+
+        <div class="grid">
+          <div>
+            <label for="dob">Date of Birth</label>
+            <input id="dob" type="date" required/>
+          </div>
+          <div>
+            <label>Gender</label>
+            <div class="inline">
+              <label class="inline"><input type="radio" name="gender" value="Male" required/> Male</label>
+              <label class="inline"><input type="radio" name="gender" value="Female"/> Female</label>
+              <label class="inline"><input type="radio" name="gender" value="Other"/> Other</label>
+            </div>
+          </div>
+
+          <div class="grid-1" style="grid-column:1/-1">
+            <label for="address">Full Address</label>
+            <textarea id="address" placeholder="House No, Street, Area, Landmark"></textarea>
+          </div>
+
+          <div>
+            <label for="pincode">PIN Code</label>
+            <input id="pincode" type="text" pattern="^[0-9]{6}$" maxlength="6" placeholder="e.g. 110001" required/>
+            <div class="hint">City & State will auto-fill after valid PIN.</div>
+          </div>
+          <div>
+            <label for="city">City</label>
+            <input id="city" type="text" placeholder="Auto-filled"/>
+          </div>
+          <div>
+            <label for="state">State</label>
+            <input id="state" type="text" placeholder="Auto-filled"/>
+          </div>
+
+          <div class="grid-1">
+            <label for="pan">PAN Number (Mandatory)</label>
+            <input id="pan" type="text" placeholder="ABCDE1234F" maxlength="10" required/>
+            <div class="hint">Format: 5 letters + 4 digits + 1 letter</div>
+          </div>
+        </div>
+
+        <div class="actions">
+          <button type="button" class="btn btn-secondary" id="back2">Back</button>
+          <button type="button" class="btn btn-primary" id="next2">Save & Next</button>
+        </div>
+      </section>
+
+      <!-- STEP 3: Job & Business (Agent) -->
+      <section id="step-3" class="hidden">
+        <h2>Step 3: Job & Business</h2>
+        <div class="sub">Provide your business details.</div>
+
+        <div class="grid">
+          <div class="grid-1" style="grid-column:1/-1">
+            <label for="businessType">Business Type</label>
+            <select id="businessType" required>
+              <option value="">Select</option>
+              <option value="proprietor">Proprietor</option>
+              <option value="dsa">DSA</option>
+              <option value="pvtltd">Pvt LTD</option>
+              <option value="individual">Individual</option>
+            </select>
+          </div>
+
+          <div id="gstWrap" class="hidden">
+            <label for="gstNo">GST Number</label>
+            <input id="gstNo" type="text" placeholder="Enter GSTIN (if applicable)"/>
+          </div>
+
+          <div id="dsaWrap" class="hidden">
+            <label for="dsaCode">DSA Code with Name</label>
+            <input id="dsaCode" type="text" placeholder="e.g. ABC123 - John Doe"/>
+          </div>
+
+          <div class="grid-1" style="grid-column:1/-1">
+            <label for="businessName">Business Name</label>
+            <input id="businessName" type="text" placeholder="Registered/Trade name"/>
+          </div>
+
+          <div>
+            <label for="businessDesignation">Designation</label>
+            <select id="businessDesignation">
+              <option value="">Select Designation</option>
+              <option value="director">Director</option>
+              <option value="ceo">CEO</option>
+              <option value="owner">Owner</option>
+              <option value="proprietor">Proprietor</option>
+              <option value="partner">Partner</option>
+            </select>
+          </div>
+
+          <div>
+            <label for="businessTurnover">Last Year Company Turnover (₹)</label>
+            <input id="businessTurnover" type="number" min="0" placeholder="Enter Company Turnover"/>
+          </div>
+        </div>
+
+        <div class="actions">
+          <button type="button" class="btn btn-secondary" id="back3">Back</button>
+          <button type="submit" class="btn btn-success">Save & Finish</button>
+        </div>
+      </section>
+    </form>
+  </main>
+
+  <footer>
+    &copy; 2025 LoanSaathiHub. All rights reserved. | Terms &amp; Conditions | Privacy Policy
+  </footer>
+
+  <script>
+    // ------- Step handling -------
+    let currentStep = 1;
+    function showStep(n){
+      currentStep = n;
+      document.getElementById('step-1').classList.toggle('hidden', n!==1);
+      document.getElementById('step-2').classList.toggle('hidden', n!==2);
+      document.getElementById('step-3').classList.toggle('hidden', n!==3);
+      [...document.querySelectorAll('.stepper .step')].forEach((el,i)=>{
+        el.classList.toggle('active', i===n-1);
+        el.classList.toggle('done', i < n-1);
+        el.querySelector('.badge').textContent = (i < n-1) ? '✓' : (i+1);
+      });
+    }
+
+    // ------- OTP demo -------
+    let generatedOTP = null;
+    let otpVerified = false;
+    const sendOtpBtn = document.getElementById('sendOtpBtn');
+    const verifyOtpBtn = document.getElementById('verifyOtpBtn');
+    const otpInfo = document.getElementById('otpInfo');
+    const otpInput = document.getElementById('otp');
+    const otpStatus = document.getElementById('otpStatus');
+
+    function randomOTP(){ return Math.floor(100000 + Math.random()*900000).toString(); }
+
+    sendOtpBtn?.addEventListener('click', ()=>{
+      const mobile = document.getElementById('mobile').value.trim();
+      if(!/^[0-9]{10}$/.test(mobile)){ alert('Please enter a valid 10-digit mobile number.'); return; }
+      generatedOTP = randomOTP(); otpVerified = false;
+      otpStatus.textContent = 'OTP sent. Not verified'; otpStatus.className = 'status';
+      otpInfo.textContent = `Demo OTP (for testing): ${generatedOTP}`;
+    });
+
+    verifyOtpBtn?.addEventListener('click', ()=>{
+      if(!generatedOTP){ alert('Please click "Send OTP" first.'); return; }
+      if(otpInput.value.trim() === generatedOTP){
+        otpVerified = true; otpStatus.textContent = 'Verified'; otpStatus.className = 'status ok';
+      }else{
+        otpVerified = false; otpStatus.textContent = 'Invalid OTP'; otpStatus.className = 'status bad';
       }
     });
-  });
-</script>
 
-{% include "partials/complete_profile_agent_fields.html" %}
-        
-    </form>
-</div>
-{% endblock %}
+    // ------- Password hash (SHA-256) -------
+    async function sha256(message){
+      const msgBuffer = new TextEncoder().encode(message);
+      const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+      const hashArray = Array.from(new Uint8Array(hashBuffer));
+      return hashArray.map(b => b.toString(16).padStart(2,'0')).join('');
+    }
+
+    // Step 1 next
+    document.getElementById('next1').addEventListener('click', async ()=>{
+      const title = document.getElementById('title').value.trim();
+      const firstName = document.getElementById('firstName').value.trim();
+      const lastName = document.getElementById('lastName').value.trim();
+      const mobile = document.getElementById('mobile').value.trim();
+      const email = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value;
+      const confirmPassword = document.getElementById('confirmPassword').value;
+
+      if(!title || !firstName || !lastName || !/^[0-9]{10}$/.test(mobile) || !email){
+        alert('Please complete all required fields correctly.'); return;
+      }
+      if(!otpVerified){ alert('Please verify OTP to proceed.'); return; }
+      if(password.length < 8){ alert('Password must be at least 8 characters.'); return; }
+      if(password !== confirmPassword){ alert('Passwords do not match.'); return; }
+
+      const hash = await sha256(password);
+      document.getElementById('password_hash').value = hash;
+      document.getElementById('password').value = '';
+      document.getElementById('confirmPassword').value = '';
+      showStep(2);
+    });
+
+    // Step 2 back/next
+    document.getElementById('back2').addEventListener('click', ()=> showStep(1));
+    document.getElementById('next2').addEventListener('click', ()=>{
+      const dob = document.getElementById('dob').value;
+      const gender = (document.querySelector('input[name="gender"]:checked')||{}).value;
+      const pincode = document.getElementById('pincode').value.trim();
+      const pan = document.getElementById('pan').value.trim().toUpperCase();
+
+      if(!dob || !gender || !/^[0-9]{6}$/.test(pincode)){
+        alert('Please complete required fields (DOB, Gender, PIN).'); return;
+      }
+      if(!/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/.test(pan)){
+        alert('Please enter a valid PAN (e.g., ABCDE1234F).'); return;
+      }
+      showStep(3);
+    });
+
+    // Step 3 back
+    document.getElementById('back3').addEventListener('click', ()=> showStep(2));
+
+    // Business type conditional fields
+    const businessTypeEl = document.getElementById('businessType');
+    const gstWrap = document.getElementById('gstWrap');
+    const dsaWrap = document.getElementById('dsaWrap');
+    businessTypeEl.addEventListener('change', ()=>{
+      const v = businessTypeEl.value;
+      gstWrap.classList.toggle('hidden', !(v==='proprietor' || v==='pvtltd'));
+      dsaWrap.classList.toggle('hidden', v!=='dsa');
+    });
+
+    // PIN → City/State (simple API + fallback)
+    const pinMap = {
+      "110001": { city:"New Delhi", state:"Delhi" },
+      "400001": { city:"Mumbai", state:"Maharashtra" },
+      "560001": { city:"Bengaluru", state:"Karnataka" },
+      "700001": { city:"Kolkata", state:"West Bengal" },
+      "600001": { city:"Chennai", state:"Tamil Nadu" }
+    };
+    async function fillCityState(pincode){
+      const cityEl = document.getElementById('city');
+      const stateEl = document.getElementById('state');
+      cityEl.value = ''; stateEl.value = '';
+
+      if(pinMap[pincode]){
+        cityEl.value = pinMap[pincode].city;
+        stateEl.value = pinMap[pincode].state;
+        return;
+      }
+      try{
+        const res = await fetch(`https://api.postalpincode.in/pincode/${pincode}`);
+        const data = await res.json();
+        if(Array.isArray(data) && data[0]?.Status === "Success"){
+          const office = data[0].PostOffice?.[0];
+          if(office){ cityEl.value = office.District || ''; stateEl.value = office.State || ''; }
+        }
+      }catch(e){ /* ignore */ }
+    }
+    document.getElementById('pincode').addEventListener('input',(e)=>{
+      const p = e.target.value.trim(); if(/^\d{6}$/.test(p)){ fillCityState(p); }
+    });
+
+    // Final submit -> payload
+    document.getElementById('agentForm').addEventListener('submit', (e)=>{
+      e.preventDefault();
+      const payload = {
+        basic:{
+          title: document.getElementById('title').value.trim(),
+          firstName: document.getElementById('firstName').value.trim(),
+          lastName: document.getElementById('lastName').value.trim(),
+          mobile: document.getElementById('mobile').value.trim(),
+          email: document.getElementById('email').value.trim(),
+          password_hash: document.getElementById('password_hash').value,
+          otpVerified
+        },
+        personal:{
+          dob: document.getElementById('dob').value,
+          gender: (document.querySelector('input[name="gender"]:checked')||{}).value || '',
+          address: document.getElementById('address').value,
+          pincode: document.getElementById('pincode').value.trim(),
+          city: document.getElementById('city').value,
+          state: document.getElementById('state').value,
+          pan: document.getElementById('pan').value.trim().toUpperCase()
+        },
+        business:{
+          businessType: document.getElementById('businessType').value,
+          gstNo: document.getElementById('gstNo')?.value || '',
+          dsaCode: document.getElementById('dsaCode')?.value || '',
+          businessName: document.getElementById('businessName')?.value || '',
+          businessDesignation: document.getElementById('businessDesignation')?.value || '',
+          businessTurnover: document.getElementById('businessTurnover')?.value || ''
+        }
+      };
+      console.log('Agent Profile Payload:', payload);
+      alert('Agent profile saved (demo). Check console for payload.');
+      // TODO: fetch('/agent/save', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)})
+    });
+
+    // init
+    showStep(1);
+  </script>
+</body>
+</html>

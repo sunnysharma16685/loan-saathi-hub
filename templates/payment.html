@@ -1,98 +1,69 @@
-{% extends "base.html" %}
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Loan Saathi Hub - Payment</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Poppins', sans-serif; background: #f5f8fa; margin: 0; }
+        header, footer { background: #0d6efd; color: #fff; padding: 15px 30px; }
+        header { display: flex; justify-content: space-between; }
+        header a { color: #fff; text-decoration: none; }
+        .container { background: #fff; max-width: 600px; margin: 40px auto; padding: 20px; border-radius: 8px; box-shadow: 0px 0px 8px rgba(0,0,0,0.1); }
+        h1 { color: #0d6efd; }
+        label { font-weight: 600; }
+        .payment-method { margin-bottom: 10px; }
+        button { background: #28a745; color: #fff; padding: 10px 15px; border: none; cursor: pointer; border-radius: 4px; }
+        footer { text-align: center; font-size: 14px; }
+        footer a { color: #fff; margin: 0 5px; text-decoration: none; }
+    </style>
+</head>
+<body>
 
-{% block title %}Agent Dashboard - LoanSaathiHub{% endblock %}
+<header>
+    <div>Loan Saathi Hub</div>
+    <a href="{% url 'dashboard_agent' %}">Back to Dashboard</a>
+</header>
 
-{% block header_buttons %}
-<a href="{{ url_for('logout') }}" class="btn btn-sm btn-danger">Logout</a>
-<a href="{{ url_for('index') }}" class="btn btn-sm btn-secondary ms-2">Home</a>
-{% endblock %}
+<div class="container">
+    <h1>Payment for Profile Access</h1>
+    <p>Company: <strong>S M Enterprises</strong></p>
+    <p>Please select a payment method to proceed:</p>
 
-{% block content %}
-<div class="container mt-4">
-  <h3>Welcome, {{ user.first_name }}! Your Client Leads</h3>
-
-  <table class="table table-striped mt-3">
-    <thead>
-      <tr>
-        <th>Client ID</th>
-        <th>Client Name</th>
-        <th>Loan Type</th>
-        <th>Amount Requested (₹)</th>
-        <th>Status</th>
-        <th>Remark</th>
-        <th>View Profile</th>
-        <th>Payment</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for loan in loans %}
-      <tr>
-        <td>{{ loan.loan_id }}</td>
-        <td>{{ loan.client_name }}</td>
-        <td>{{ loan.loan_type }}</td>
-        <td>{{ loan.amount }}</td>
-        <td>
-          <form method="POST" action="{{ url_for('update_loan_status', loan_id=loan.loan_id) }}">
-            <select name="status" onchange="this.form.submit()" class="form-select form-select-sm">
-              <option value="pending" {% if loan.status == 'pending' %}selected{% endif %}>Pending</option>
-              <option value="active" {% if loan.status == 'active' %}selected{% endif %}>Active</option>
-              <option value="rejected" {% if loan.status == 'rejected' %}selected{% endif %}>Rejected</option>
-              <option value="approved" {% if loan.status == 'approved' %}selected{% endif %}>Approved</option>
-            </select>
-          </form>
-        </td>
-        <td>
-          <form method="POST" action="{{ url_for('update_loan_remark', loan_id=loan.loan_id) }}">
-            <input type="text" name="remark" value="{{ loan.remark or '' }}" class="form-control form-control-sm" placeholder="Enter remark" />
-            <button type="submit" class="btn btn-primary btn-sm mt-1">Update</button>
-          </form>
-        </td>
-        <td>
-          <a href="{{ url_for('view_profile_pdf', loan_id=loan.loan_id) }}" target="_blank" class="btn btn-info btn-sm">View Profile (PDF)</a>
-        </td>
-        <td>
-          {% if loan.status == 'approved' and not loan.payment_done %}
-          <a href="{{ url_for('payment', loan_id=loan.loan_id) }}" class="btn btn-success btn-sm">Pay ₹99</a>
-          {% elif loan.payment_done %}
-          <span class="text-success">Paid</span>{% extends "base.html" %}
-
-{% block title %}Payment - LoanSaathiHub{% endblock %}
-
-{% block header_buttons %}
-<a href="{{ url_for('logout') }}" class="btn btn-sm btn-danger">Logout</a>
-<a href="{{ url_for('dashboard_agent') }}" class="btn btn-sm btn-secondary ms-2">Back to Dashboard</a>
-{% endblock %}
-
-{% block content %}
-<div class="container mt-4">
-  <h3>Payment for Lead: {{ loan_id }}</h3>
-  <p>Amount to pay: <strong>₹99 + applicable taxes</strong></p>
-
-  <form method="POST">
-    <div class="mb-3">
-      <label for="payment_method" class="form-label">Payment Method</label>
-      <select id="payment_method" name="payment_method" class="form-select" required>
-        <option value="">Select Payment Method</option>
-        <option value="upi">UPI</option>
-        <option value="netbanking">Net Banking</option>
-        <option value="card">Credit/Debit Card</option>
-      </select>
+    <div class="payment-method">
+        <input type="radio" name="payment" id="upi">
+        <label for="upi">UPI</label>
+    </div>
+    <div class="payment-method">
+        <input type="radio" name="payment" id="card">
+        <label for="card">Credit/Debit Card</label>
+    </div>
+    <div class="payment-method">
+        <input type="radio" name="payment" id="netbanking">
+        <label for="netbanking">Net Banking</label>
     </div>
 
-    <button type="submit" class="btn btn-success">Pay Now</button>
-  </form>
+    <button onclick="confirmPayment()">Confirm Payment</button>
 </div>
-{% endblock %}
 
-          {% else %}
-          <span>-</span>
-          {% endif %}
-        </td>
-      </tr>
-      {% else %}
-      <tr><td colspan="8" class="text-center">No leads found.</td></tr>
-      {% endfor %}
-    </tbody>
-  </table>
-</div>
-{% endblock %}
+<footer>
+    © 2025 LoanSaathiHub. All rights reserved. |
+    <a href="#">About us</a> |
+    <a href="#">Terms & Conditions</a> |
+    <a href="#">Privacy Policy</a> |
+    <a href="#">FAQ</a> |
+    <a href="#">Support</a> |
+    <a href="#">Contacts</a> |
+    <a href="#">Feedback Stars</a>
+</footer>
+
+<script>
+    function confirmPayment() {
+        alert("Payment confirmed! Redirecting...");
+        window.location.href = "{% url 'dashboard_agent' %}";
+    }
+</script>
+
+</body>
+</html>

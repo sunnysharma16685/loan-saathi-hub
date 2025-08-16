@@ -15,6 +15,8 @@
         label { font-weight: 600; }
         .payment-method { margin-bottom: 10px; }
         button { background: #28a745; color: #fff; padding: 10px 15px; border: none; cursor: pointer; border-radius: 4px; }
+        .alert { padding: 10px; margin-bottom: 15px; border-radius: 5px; }
+        .alert-success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
         footer { text-align: center; font-size: 14px; }
         footer a { color: #fff; margin: 0 5px; text-decoration: none; }
     </style>
@@ -28,23 +30,38 @@
 
 <div class="container">
     <h1>Payment for Profile Access</h1>
+
+    <!-- ✅ Success Message -->
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-success">{{ message }}</div>
+        {% endfor %}
+    {% endif %}
+
     <p>Company: <strong>S M Enterprises</strong></p>
     <p>Please select a payment method to proceed:</p>
 
-    <div class="payment-method">
-        <input type="radio" name="payment" id="upi">
-        <label for="upi">UPI</label>
-    </div>
-    <div class="payment-method">
-        <input type="radio" name="payment" id="card">
-        <label for="card">Credit/Debit Card</label>
-    </div>
-    <div class="payment-method">
-        <input type="radio" name="payment" id="netbanking">
-        <label for="netbanking">Net Banking</label>
-    </div>
+    <!-- ✅ Django Form -->
+    <form method="POST">
+        {% csrf_token %}
+        <div class="payment-method">
+            <input type="radio" name="payment_method" value="UPI" required>
+            <label for="upi">UPI</label>
+        </div>
+        <div class="payment-method">
+            <input type="radio" name="payment_method" value="Card">
+            <label for="card">Credit/Debit Card</label>
+        </div>
+        <div class="payment-method">
+            <input type="radio" name="payment_method" value="NetBanking">
+            <label for="netbanking">Net Banking</label>
+        </div>
 
-    <button onclick="confirmPayment()">Confirm Payment</button>
+        <label for="amount">Amount (₹)</label>
+        <input type="number" name="amount" min="1" required>
+
+        <button type="submit">Confirm Payment</button>
+    </form>
 </div>
 
 <footer>
@@ -57,13 +74,6 @@
     <a href="#">Contacts</a> |
     <a href="#">Feedback Stars</a>
 </footer>
-
-<script>
-    function confirmPayment() {
-        alert("Payment confirmed! Redirecting...");
-        window.location.href = "{% url 'dashboard_agent' %}";
-    }
-</script>
 
 </body>
 </html>

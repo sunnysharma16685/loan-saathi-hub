@@ -15,7 +15,7 @@ urlpatterns = [
     path("loan-request/", views.loan_request, name="loan_request"),
 
     # ✅ Yeh line fix ki gayi (payment → payment_page)
-    path("payment/<int:loan_id>/", views.payment_page, name="payment"),
+    path("payment/<int:loan_id>/", views.payment_page, name="payment_page"),
 
     path("profile/user/", views.complete_profile_user, name="complete_profile_user"),
     path("profile/agent/", views.complete_profile_agent, name="complete_profile_agent"),

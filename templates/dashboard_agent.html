@@ -155,7 +155,7 @@
             <td>{{ loan.status }}</td>
             <td>{{ loan.remarks }}</td>
             <td>
-                <a href="{% url 'payment' loan.id %}" class="btn btn-approve">Make Payment</a>
+                <a href="{% url 'payment_page' loan.id %}" class="btn btn-approve">Make Payment</a>
                 <button class="btn-view" onclick="openProfile('{{ loan.loan_id }}', {% if loan.payment_set.exists %}true{% else %}false{% endif %})">
                     View Profile
                 </button>

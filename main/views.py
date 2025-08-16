@@ -27,6 +27,28 @@ def login_view(request):
     return render(request, 'login.html')
 
 
+# ------------------------
+# NEW REDIRECT HELPERS
+# ------------------------
+
+@login_required
+def redirect_to_user_flow(request):
+    """Index -> Loan User -> Complete Profile -> Dashboard"""
+    profile_exists = UserProfile.objects.filter(user=request.user).exists()
+    if profile_exists:
+        return redirect("dashboard_user")
+    return redirect("complete_profile_user")
+
+
+@login_required
+def redirect_to_agent_flow(request):
+    """Index -> Loan Agent -> Complete Profile -> Dashboard"""
+    profile_exists = AgentProfile.objects.filter(user=request.user).exists()
+    if profile_exists:
+        return redirect("dashboard_agent")
+    return redirect("complete_profile_agent")
+
+
 def logout_view(request):
     logout(request)
     return redirect('index')

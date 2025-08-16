@@ -2,7 +2,6 @@
 {% load static %}
 {% block content %}
 
-
 <!-- Google Font -->
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
 
@@ -54,6 +53,7 @@
     border-radius: 8px;
     cursor: pointer;
     font-weight: 600;
+    text-decoration: none;
 }
 
 /* Main layout */
@@ -78,7 +78,7 @@
     font-weight: 400;
 }
 
-.left-side button {
+.left-side a {
     display: block;
     width: 200px;
     padding: 14px;
@@ -88,6 +88,8 @@
     border: none;
     border-radius: 8px;
     cursor: pointer;
+    text-align: center;
+    text-decoration: none;
 }
 
 .loan-user {
@@ -136,7 +138,7 @@
             <img src="{% static 'logo.png' %}" alt="Logo">
             LoanSaathiHub
         </div>
-        <button class="login-btn">Login</button>
+        <a href="{% url 'login' %}" class="login-btn">Login</a>
     </div>
 
     <!-- Main section -->
@@ -145,8 +147,8 @@
         <div class="left-side">
             <h1>Welcome to LoanSaathiHub</h1>
             <p>Please select your account type:</p>
-            <button class="loan-user">Loan User</button>
-            <button class="loan-agent">Loan Agent</button>
+            <a href="{% url 'complete_profile_user' %}" class="loan-user">Loan User</a>
+            <a href="{% url 'complete_profile_agent' %}" class="loan-agent">Loan Agent</a>
         </div>
 
         <!-- Right images -->

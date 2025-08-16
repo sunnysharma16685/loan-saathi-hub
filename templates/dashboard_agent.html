@@ -49,11 +49,13 @@
             background: #0d6efd;
             color: #fff;
         }
-        button {
+        button, .btn {
             padding: 6px 12px;
             border: none;
             cursor: pointer;
             border-radius: 4px;
+            text-decoration: none;
+            font-size: 14px;
         }
         .btn-view { background: #0d6efd; color: #fff; }
         .btn-approve { background: #28a745; color: #fff; }
@@ -119,12 +121,13 @@
 <header>
     <div>Loan Saathi Hub</div>
     <div>
+        <span>Welcome, {{ request.user.first_name }}</span>
         <a href="{% url 'index' %}">Home</a>
         <a href="{% url 'logout' %}">Logout</a>
     </div>
 </header>
 
-<h1>Welcome, Agent</h1>
+<h1>Agent Dashboard</h1>
 
 <table>
     <thead>
@@ -140,41 +143,29 @@
             <th>Actions</th>
         </tr>
     </thead>
-    <tbody id="loanTable">
-        <!-- Dummy Data -->
+    <tbody>
+        {% for loan in loans|slice:":3" %}
         <tr>
-            <td>1</td>
-            <td>LSH0001</td>
-            <td>Rahul Sharma (01-01-1990, Male)</td>
-            <td>₹5,00,000</td>
-            <td>36</td>
-            <td>15%-25%</td>
-            <td>Pending</td>
-            <td>Marriage</td>
-            <td><button class="btn-view" onclick="openProfile('LSH0001', false)">View Profile</button></td>
+            <td>{{ forloop.counter }}</td>
+            <td>{{ loan.loan_id }}</td>
+            <td>{{ loan.user.first_name }} {{ loan.user.last_name }}</td>
+            <td>₹{{ loan.amount_requested }}</td>
+            <td>{{ loan.duration_months }} months</td>
+            <td>{{ loan.interest_rate }}%</td>
+            <td>{{ loan.status }}</td>
+            <td>{{ loan.remarks }}</td>
+            <td>
+                <a href="{% url 'payment' loan.id %}" class="btn btn-approve">Make Payment</a>
+                <button class="btn-view" onclick="openProfile('{{ loan.loan_id }}', {% if loan.payment_set.exists %}true{% else %}false{% endif %})">
+                    View Profile
+                </button>
+            </td>
         </tr>
+        {% empty %}
         <tr>
-            <td>2</td>
-            <td>LSH0002</td>
-            <td>Priya Singh (15-05-1988, Female)</td>
-            <td>₹8,00,000</td>
-            <td>60</td>
-            <td>7%-15%</td>
-            <td>Active</td>
-            <td>Home Renovation</td>
-            <td><button class="btn-view" onclick="openProfile('LSH0002', false)">View Profile</button></td>
+            <td colspan="9">No loan requests found.</td>
         </tr>
-        <tr>
-            <td>3</td>
-            <td>LSH0003</td>
-            <td>Amit Verma (20-08-1985, Male)</td>
-            <td>₹10,00,000</td>
-            <td>48</td>
-            <td>25%-36%</td>
-            <td>Approved & Payment Done</td>
-            <td>Business Expansion</td>
-            <td><button class="btn-view" onclick="openProfile('LSH0003', true)">View Profile</button></td>
-        </tr>
+        {% endfor %}
     </tbody>
 </table>
 
@@ -246,15 +237,9 @@
     function closeProfile() {
         document.getElementById('profileModal').style.display = 'none';
     }
-    function approveLoan() {
-        window.location.href = "{% url 'agent_payment' %}";
-    }
-    function rejectLoan() {
-        alert("Reject reason dropdown here");
-    }
-    function activeLoan() {
-        alert("Loan status changed to Active");
-    }
+    function approveLoan() { alert("Loan approved!"); }
+    function rejectLoan() { alert("Loan rejected!"); }
+    function activeLoan() { alert("Loan marked active!"); }
 </script>
 
 </body>

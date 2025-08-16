@@ -88,22 +88,51 @@ def payment_page(request, loan_id):
 def complete_profile_user(request):
     profile, created = UserProfile.objects.get_or_create(user=request.user)
     if request.method == 'POST':
-        profile.full_name = request.POST.get('full_name')
-        profile.dob = request.POST.get('dob')
-        profile.gender = request.POST.get('gender')
-        profile.marital_status = request.POST.get('marital_status')
-        profile.nationality = request.POST.get('nationality')
-        profile.pan_number = request.POST.get('pan_number')
-        profile.voter_id = request.POST.get('voter_id')
-        profile.passport_no = request.POST.get('passport_no')
-        profile.driving_license = request.POST.get('driving_license')
-        profile.bank_account_no = request.POST.get('bank_account_no')
-        profile.ifsc_code = request.POST.get('ifsc_code')
-        profile.reason_for_loan = request.POST.get('reason_for_loan')
-        profile.occupation = request.POST.get('occupation')
-        profile.company_name = request.POST.get('company_name')
-        profile.designation = request.POST.get('designation')
-        profile.turnover = request.POST.get('turnover')
+        # ---------------- OLD FIELDS (if present in form) ----------------
+        if 'full_name' in request.POST: profile.full_name = request.POST.get('full_name')
+        if 'dob' in request.POST: profile.dob = request.POST.get('dob')
+        if 'gender' in request.POST: profile.gender = request.POST.get('gender')
+        if 'marital_status' in request.POST: profile.marital_status = request.POST.get('marital_status')
+        if 'nationality' in request.POST: profile.nationality = request.POST.get('nationality')
+        if 'pan_number' in request.POST: profile.pan_number = request.POST.get('pan_number')
+        if 'voter_id' in request.POST: profile.voter_id = request.POST.get('voter_id')
+        if 'bank_account_no' in request.POST: profile.bank_account_no = request.POST.get('bank_account_no')
+        if 'ifsc_code' in request.POST: profile.ifsc_code = request.POST.get('ifsc_code')
+        if 'reason_for_loan' in request.POST: profile.reason_for_loan = request.POST.get('reason_for_loan')
+
+        # ---------------- NEW USER FORM FIELDS ----------------
+        if 'title' in request.POST: profile.title = request.POST.get('title')
+        if 'firstName' in request.POST: profile.first_name = request.POST.get('firstName')
+        if 'lastName' in request.POST: profile.last_name = request.POST.get('lastName')
+        if 'mobile' in request.POST: profile.mobile = request.POST.get('mobile')
+        if 'email' in request.POST: profile.email = request.POST.get('email')
+        if 'password_hash' in request.POST: profile.password_hash = request.POST.get('password_hash')
+
+        if 'address' in request.POST: profile.address = request.POST.get('address')
+        if 'pincode' in request.POST: profile.pincode = request.POST.get('pincode')
+        if 'city' in request.POST: profile.city = request.POST.get('city')
+        if 'state' in request.POST: profile.state = request.POST.get('state')
+        if 'pan' in request.POST: profile.pan_number = request.POST.get('pan')   # same as pan_number
+        if 'aadhaar' in request.POST: profile.aadhaar = request.POST.get('aadhaar')
+        if 'itr' in request.POST: profile.itr = request.POST.get('itr')
+        if 'cibil' in request.POST: profile.cibil = request.POST.get('cibil')
+
+        # Job fields
+        if 'type' in request.POST: profile.work_type = request.POST.get('type')
+        if 'jobType' in request.POST: profile.job_type = request.POST.get('jobType')
+        if 'employmentType' in request.POST: profile.employment_type = request.POST.get('employmentType')
+        if 'companyName' in request.POST: profile.company_name = request.POST.get('companyName')
+        if 'jobDesignation' in request.POST: profile.job_designation = request.POST.get('jobDesignation')
+        if 'totalExperience' in request.POST: profile.total_experience = request.POST.get('totalExperience')
+        if 'currentExperience' in request.POST: profile.current_experience = request.POST.get('currentExperience')
+        if 'salaryMode' in request.POST: profile.salary_mode = request.POST.get('salaryMode')
+        if 'monthlySalary' in request.POST: profile.monthly_salary = request.POST.get('monthlySalary')
+        if 'otherIncome' in request.POST: profile.other_income = request.POST.get('otherIncome')
+
+        # Business fields
+        if 'businessTurnover' in request.POST: profile.business_turnover = request.POST.get('businessTurnover')
+        if 'businessDesignation' in request.POST: profile.business_designation = request.POST.get('businessDesignation')
+
         profile.save()
         return redirect('dashboard_user')
 
@@ -113,24 +142,33 @@ def complete_profile_user(request):
 @login_required
 def complete_profile_agent(request):
     profile, created = AgentProfile.objects.get_or_create(user=request.user)
+
     if request.method == 'POST':
-        profile.full_name = request.POST.get('full_name')
+        # STEP 1: Basic
+        profile.title = request.POST.get('title')
+        profile.first_name = request.POST.get('firstName')
+        profile.last_name = request.POST.get('lastName')
+        profile.mobile = request.POST.get('mobile')
+        profile.email = request.POST.get('email')
+        profile.password_hash = request.POST.get('password_hash')  # hashed password from form
+
+        # STEP 2: Personal
         profile.dob = request.POST.get('dob')
         profile.gender = request.POST.get('gender')
-        profile.marital_status = request.POST.get('marital_status')
-        profile.nationality = request.POST.get('nationality')
-        profile.pan_number = request.POST.get('pan_number')
-        profile.voter_id = request.POST.get('voter_id')
-        profile.passport_no = request.POST.get('passport_no')
-        profile.driving_license = request.POST.get('driving_license')
-        profile.bank_account_no = request.POST.get('bank_account_no')
-        profile.ifsc_code = request.POST.get('ifsc_code')
-        profile.business_type = request.POST.get('business_type')
-        profile.gst_no = request.POST.get('gst_no')
-        profile.dsa_code_name = request.POST.get('dsa_code_name')
-        profile.business_name = request.POST.get('business_name')
-        profile.designation = request.POST.get('designation')
-        profile.turnover = request.POST.get('turnover')
+        profile.address = request.POST.get('address')
+        profile.pincode = request.POST.get('pincode')
+        profile.city = request.POST.get('city')
+        profile.state = request.POST.get('state')
+        profile.pan_number = request.POST.get('pan')
+
+        # STEP 3: Business
+        profile.business_type = request.POST.get('businessType')
+        profile.gst_no = request.POST.get('gstNo')
+        profile.dsa_code = request.POST.get('dsaCode')
+        profile.business_name = request.POST.get('businessName')
+        profile.designation = request.POST.get('businessDesignation')
+        profile.turnover = request.POST.get('businessTurnover')
+
         profile.save()
         return redirect('dashboard_agent')
 

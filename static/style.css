@@ -132,6 +132,7 @@ footer a:hover {
     max-width: 1100px;
     margin: auto;
     padding: 20px;
+    overflow-x: auto; /* mobile scroll */
 }
 
 .admin-container table {
@@ -147,6 +148,7 @@ footer a:hover {
     padding: 12px;
     border-bottom: 1px solid #ddd;
     text-align: left;
+    word-break: break-word; /* long text wrap */
 }
 
 .admin-container th {
@@ -156,6 +158,22 @@ footer a:hover {
 
 .admin-container tr:hover {
     background: #f1f1f1;
+}
+
+/* ===== Message Box ===== */
+.msg {
+    margin: 10px 0;
+    padding: 10px;
+    border-radius: 6px;
+    display: none;
+}
+.msg.success {
+    background: #d4edda;
+    color: #155724;
+}
+.msg.error {
+    background: #f8d7da;
+    color: #721c24;
 }
 
 /* ===== Responsive ===== */

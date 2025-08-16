@@ -1,30 +1,30 @@
-<script>
 async function loginUser(event) {
   event.preventDefault();
 
-  // Get form inputs
   const email = document.getElementById("email").value.trim();
   const password = document.getElementById("password").value;
+  const userType = document.querySelector("input[name='user_type']:checked")?.value || "user";
 
-  // Basic UX validation
   if (!email || !password) {
     showMessage("कृपया सभी फ़ील्ड भरें।", "error");
     return;
   }
 
-  // Disable button to prevent multiple submissions
   const loginBtn = document.getElementById("loginBtn");
   loginBtn.disabled = true;
-  loginBtn.innerText = "लॉगिन हो रहा है...";
+  loginBtn.innerText = "Login हो रहा है...";
 
   try {
-    // Mock login logic (replace with real fetch or Supabase logic)
-    const response = await fakeLogin(email, password);
+    const response = await fakeLogin(email, password, userType);
 
     if (response.success) {
       showMessage("लॉगिन सफल हुआ!", "success");
       setTimeout(() => {
-        window.location.href = "/dashboard";  // Your Flask route here
+        if (response.role === "user") {
+          window.location.href = "/dashboard_user";
+        } else {
+          window.location.href = "/dashboard_agent";
+        }
       }, 1000);
     } else {
       showMessage("गलत ईमेल या पासवर्ड।", "error");
@@ -38,20 +38,22 @@ async function loginUser(event) {
   }
 }
 
-// Fake login logic to simulate success/failure
-async function fakeLogin(email, password) {
+// Mock login (replace later with real backend/Supabase)
+async function fakeLogin(email, password, userType) {
   return new Promise((resolve) => {
     setTimeout(() => {
-      resolve({ success: email === "test@example.com" && password === "123456" });
+      if (email === "test@example.com" && password === "123456") {
+        resolve({ success: true, role: userType });
+      } else {
+        resolve({ success: false });
+      }
     }, 1000);
   });
 }
 
-// UX-friendly message display
 function showMessage(message, type) {
   const msgBox = document.getElementById("messageBox");
   msgBox.innerText = message;
   msgBox.className = type === "success" ? "msg success" : "msg error";
   msgBox.style.display = "block";
 }
-</script>

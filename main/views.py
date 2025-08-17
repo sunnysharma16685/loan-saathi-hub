@@ -5,8 +5,8 @@ from django.contrib import messages
 from .models import LoanRequest, Payment, UserProfile, AgentProfile, User
 from django.utils.crypto import get_random_string
 from django.db.models import Count, Q
-from django.conf import settings
-supabase = settings.supabase
+from .supabase_client import supabase   # ✅ single source of truth
+
 
 def index(request):
     return render(request, 'index.html')
@@ -88,7 +88,7 @@ def payment_page(request, loan_id):
 
 
 # ------------------------
-# PROFILE VIEWS (NO LOGIN REQUIRED)
+# PROFILE VIEWS
 # ------------------------
 
 def complete_profile_user(request):
@@ -98,7 +98,7 @@ def complete_profile_user(request):
             messages.error(request, "Please login first to save profile.")
             return redirect('login')
 
-        # ---------------- OLD FIELDS (if present in form) ----------------
+        # OLD FIELDS
         if 'full_name' in request.POST: profile.full_name = request.POST.get('full_name')
         if 'dob' in request.POST: profile.dob = request.POST.get('dob')
         if 'gender' in request.POST: profile.gender = request.POST.get('gender')
@@ -110,14 +110,13 @@ def complete_profile_user(request):
         if 'ifsc_code' in request.POST: profile.ifsc_code = request.POST.get('ifsc_code')
         if 'reason_for_loan' in request.POST: profile.reason_for_loan = request.POST.get('reason_for_loan')
 
-        # ---------------- NEW USER FORM FIELDS ----------------
+        # NEW FIELDS
         if 'title' in request.POST: profile.title = request.POST.get('title')
         if 'firstName' in request.POST: profile.first_name = request.POST.get('firstName')
         if 'lastName' in request.POST: profile.last_name = request.POST.get('lastName')
         if 'mobile' in request.POST: profile.mobile = request.POST.get('mobile')
         if 'email' in request.POST: profile.email = request.POST.get('email')
         if 'password_hash' in request.POST: profile.password_hash = request.POST.get('password_hash')
-
         if 'address' in request.POST: profile.address = request.POST.get('address')
         if 'pincode' in request.POST: profile.pincode = request.POST.get('pincode')
         if 'city' in request.POST: profile.city = request.POST.get('city')
@@ -127,7 +126,7 @@ def complete_profile_user(request):
         if 'itr' in request.POST: profile.itr = request.POST.get('itr')
         if 'cibil' in request.POST: profile.cibil = request.POST.get('cibil')
 
-        # Job fields
+        # Job
         if 'type' in request.POST: profile.work_type = request.POST.get('type')
         if 'jobType' in request.POST: profile.job_type = request.POST.get('jobType')
         if 'employmentType' in request.POST: profile.employment_type = request.POST.get('employmentType')
@@ -139,16 +138,13 @@ def complete_profile_user(request):
         if 'monthlySalary' in request.POST: profile.monthly_salary = request.POST.get('monthlySalary')
         if 'otherIncome' in request.POST: profile.other_income = request.POST.get('otherIncome')
 
-        # Business fields
+        # Business
         if 'businessTurnover' in request.POST: profile.business_turnover = request.POST.get('businessTurnover')
         if 'businessDesignation' in request.POST: profile.business_designation = request.POST.get('businessDesignation')
 
         profile.save()
 
         # --- sync with Supabase ---
-        from django.conf import settings
-        supabase = settings.supabase
-
         data_user = {
             "id": str(request.user.id),
             "username": request.user.username,
@@ -181,7 +177,6 @@ def complete_profile_user(request):
     return render(request, 'complete_profile_user.html', {'profile': profile})
 
 
-
 def complete_profile_agent(request):
     profile, created = AgentProfile.objects.get_or_create(user=request.user) if request.user.is_authenticated else (None, False)
 
@@ -190,7 +185,7 @@ def complete_profile_agent(request):
             messages.error(request, "Please login first to save profile.")
             return redirect('login')
 
-        # STEP 1: Basic
+        # Basic
         profile.title = request.POST.get('title')
         profile.first_name = request.POST.get('firstName')
         profile.last_name = request.POST.get('lastName')
@@ -198,7 +193,7 @@ def complete_profile_agent(request):
         profile.email = request.POST.get('email')
         profile.password_hash = request.POST.get('password_hash')
 
-        # STEP 2: Personal
+        # Personal
         profile.dob = request.POST.get('dob')
         profile.gender = request.POST.get('gender')
         profile.address = request.POST.get('address')
@@ -207,7 +202,7 @@ def complete_profile_agent(request):
         profile.state = request.POST.get('state')
         profile.pan_number = request.POST.get('pan')
 
-        # STEP 3: Business
+        # Business
         profile.business_type = request.POST.get('businessType')
         profile.gst_no = request.POST.get('gstNo')
         profile.dsa_code = request.POST.get('dsaCode')
@@ -218,9 +213,6 @@ def complete_profile_agent(request):
         profile.save()
 
         # --- sync with Supabase ---
-        from django.conf import settings
-        supabase = settings.supabase
-
         data_user = {
             "id": str(request.user.id),
             "username": request.user.username,
@@ -252,18 +244,15 @@ def complete_profile_agent(request):
 
     return render(request, 'complete_profile_agent.html', {'profile': profile})
 
+
 def complete_profile_admin(request):
     if request.method == 'POST':
-        # admin form fields
         first_name = request.POST.get('first_name')
         last_name = request.POST.get('last_name')
         email = request.POST.get('email')
         mobile = request.POST.get('mobile')
 
         # --- sync with Supabase ---
-        from django.conf import settings
-        supabase = settings.supabase
-
         data_user = {
             "id": str(request.user.id),
             "username": request.user.username,
@@ -293,6 +282,7 @@ def complete_profile_admin(request):
         return redirect('dashboard_admin')
 
     return render(request, 'complete_profile_admin.html')
+
 
 # ------------------------
 # ADMIN LOGIN
@@ -325,7 +315,7 @@ def dashboard_admin(request):
     payments = Payment.objects.all()
     loans = LoanRequest.objects.all()
 
-    # --- Sync snapshot to Supabase (optional bulk push) ---
+    # --- Sync snapshot to Supabase ---
     try:
         supabase.table("user_profiles").upsert(
             [dict(id=str(u.id), first_name=u.first_name, last_name=u.last_name, email=u.email, mobile=u.mobile, role="user") for u in users]
@@ -351,5 +341,3 @@ def dashboard_admin(request):
         "payments": payments,
         "loans": loans,
     })
-
-

@@ -27,28 +27,6 @@ def login_view(request):
     return render(request, 'login.html')
 
 
-# ------------------------
-# NEW REDIRECT HELPERS
-# ------------------------
-
-@login_required
-def redirect_to_user_flow(request):
-    """Index -> Loan User -> Complete Profile -> Dashboard"""
-    profile_exists = UserProfile.objects.filter(user=request.user).exists()
-    if profile_exists:
-        return redirect("dashboard_user")
-    return redirect("complete_profile_user")
-
-
-@login_required
-def redirect_to_agent_flow(request):
-    """Index -> Loan Agent -> Complete Profile -> Dashboard"""
-    profile_exists = AgentProfile.objects.filter(user=request.user).exists()
-    if profile_exists:
-        return redirect("dashboard_agent")
-    return redirect("complete_profile_agent")
-
-
 def logout_view(request):
     logout(request)
     return redirect('index')
@@ -106,10 +84,17 @@ def payment_page(request, loan_id):
     return render(request, 'payment.html', {'loan': loan})
 
 
-@login_required
+# ------------------------
+# PROFILE VIEWS (NO LOGIN REQUIRED)
+# ------------------------
+
 def complete_profile_user(request):
-    profile, created = UserProfile.objects.get_or_create(user=request.user)
+    profile, created = UserProfile.objects.get_or_create(user=request.user) if request.user.is_authenticated else (None, False)
     if request.method == 'POST':
+        if not request.user.is_authenticated:
+            messages.error(request, "Please login first to save profile.")
+            return redirect('login')
+
         # ---------------- OLD FIELDS (if present in form) ----------------
         if 'full_name' in request.POST: profile.full_name = request.POST.get('full_name')
         if 'dob' in request.POST: profile.dob = request.POST.get('dob')
@@ -134,7 +119,7 @@ def complete_profile_user(request):
         if 'pincode' in request.POST: profile.pincode = request.POST.get('pincode')
         if 'city' in request.POST: profile.city = request.POST.get('city')
         if 'state' in request.POST: profile.state = request.POST.get('state')
-        if 'pan' in request.POST: profile.pan_number = request.POST.get('pan')   # same as pan_number
+        if 'pan' in request.POST: profile.pan_number = request.POST.get('pan')
         if 'aadhaar' in request.POST: profile.aadhaar = request.POST.get('aadhaar')
         if 'itr' in request.POST: profile.itr = request.POST.get('itr')
         if 'cibil' in request.POST: profile.cibil = request.POST.get('cibil')
@@ -161,18 +146,21 @@ def complete_profile_user(request):
     return render(request, 'complete_profile_user.html', {'profile': profile})
 
 
-@login_required
 def complete_profile_agent(request):
-    profile, created = AgentProfile.objects.get_or_create(user=request.user)
+    profile, created = AgentProfile.objects.get_or_create(user=request.user) if request.user.is_authenticated else (None, False)
 
     if request.method == 'POST':
+        if not request.user.is_authenticated:
+            messages.error(request, "Please login first to save profile.")
+            return redirect('login')
+
         # STEP 1: Basic
         profile.title = request.POST.get('title')
         profile.first_name = request.POST.get('firstName')
         profile.last_name = request.POST.get('lastName')
         profile.mobile = request.POST.get('mobile')
         profile.email = request.POST.get('email')
-        profile.password_hash = request.POST.get('password_hash')  # hashed password from form
+        profile.password_hash = request.POST.get('password_hash')
 
         # STEP 2: Personal
         profile.dob = request.POST.get('dob')

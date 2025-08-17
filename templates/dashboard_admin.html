@@ -8,31 +8,11 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{% static 'css/style.css' %}">
     <style>
-        table {
-            border-collapse: collapse;
-            width: 100%;
-            margin-bottom: 40px;
-        }
-        th, td {
-            border: 1px solid #ddd;
-            padding: 8px;
-            text-align: center;
-        }
-        th {
-            background-color: #0d6efd;
-            color: white;
-        }
-        select {
-            padding: 5px;
-            border-radius: 4px;
-            border: 1px solid #ccc;
-        }
-        button {
-            padding: 5px 10px;
-            border-radius: 4px;
-            border: none;
-            cursor: pointer;
-        }
+        table { border-collapse: collapse; width: 100%; margin-bottom: 40px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: center; }
+        th { background-color: #0d6efd; color: white; }
+        select { padding: 5px; border-radius: 4px; border: 1px solid #ccc; }
+        button { padding: 5px 10px; border-radius: 4px; border: none; cursor: pointer; }
         .btn-approve { background: #198754; color: white; }
         .btn-reject { background: #dc3545; color: white; }
     </style>
@@ -44,12 +24,12 @@
         <h2 style="margin: 0;">Loan Saathi Hub - Admin Dashboard</h2>
         <div>
             <a href="{% url 'home' %}" style="color: white; margin-right: 20px; text-decoration: none;">Home</a>
-            <a href="{% url 'admin_login' %}" style="color: white; text-decoration: none;">Logout</a>
+            <a href="{% url 'logout' %}" style="color: white; text-decoration: none;">Logout</a>
         </div>
     </header>
 
     <div style="padding: 20px;">
-        <h3>Welcome, Admin</h3>
+        <h3>Welcome, {{ request.user.first_name }} (Admin)</h3>
 
         <!-- Loan Requests Table -->
         <h4>All Loan Requests</h4>
@@ -69,21 +49,25 @@
                 </tr>
             </thead>
             <tbody>
+                {% for loan in loans %}
                 <tr>
-                    <td>1</td>
-                    <td>LSH0001</td>
-                    <td>Ravi Kumar</td>
-                    <td>Personal Loan</td>
-                    <td>₹5,00,000</td>
-                    <td>24 months</td>
-                    <td>15%</td>
-                    <td>Pending</td>
-                    <td>Agent 3</td>
+                    <td>{{ forloop.counter }}</td>
+                    <td>{{ loan.loan_id }}</td>
+                    <td>{{ loan.user.first_name }} {{ loan.user.last_name }}</td>
+                    <td>{{ loan.loan_type }}</td>
+                    <td>₹{{ loan.amount_requested }}</td>
+                    <td>{{ loan.duration_months }} months</td>
+                    <td>{{ loan.interest_rate }}%</td>
+                    <td>{{ loan.status }}</td>
+                    <td>{% if loan.agent %}{{ loan.agent.first_name }}{% else %}-{% endif %}</td>
                     <td>
                         <button class="btn-approve">Approve</button>
                         <button class="btn-reject">Reject</button>
                     </td>
                 </tr>
+                {% empty %}
+                <tr><td colspan="10">No Loan Requests Found</td></tr>
+                {% endfor %}
             </tbody>
         </table>
 
@@ -100,18 +84,22 @@
                 </tr>
             </thead>
             <tbody>
+                {% for u in users %}
                 <tr>
-                    <td>1</td>
-                    <td>Amit Sharma</td>
-                    <td>amit@example.com</td>
-                    <td>9876543210</td>
+                    <td>{{ forloop.counter }}</td>
+                    <td>{{ u.first_name }} {{ u.last_name }}</td>
+                    <td>{{ u.email }}</td>
+                    <td>{{ u.mobile }}</td>
                     <td>
                         <select>
-                            <option value="active">Active</option>
-                            <option value="inactive" selected>Inactive</option>
+                            <option value="active" {% if u.is_active %}selected{% endif %}>Active</option>
+                            <option value="inactive" {% if not u.is_active %}selected{% endif %}>Inactive</option>
                         </select>
                     </td>
                 </tr>
+                {% empty %}
+                <tr><td colspan="5">No Users Found</td></tr>
+                {% endfor %}
             </tbody>
         </table>
 
@@ -128,18 +116,22 @@
                 </tr>
             </thead>
             <tbody>
+                {% for a in agents %}
                 <tr>
-                    <td>1</td>
-                    <td>Rajesh Verma</td>
-                    <td>Proprietor</td>
-                    <td>9123456780</td>
+                    <td>{{ forloop.counter }}</td>
+                    <td>{{ a.first_name }} {{ a.last_name }}</td>
+                    <td>{{ a.business_type }}</td>
+                    <td>{{ a.mobile }}</td>
                     <td>
                         <select>
-                            <option value="active" selected>Active</option>
-                            <option value="inactive">Inactive</option>
+                            <option value="active" {% if a.is_active %}selected{% endif %}>Active</option>
+                            <option value="inactive" {% if not a.is_active %}selected{% endif %}>Inactive</option>
                         </select>
                     </td>
                 </tr>
+                {% empty %}
+                <tr><td colspan="5">No Agents Found</td></tr>
+                {% endfor %}
             </tbody>
         </table>
 
@@ -158,15 +150,19 @@
                 </tr>
             </thead>
             <tbody>
+                {% for p in payments %}
                 <tr>
-                    <td>1</td>
-                    <td>PAY12345</td>
-                    <td>LSH0001</td>
-                    <td>Rajesh Verma</td>
-                    <td>₹500</td>
-                    <td>UPI</td>
-                    <td>Success</td>
+                    <td>{{ forloop.counter }}</td>
+                    <td>{{ p.id }}</td>
+                    <td>{{ p.loan_request.loan_id }}</td>
+                    <td>{{ p.agent.first_name }}</td>
+                    <td>₹{{ p.amount }}</td>
+                    <td>{{ p.payment_method }}</td>
+                    <td>{{ p.status }}</td>
                 </tr>
+                {% empty %}
+                <tr><td colspan="7">No Payments Found</td></tr>
+                {% endfor %}
             </tbody>
         </table>
 
@@ -182,12 +178,16 @@
                 </tr>
             </thead>
             <tbody>
+                {% for report in reports %}
                 <tr>
-                    <td>Personal Loan</td>
-                    <td>15</td>
-                    <td>10</td>
-                    <td>5</td>
+                    <td>{{ report.loan_type }}</td>
+                    <td>{{ report.total }}</td>
+                    <td>{{ report.approved }}</td>
+                    <td>{{ report.rejected }}</td>
                 </tr>
+                {% empty %}
+                <tr><td colspan="4">No Reports Found</td></tr>
+                {% endfor %}
             </tbody>
         </table>
 

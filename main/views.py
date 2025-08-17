@@ -4,6 +4,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from .models import LoanRequest, Payment, UserProfile, AgentProfile, User
 from django.utils.crypto import get_random_string
+from django.db.models import Count, Q
 from django.conf import settings
 supabase = settings.supabase
 
@@ -292,4 +293,63 @@ def complete_profile_admin(request):
         return redirect('dashboard_admin')
 
     return render(request, 'complete_profile_admin.html')
+
+# ------------------------
+# ADMIN LOGIN
+# ------------------------
+def admin_login(request):
+    if request.method == "POST":
+        username = request.POST.get("username")
+        password = request.POST.get("password")
+
+        user = authenticate(request, username=username, password=password)
+        if user is not None and user.role == "admin":
+            login(request, user)
+            return redirect("dashboard_admin")
+        else:
+            messages.error(request, "Invalid admin credentials.")
+    return render(request, "admin_login.html")
+
+
+# ------------------------
+# ADMIN DASHBOARD
+# ------------------------
+@login_required
+def dashboard_admin(request):
+    if request.user.role != "admin":
+        messages.error(request, "Access denied. Admins only.")
+        return redirect("index")
+
+    users = UserProfile.objects.all()
+    agents = AgentProfile.objects.all()
+    payments = Payment.objects.all()
+    loans = LoanRequest.objects.all()
+
+    # --- Sync snapshot to Supabase (optional bulk push) ---
+    try:
+        supabase.table("user_profiles").upsert(
+            [dict(id=str(u.id), first_name=u.first_name, last_name=u.last_name, email=u.email, mobile=u.mobile, role="user") for u in users]
+        ).execute()
+
+        supabase.table("agent_profiles").upsert(
+            [dict(id=str(a.id), first_name=a.first_name, last_name=a.last_name, email=a.email, mobile=a.mobile, role="agent") for a in agents]
+        ).execute()
+
+        supabase.table("payments").upsert(
+            [dict(id=str(p.id), loan_id=str(p.loan_request.id), agent_id=str(p.agent.id), amount=p.amount, status=p.status) for p in payments]
+        ).execute()
+
+        supabase.table("loan_requests").upsert(
+            [dict(id=str(l.id), loan_id=l.loan_id, loan_type=l.loan_type, amount=l.amount_requested, status=l.status) for l in loans]
+        ).execute()
+    except Exception as e:
+        print("Supabase sync error (admin dashboard):", e)
+
+    return render(request, "admin_dashboard.html", {
+        "users": users,
+        "agents": agents,
+        "payments": payments,
+        "loans": loans,
+    })
+
 

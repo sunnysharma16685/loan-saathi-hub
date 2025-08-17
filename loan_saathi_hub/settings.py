@@ -1,5 +1,6 @@
 from pathlib import Path
 import os
+from supabase import create_client, Client
 from dotenv import load_dotenv
 import dj_database_url
 

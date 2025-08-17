@@ -9,8 +9,8 @@ urlpatterns = [
     path("login/", views.login_view, name="login"),
     path("logout/", views.logout_view, name="logout"),
 
-    path("dashboard/user/", views.dashboard_user, name="dashboard_user"),
-    path("dashboard/agent/", views.dashboard_agent, name="dashboard_agent"),
+    path("complete/profile/user/", views.dashboard_user, name="dashboard_user"),
+    path("complete/profile/agent/", views.dashboard_agent, name="dashboard_agent"),
 
     path("loan-request/", views.loan_request, name="loan_request"),
 

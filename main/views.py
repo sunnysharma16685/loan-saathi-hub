@@ -4,6 +4,8 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from .models import LoanRequest, Payment, UserProfile, AgentProfile, User
 from django.utils.crypto import get_random_string
+from django.conf import settings
+supabase = settings.supabase
 
 def index(request):
     return render(request, 'index.html')
@@ -141,9 +143,42 @@ def complete_profile_user(request):
         if 'businessDesignation' in request.POST: profile.business_designation = request.POST.get('businessDesignation')
 
         profile.save()
+
+        # --- sync with Supabase ---
+        from django.conf import settings
+        supabase = settings.supabase
+
+        data_user = {
+            "id": str(request.user.id),
+            "username": request.user.username,
+            "first_name": profile.first_name,
+            "last_name": profile.last_name,
+            "email": profile.email,
+            "mobile": profile.mobile,
+            "password_hash": getattr(profile, "password_hash", "NA"),
+            "role": "user",
+            "is_active": True,
+            "is_staff": False,
+            "is_superuser": False,
+            "date_joined": "now()"
+        }
+        supabase.table("users").upsert(data_user).execute()
+
+        data_profile = {
+            "id": str(request.user.id),
+            "first_name": profile.first_name,
+            "last_name": profile.last_name,
+            "email": profile.email,
+            "mobile": profile.mobile,
+            "role": "user",
+            "custom_id": f"U{request.user.id}"
+        }
+        supabase.table("user_profiles").upsert(data_profile).execute()
+
         return redirect('dashboard_user')
 
     return render(request, 'complete_profile_user.html', {'profile': profile})
+
 
 
 def complete_profile_agent(request):
@@ -180,6 +215,81 @@ def complete_profile_agent(request):
         profile.turnover = request.POST.get('businessTurnover')
 
         profile.save()
+
+        # --- sync with Supabase ---
+        from django.conf import settings
+        supabase = settings.supabase
+
+        data_user = {
+            "id": str(request.user.id),
+            "username": request.user.username,
+            "first_name": profile.first_name,
+            "last_name": profile.last_name,
+            "email": profile.email,
+            "mobile": profile.mobile,
+            "password_hash": getattr(profile, "password_hash", "NA"),
+            "role": "agent",
+            "is_active": True,
+            "is_staff": False,
+            "is_superuser": False,
+            "date_joined": "now()"
+        }
+        supabase.table("users").upsert(data_user).execute()
+
+        data_agent = {
+            "id": str(request.user.id),
+            "first_name": profile.first_name,
+            "last_name": profile.last_name,
+            "email": profile.email,
+            "mobile": profile.mobile,
+            "role": "agent",
+            "custom_id": f"A{request.user.id}"
+        }
+        supabase.table("agent_profiles").upsert(data_agent).execute()
+
         return redirect('dashboard_agent')
 
     return render(request, 'complete_profile_agent.html', {'profile': profile})
+
+def complete_profile_admin(request):
+    if request.method == 'POST':
+        # admin form fields
+        first_name = request.POST.get('first_name')
+        last_name = request.POST.get('last_name')
+        email = request.POST.get('email')
+        mobile = request.POST.get('mobile')
+
+        # --- sync with Supabase ---
+        from django.conf import settings
+        supabase = settings.supabase
+
+        data_user = {
+            "id": str(request.user.id),
+            "username": request.user.username,
+            "first_name": first_name,
+            "last_name": last_name,
+            "email": email,
+            "mobile": mobile,
+            "role": "admin",
+            "is_active": True,
+            "is_staff": True,
+            "is_superuser": True,
+            "date_joined": "now()"
+        }
+        supabase.table("users").upsert(data_user).execute()
+
+        data_admin = {
+            "id": str(request.user.id),
+            "first_name": first_name,
+            "last_name": last_name,
+            "email": email,
+            "mobile": mobile,
+            "role": "admin",
+            "custom_id": f"AD{request.user.id}"
+        }
+        supabase.table("admin_profiles").upsert(data_admin).execute()
+
+        return redirect('dashboard_admin')
+
+    return render(request, 'complete_profile_admin.html')
+

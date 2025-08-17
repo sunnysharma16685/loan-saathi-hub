@@ -1,16 +1,2 @@
-# Ignore environment files
-.env
-
-# Ignore Python cache
-__pycache__/
-*.pyc
-
-# Ignore virtual environments
-.venv/
-venv/
-
-# Ignore database files (agar local sqlite use ho raha hai)
-db.sqlite3
-
-# Ignore media/uploads (agar required ho)
-media/
+# Created by venv; see https://docs.python.org/3/library/venv.html
+*

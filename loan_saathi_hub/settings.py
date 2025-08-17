@@ -185,3 +185,12 @@ LOGIN_URL = '/login/'
 LOGIN_REDIRECT_URL = '/dashboard/user/'  # default redirect after login
 LOGOUT_REDIRECT_URL = '/'
 
+# ------------------------
+# SUPABASE CONFIG
+# ------------------------
+SUPABASE_URL = os.getenv("SUPABASE_URL")
+SUPABASE_KEY = os.getenv("SUPABASE_KEY")
+
+from supabase import create_client
+supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
+

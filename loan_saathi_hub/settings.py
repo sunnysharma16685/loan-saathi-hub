@@ -163,3 +163,25 @@ if DEBUG:
     SECURE_SSL_REDIRECT = False
     SESSION_COOKIE_SECURE = False
     CSRF_COOKIE_SECURE = False
+
+# ------------------------
+# SECURITY (Production)
+# ------------------------
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+SESSION_COOKIE_SECURE = True
+CSRF_COOKIE_SECURE = True
+SECURE_SSL_REDIRECT = True
+
+# Relax for local development
+if DEBUG:
+    SECURE_SSL_REDIRECT = False
+    SESSION_COOKIE_SECURE = False
+    CSRF_COOKIE_SECURE = False
+
+# ------------------------
+# AUTH REDIRECT SETTINGS
+# ------------------------
+LOGIN_URL = '/login/'
+LOGIN_REDIRECT_URL = '/dashboard/user/'  # default redirect after login
+LOGOUT_REDIRECT_URL = '/'
+

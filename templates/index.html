@@ -2,82 +2,32 @@
 {% load static %}
 {% block content %}
 
-<!-- Google Font -->
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-
 <style>
-/* Reset for section */
-.landing-page * {
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
-}
-
-.landing-page {
-    font-family: 'Inter', sans-serif;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 40px 20px;
-    color: #212529;
-}
-
-/* Top bar */
-.top-bar {
-    width: 100%;
-    max-width: 1100px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 50px;
-}
-
-.logo {
-    display: flex;
-    align-items: center;
-    font-size: 22px;
-    font-weight: 700;
-}
-
+/* Top bar logo बड़ा */
 .logo img {
-    height: 40px;
+    height: 70px;   /* पहले 40px था, अब बड़ा */
     margin-right: 10px;
 }
 
-.login-btn {
-    background: #1877F2;
-    color: white;
-    border: none;
-    padding: 10px 24px;
-    font-size: 16px;
-    border-radius: 8px;
-    cursor: pointer;
-    font-weight: 600;
-    text-decoration: none;
-}
-
-/* Main layout */
+/* Main section */
 .main-section {
     display: flex;
     justify-content: center;
     align-items: center;
-    gap: 60px;
+    gap: 80px;
     flex-wrap: nowrap;
 }
 
-/* Left side text + buttons */
+/* Left section */
 .left-side h1 {
-    font-size: 32px;
+    font-size: 36px;
     font-weight: 700;
-    margin-bottom: 8px;
+    margin-bottom: 10px;
 }
-
 .left-side p {
     font-size: 18px;
     margin-bottom: 25px;
-    font-weight: 400;
 }
-
 .left-side a {
     display: block;
     width: 200px;
@@ -91,42 +41,45 @@
     text-align: center;
     text-decoration: none;
 }
+.loan-user { background-color: #28A745; color: white; }
+.loan-agent { background-color: #007BFF; color: white; }
 
-.loan-user {
-    background-color: #28A745;
-    color: white;
-}
-
-.loan-agent {
-    background-color: #007BFF;
-    color: white;
-}
-
-/* Right side images */
+/* Right section */
 .right-side {
     display: flex;
     flex-direction: column;
     align-items: center;
 }
-
 .main-img {
-    width: 400px;
+    width: 500px;   /* बड़ा कर दिया */
     height: auto;
     border-radius: 12px;
-    margin-bottom: 15px;
+    margin-bottom: 20px;
     object-fit: cover;
 }
 
-.thumbnail-row {
+/* Slider thumbnails */
+.slider {
+    width: 500px;
+    overflow: hidden;
+    border-radius: 10px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+}
+.slider-track {
     display: flex;
-    gap: 12px;
+    width: calc(500px * 6); /* 3 images × 2 (loop) */
+    animation: scroll 20s linear infinite; /* slow speed scroll */
+}
+.slider-track img {
+    width: 500px;
+    height: 250px;
+    object-fit: cover;
 }
 
-.thumbnail-row img {
-    width: 110px;
-    height: 110px;
-    object-fit: cover;
-    border-radius: 8px;
+/* Animation for continuous scroll */
+@keyframes scroll {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-1500px); } /* 3 × 500px */
 }
 </style>
 
@@ -138,7 +91,6 @@
             <img src="{% static 'logo.png' %}" alt="Logo">
             LoanSaathiHub
         </div>
-        <a href="{% url 'login' %}" class="login-btn">Login</a>
     </div>
 
     <!-- Main section -->
@@ -153,11 +105,20 @@
 
         <!-- Right images -->
         <div class="right-side">
-            <img class="main-img" src="{% static 'main.jpg' %}" alt="Main Ad">
-            <div class="thumbnail-row">
-                <img src="{% static 'thumb1.jpg' %}" alt="Thumbnail 1">
-                <img src="{% static 'thumb2.jpg' %}" alt="Thumbnail 2">
-                <img src="{% static 'thumb3.jpg' %}" alt="Thumbnail 3">
+            <!-- Big image -->
+            <img class="main-img" src="{% static 'main.jpg' %}" alt="Main Banner">
+
+            <!-- Running slider -->
+            <div class="slider">
+                <div class="slider-track">
+                    <img src="{% static 'thumb1.jpg' %}" alt="Thumbnail 1">
+                    <img src="{% static 'thumb2.jpg' %}" alt="Thumbnail 2">
+                    <img src="{% static 'thumb3.jpg' %}" alt="Thumbnail 3">
+                    <!-- repeat for infinite effect -->
+                    <img src="{% static 'thumb1.jpg' %}" alt="Thumbnail 1">
+                    <img src="{% static 'thumb2.jpg' %}" alt="Thumbnail 2">
+                    <img src="{% static 'thumb3.jpg' %}" alt="Thumbnail 3">
+                </div>
             </div>
         </div>
     </div>

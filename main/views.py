@@ -13,21 +13,25 @@ def index(request):
 
 
 def login_view(request):
-    if request.method == 'POST':
-        username = request.POST.get('username')
-        password = request.POST.get('password')
-        role = request.POST.get('role')
+    if request.method == "POST":
+        identifier = request.POST.get("identifier")  # email ya mobile
+        password = request.POST.get("password")
+        role = request.POST.get("role")  # 'user' / 'agent' / 'admin'
 
-        user = authenticate(request, username=username, password=password)
+        user = authenticate(request, identifier=identifier, password=password)
+
         if user is not None and user.role == role:
             login(request, user)
-            if role == 'user':
-                return redirect('dashboard_user')
-            elif role == 'agent':
-                return redirect('dashboard_agent')
+            if role == "user":
+                return redirect("dashboard_user")
+            elif role == "agent":
+                return redirect("dashboard_agent")
+            elif role == "admin":
+                return redirect("dashboard_admin")
         else:
             messages.error(request, "Invalid credentials or role.")
-    return render(request, 'login.html')
+
+    return render(request, "login.html")
 
 
 def logout_view(request):
@@ -287,17 +291,19 @@ def complete_profile_admin(request):
 # ------------------------
 # ADMIN LOGIN
 # ------------------------
-def admin_login(request):
+def admin_login_view(request):
     if request.method == "POST":
-        username = request.POST.get("username")
+        identifier = request.POST.get("identifier")  # email or mobile
         password = request.POST.get("password")
 
-        user = authenticate(request, username=username, password=password)
+        user = authenticate(request, username=identifier, password=password)
+
         if user is not None and user.role == "admin":
             login(request, user)
             return redirect("dashboard_admin")
         else:
-            messages.error(request, "Invalid admin credentials.")
+            messages.error(request, "Invalid admin credentials or unauthorized access.")
+
     return render(request, "admin_login.html")
 
 

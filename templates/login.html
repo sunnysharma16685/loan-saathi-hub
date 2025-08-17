@@ -147,10 +147,13 @@
     <div class="tab" id="agentTab" onclick="selectTab('agent')">Agent</div>
   </div>
 
-  <form id="loginForm">
-    <label for="username">Mobile No. or Email</label>
-    <input type="text" id="username" name="username" placeholder="Enter Mobile or Email">
-    <div id="usernameError" class="error">This field is required.</div>
+  <form id="loginForm" method="POST" action="{% url 'login' %}">
+    {% csrf_token %}
+    <input type="hidden" id="roleInput" name="role" value="user">
+
+    <label for="identifier">Mobile No. or Email</label>
+    <input type="text" id="identifier" name="identifier" placeholder="Enter Mobile or Email">
+    <div id="identifierError" class="error">This field is required.</div>
 
     <label for="password">Password</label>
     <input type="password" id="password" name="password" placeholder="Enter Password">
@@ -181,8 +184,10 @@
 
   function selectTab(role) {
     selectedRole = role;
+    document.getElementById('roleInput').value = role;
     document.getElementById('userTab').classList.toggle('active', role === 'user');
     document.getElementById('agentTab').classList.toggle('active', role === 'agent');
+    document.getElementById('adminTab').classList.toggle('active', role === 'admin');
   }
 
   function goBack() {
@@ -190,17 +195,15 @@
   }
 
   document.getElementById('loginForm').addEventListener('submit', function(e) {
-    e.preventDefault();
-
-    let username = document.getElementById('username').value.trim();
+    let identifier = document.getElementById('identifier').value.trim();
     let password = document.getElementById('password').value.trim();
     let valid = true;
 
-    if (!username) {
-      document.getElementById('usernameError').style.display = 'block';
+    if (!identifier) {
+      document.getElementById('identifierError').style.display = 'block';
       valid = false;
     } else {
-      document.getElementById('usernameError').style.display = 'none';
+      document.getElementById('identifierError').style.display = 'none';
     }
 
     if (!password) {
@@ -210,12 +213,8 @@
       document.getElementById('passwordError').style.display = 'none';
     }
 
-    if (valid) {
-      if (selectedRole === 'user') {
-        window.location.href = "{% url 'dashboard_user' %}";
-      } else {
-        window.location.href = "{% url 'dashboard_agent' %}";
-      }
+    if (!valid) {
+      e.preventDefault(); // stop form submit
     }
   });
 </script>

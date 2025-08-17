@@ -3,15 +3,13 @@ from django.urls import path
 from main import views
 
 urlpatterns = [
-    path("admin/", admin.site.urls),
-
+    path("login/", views.login_view, name="login"),              # user + agent
+    path("dashboard-login/", views.admin_login_view, name="admin_login"),  # admin only
+    path("dashboard/user/", views.dashboard_user, name="dashboard_user"),
+    path("dashboard/agent/", views.dashboard_agent, name="dashboard_agent"),
+    path("dashboard/admin/", views.dashboard_admin, name="dashboard_admin"),
     path("", views.index, name="index"),
-    path("login/", views.login_view, name="login"),
     path("logout/", views.logout_view, name="logout"),
-
-    path("complete/profile/user/", views.dashboard_user, name="dashboard_user"),
-    path("complete/profile/agent/", views.dashboard_agent, name="dashboard_agent"),
-
     path("loan-request/", views.loan_request, name="loan_request"),
 
     # ✅ Yeh line fix ki gayi (payment → payment_page)

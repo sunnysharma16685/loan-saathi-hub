@@ -89,6 +89,12 @@ else:
 # ------------------------
 AUTH_USER_MODEL = "main.User"
 
+# ✅ custom authentication backends (mobile/email login)
+AUTHENTICATION_BACKENDS = [
+    "main.auth_backends.EmailOrMobileBackend",
+    "django.contrib.auth.backends.ModelBackend",
+]
+
 # ------------------------
 # TEMPLATES
 # ------------------------
@@ -125,14 +131,12 @@ STATIC_URL = "/static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
 STATICFILES_DIRS = [BASE_DIR / "static"] if (BASE_DIR / "static").exists() else []
 
-# Django 4.2+/5.0: prefer STORAGES over STATICFILES_STORAGE
 STORAGES = {
     "staticfiles": {
         "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
     }
 }
 
-# Optional but helpful: keep only hashed files after collectstatic
 WHITENOISE_KEEP_ONLY_HASHED_FILES = True
 
 MEDIA_URL = "/media/"
@@ -159,21 +163,6 @@ SESSION_COOKIE_SECURE = True
 CSRF_COOKIE_SECURE = True
 SECURE_SSL_REDIRECT = True
 
-# Relax for local development
-if DEBUG:
-    SECURE_SSL_REDIRECT = False
-    SESSION_COOKIE_SECURE = False
-    CSRF_COOKIE_SECURE = False
-
-# ------------------------
-# SECURITY (Production)
-# ------------------------
-SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
-SESSION_COOKIE_SECURE = True
-CSRF_COOKIE_SECURE = True
-SECURE_SSL_REDIRECT = True
-
-# Relax for local development
 if DEBUG:
     SECURE_SSL_REDIRECT = False
     SESSION_COOKIE_SECURE = False
@@ -183,7 +172,7 @@ if DEBUG:
 # AUTH REDIRECT SETTINGS
 # ------------------------
 LOGIN_URL = '/login/'
-LOGIN_REDIRECT_URL = '/dashboard/user/'  # default redirect after login
+LOGIN_REDIRECT_URL = '/dashboard/user/'
 LOGOUT_REDIRECT_URL = '/'
 
 # ------------------------
@@ -192,6 +181,4 @@ LOGOUT_REDIRECT_URL = '/'
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY")
 
-from supabase import create_client
-supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
-
+supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)

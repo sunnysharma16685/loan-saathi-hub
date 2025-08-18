@@ -342,6 +342,9 @@ if supabase:
     except Exception as e:
         print("Supabase sync error (admin dashboard):", e)
 
+    def admin_dashboard(request):
+    users = User.objects.all()
+    agents = AgentProfile.objects.all()
     return render(request, "admin_dashboard.html", {
         "users": users,
         "agents": agents,

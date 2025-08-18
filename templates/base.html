@@ -3,68 +3,117 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}LoanSaathiHub{% endblock %}</title>
-
-    <!-- Google Font -->
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
-
+    <title>LoanSaathiHub</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
     <style>
-        body {
-            font-family: 'Poppins', sans-serif;
-            background: #f8f9fa;
-            margin: 0;
-            padding: 0;
+        /* Top bar logo बड़ा */
+        .logo img {
+            height: 70px;
+            margin-right: 10px;
         }
-        header {
-            background: white;
-            padding: 10px 30px;
+
+        /* Main section */
+        .main-section {
             display: flex;
-            justify-content: space-between;
+            justify-content: center;
             align-items: center;
-            border-bottom: 1px solid #eee;
+            gap: 80px;
+            flex-wrap: nowrap;
         }
-        header img {
-            height: 50px;
+
+        /* Left section */
+        .left-side h1 {
+            font-size: 36px;
+            font-weight: 700;
+            margin-bottom: 10px;
         }
-        nav a {
-            margin-left: 20px;
-            text-decoration: none;
-            font-weight: 500;
-            color: #0d6efd;
+        .left-side p {
+            font-size: 18px;
+            margin-bottom: 25px;
         }
-        nav a:hover {
-            text-decoration: underline;
-        }
-        footer {
-            background: white;
-            padding: 15px;
+        .left-side a {
+            display: block;
+            width: 200px;
+            padding: 14px;
+            margin-bottom: 15px;
+            font-size: 18px;
+            font-weight: 600;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
             text-align: center;
-            border-top: 1px solid #eee;
-            color: #666;
-            margin-top: 40px;
+            text-decoration: none;
+        }
+        .loan-user { background-color: #28A745; color: white; }
+        .loan-agent { background-color: #007BFF; color: white; }
+
+        /* Right section */
+        .right-side {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .main-img {
+            width: 500px;
+            height: auto;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            object-fit: cover;
+        }
+
+        /* Slider thumbnails */
+        .slider {
+            width: 500px;
+            overflow: hidden;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+        }
+        .slider-track {
+            display: flex;
+            width: calc(500px * 6); /* 3 images × 2 (loop) */
+            animation: scroll 20s linear infinite;
+        }
+        .slider-track img {
+            width: 500px;
+            height: 250px;
+            object-fit: cover;
+        }
+
+        /* Animation for continuous scroll */
+        @keyframes scroll {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-1500px); } /* 3 × 500px */
         }
     </style>
 </head>
 <body>
 
-<header>
-    <div>
-        <img src="{% static 'logo.png' %}" alt="LoanSaathiHub Logo">
+    <!-- Top bar -->
+    <div class="top-bar p-3 bg-light d-flex align-items-center">
+        <div class="logo d-flex align-items-center">
+            <img src="{% static 'logo.png' %}" alt="Logo">
+            <strong>LoanSaathiHub</strong>
+        </div>
     </div>
-    <nav>
-        <a href="{% url 'index' %}">Home</a>
-        <a href="{% url 'login' %}">Login</a>
-    </nav>
-</header>
 
-<main>
-    {% block content %}{% endblock %}
-</main>
+    <!-- Messages -->
+    <div class="container mt-3">
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+    </div>
 
-<footer>
-    &copy; {{ now|date:"Y" }} LoanSaathiHub. All rights reserved.
-</footer>
+    <!-- Page Content -->
+    <div class="landing-page container mt-4">
+        {% block content %}
+        {% endblock %}
+    </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

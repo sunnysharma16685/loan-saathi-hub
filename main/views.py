@@ -141,11 +141,17 @@ def payment_page(request, loan_id):
 # PROFILE VIEWS
 # ------------------------
 
-@login_required
 def complete_profile_user(request):
-    profile, created = UserProfile.objects.get_or_create(user=request.user)
+    if request.method == "POST":
+        email = request.POST.get("email")
+        mobile = request.POST.get("mobile")
 
-    if request.method == 'POST':
+        # पहले से मौजूद user check करो
+        if User.objects.filter(email=email).exists() or User.objects.filter(mobile=mobile).exists():
+            messages.error(request, "Your mobile or email is already registered with us")
+            return redirect("complete_profile_user")  # वही form पर वापस भेज दो
+
+        # नया profile create करो
         # OLD FIELDS (preserved)
         if 'full_name' in request.POST: profile.full_name = request.POST.get('full_name')
         if 'dob' in request.POST: profile.dob = request.POST.get('dob')
@@ -244,16 +250,23 @@ def complete_profile_user(request):
         except Exception as e:
             print("Supabase sync error (user->user_profiles):", e)
 
+        messages.success(request, "Profile created successfully")
         return redirect('dashboard_user')
 
-    return render(request, 'complete_profile_user.html', {'profile': profile})
+    return render(request, "complete_profile_user.html")
 
 
-@login_required
 def complete_profile_agent(request):
-    profile, created = AgentProfile.objects.get_or_create(user=request.user)
+    if request.method == "POST":
+        email = request.POST.get("email")
+        mobile = request.POST.get("mobile")
 
-    if request.method == 'POST':
+        # पहले से मौजूद agent check करो
+        if User.objects.filter(email=email).exists() or User.objects.filter(mobile=mobile).exists():
+            messages.error(request, "Your mobile or email is already registered with us")
+            return redirect("complete_profile_agent")
+
+        # नया profile create करो
         # Basic
         profile.title = request.POST.get('title')
         profile.first_name = request.POST.get('firstName')
@@ -333,10 +346,11 @@ def complete_profile_agent(request):
             supabase.table("agent_profiles").upsert(data_agent).execute()
         except Exception as e:
             print("Supabase sync error (agent->agent_profiles):", e)
-
+         
+        messages.success(request, "Profile created successfully")
         return redirect('dashboard_agent')
 
-    return render(request, 'complete_profile_agent.html', {'profile': profile})
+    return render(request, "complete_profile_user.html")
 
 
 # ------------------------

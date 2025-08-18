@@ -249,6 +249,10 @@ def complete_profile_agent(request):
     return render(request, 'complete_profile_agent.html', {'profile': profile})
 
 
+# ------------------------
+# COMPLETE ADMIN PROFILE
+# ------------------------
+@login_required
 def complete_profile_admin(request):
     if request.method == 'POST':
         first_name = request.POST.get('first_name')
@@ -256,36 +260,37 @@ def complete_profile_admin(request):
         email = request.POST.get('email')
         mobile = request.POST.get('mobile')
 
-        # --- sync with Supabase ---
-        data_user = {
-            "id": str(request.user.id),
-            "username": request.user.username,
-            "first_name": first_name,
-            "last_name": last_name,
-            "email": email,
-            "mobile": mobile,
-            "role": "admin",
-            "is_active": True,
-            "is_staff": True,
-            "is_superuser": True,
-            "date_joined": "now()"
-        }
-        supabase.table("users").upsert(data_user).execute()
+        # --- update local user ---
+        user = request.user
+        user.first_name = first_name
+        user.last_name = last_name
+        user.email = email
+        user.mobile = mobile
+        user.role = "admin"
+        user.is_staff = True
+        user.is_superuser = True
+        user.save()
 
-        data_admin = {
-            "id": str(request.user.id),
-            "first_name": first_name,
-            "last_name": last_name,
-            "email": email,
-            "mobile": mobile,
-            "role": "admin",
-            "custom_id": f"AD{request.user.id}"
-        }
-        supabase.table("admin_profiles").upsert(data_admin).execute()
+        # --- sync with Supabase ---
+        try:
+            supabase.table("users").upsert({
+                "id": str(user.id),
+                "first_name": first_name,
+                "last_name": last_name,
+                "email": email,
+                "mobile": mobile,
+                "role": "admin",
+                "is_active": True,
+                "is_staff": True,
+                "is_superuser": True,
+            }).execute()
+        except Exception as e:
+            print("Supabase sync error (admin profile):", e)
 
         return redirect('dashboard_admin')
 
     return render(request, 'complete_profile_admin.html')
+
 
 
 # ------------------------
@@ -307,6 +312,7 @@ def admin_login_view(request):
     return render(request, "admin_login.html")
 
 
+
 # ------------------------
 # ADMIN DASHBOARD
 # ------------------------
@@ -316,35 +322,64 @@ def dashboard_admin(request):
         messages.error(request, "Access denied. Admins only.")
         return redirect("index")
 
-    users = UserProfile.objects.all()
-    agents = AgentProfile.objects.all()
-    payments = Payment.objects.all()
-    loans = LoanRequest.objects.all()
-
-    # --- Sync snapshot to Supabase ---
-if supabase:
     try:
-        supabase.table("user_profiles").upsert(
-            [dict(id=str(u.id), first_name=u.first_name, last_name=u.last_name, email=u.email, mobile=u.mobile, role="user") for u in users]
-        ).execute()
+        # Local DB fetch
+        users = UserProfile.objects.all()
+        agents = AgentProfile.objects.all()
+        payments = Payment.objects.all()
+        loans = LoanRequest.objects.all()
 
-        supabase.table("agent_profiles").upsert(
-            [dict(id=str(a.id), first_name=a.first_name, last_name=a.last_name, email=a.email, mobile=a.mobile, role="agent") for a in agents]
-        ).execute()
+        # --- Sync snapshot to Supabase ---
+        try:
+            supabase.table("user_profiles").upsert([
+                {
+                    "id": str(u.id),
+                    "first_name": u.first_name,
+                    "last_name": u.last_name,
+                    "email": u.email,
+                    "mobile": u.mobile,
+                    "role": "user"
+                } for u in users
+            ]).execute()
 
-        supabase.table("payments").upsert(
-            [dict(id=str(p.id), loan_id=str(p.loan_request.id), agent_id=str(p.agent.id), amount=p.amount, status=p.status) for p in payments]
-        ).execute()
+            supabase.table("agent_profiles").upsert([
+                {
+                    "id": str(a.id),
+                    "first_name": a.first_name,
+                    "last_name": a.last_name,
+                    "email": a.email,
+                    "mobile": a.mobile,
+                    "role": "agent"
+                } for a in agents
+            ]).execute()
 
-        supabase.table("loan_requests").upsert(
-            [dict(id=str(l.id), loan_id=l.loan_id, loan_type=l.loan_type, amount=l.amount_requested, status=l.status) for l in loans]
-        ).execute()
+            supabase.table("payments").upsert([
+                {
+                    "id": str(p.id),
+                    "loan_id": str(p.loan_request.id),
+                    "agent_id": str(p.agent.id),
+                    "amount": p.amount,
+                    "status": p.status
+                } for p in payments
+            ]).execute()
+
+            supabase.table("loan_requests").upsert([
+                {
+                    "id": str(l.id),
+                    "loan_id": l.loan_id,
+                    "loan_type": l.loan_type,
+                    "amount": l.amount_requested,
+                    "status": l.status
+                } for l in loans
+            ]).execute()
+
+        except Exception as e:
+            print("Supabase sync error (admin dashboard):", e)
+
     except Exception as e:
-        print("Supabase sync error (admin dashboard):", e)
+        print("DB fetch error (admin dashboard):", e)
+        users, agents, payments, loans = [], [], [], []
 
-    def admin_dashboard(request):
-    users = User.objects.all()
-    agents = AgentProfile.objects.all()
     return render(request, "admin_dashboard.html", {
         "users": users,
         "agents": agents,

@@ -23,7 +23,13 @@ class UserManager(BaseUserManager):
     def create_superuser(self, email=None, mobile=None, password=None, **extra_fields):
         extra_fields.setdefault("is_staff", True)
         extra_fields.setdefault("is_superuser", True)
-        return self.create_user(email=email, mobile=mobile, password=password, role="admin", **extra_fields)
+        return self.create_user(
+            email=email,
+            mobile=mobile,
+            password=password,
+            role="admin",
+            **extra_fields
+        )
 
 
 # ==============================
@@ -31,9 +37,9 @@ class UserManager(BaseUserManager):
 # ==============================
 class User(AbstractBaseUser, PermissionsMixin):
     ROLE_CHOICES = (
-        ('user', 'User'),
-        ('agent', 'Agent'),
-        ('admin', 'Admin'),
+        ("user", "User"),
+        ("agent", "Agent"),
+        ("admin", "Admin"),
     )
 
     email = models.EmailField(unique=True, null=True, blank=True)
@@ -125,11 +131,11 @@ class LoanRequest(models.Model):
     remarks = models.TextField(blank=True, null=True)
 
     STATUS_CHOICES = (
-        ('pending', 'Pending'),
-        ('approved', 'Approved'),
-        ('rejected', 'Rejected'),
+        ("pending", "Pending"),
+        ("approved", "Approved"),
+        ("rejected", "Rejected"),
     )
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="pending")
 
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -153,11 +159,11 @@ class Payment(models.Model):
     payment_method = models.CharField(max_length=50)
 
     STATUS_CHOICES = (
-        ('pending', 'Pending'),
-        ('done', 'Done'),
-        ('failed', 'Failed'),
+        ("pending", "Pending"),
+        ("done", "Done"),
+        ("failed", "Failed"),
     )
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="pending")
 
     created_at = models.DateTimeField(auto_now_add=True)
 

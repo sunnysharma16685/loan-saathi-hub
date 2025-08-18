@@ -7,30 +7,76 @@ from django.utils.crypto import get_random_string
 from django.db.models import Count, Q
 from .supabase_client import supabase   # ✅ single source of truth
 
+# 🟩 minor imports for safety
+from django.utils.timezone import now
+
 
 def index(request):
     return render(request, 'index.html')
 
 
+# ------------------------
+# Helper: profile complete?
+# ------------------------
+def is_profile_complete(user):
+    """
+    Priority:
+    1) If custom field 'is_profile_complete' exists → use it
+    2) Else infer by related profile minimal fields
+    """
+    try:
+        if hasattr(user, "is_profile_complete"):
+            return bool(getattr(user, "is_profile_complete"))
+    except Exception:
+        pass
+
+    role = getattr(user, "role", "")
+    if role == "user":
+        try:
+            p = user.userprofile
+            return bool(p.first_name and p.mobile)
+        except Exception:
+            return False
+    if role == "agent":
+        try:
+            p = user.agentprofile
+            return bool(p.first_name and p.mobile)
+        except Exception:
+            return False
+    if role == "admin":
+        return True
+    return False
+
+
 def login_view(request):
     if request.method == "POST":
-        identifier = request.POST.get("identifier")  # email ya mobile
+        email = request.POST.get("email")
         password = request.POST.get("password")
-        role = request.POST.get("role")  # 'user' / 'agent' / 'admin'
+        user_type = request.POST.get("user_type")  # user/agent
 
-        user = authenticate(request, identifier=identifier, password=password)
-
-        if user is not None and user.role == role:
+        user = authenticate(request, username=email, password=password)
+        if user is not None:
             login(request, user)
-            if role == "user":
-                return redirect("dashboard_user")
-            elif role == "agent":
-                return redirect("dashboard_agent")
-            elif role == "admin":
-                return redirect("dashboard_admin")
-        else:
-            messages.error(request, "Invalid credentials or role.")
 
+            # ✅ robust profile-complete check
+            if not is_profile_complete(user):
+                if user.role == "user":
+                    return redirect("complete_profile_user")
+                elif user.role == "agent":
+                    return redirect("complete_profile_agent")
+                elif user.role == "admin":
+                    return redirect("complete_profile_admin")
+
+            # profile complete hai → direct dashboard
+            if user.role == "user":
+                return redirect("dashboard_user")
+            elif user.role == "agent":
+                return redirect("dashboard_agent")
+            elif user.role == "admin":
+                return redirect("dashboard_admin")
+
+        else:
+            messages.error(request, "गलत ईमेल या पासवर्ड")
     return render(request, "login.html")
 
 
@@ -95,26 +141,26 @@ def payment_page(request, loan_id):
 # PROFILE VIEWS
 # ------------------------
 
+@login_required
 def complete_profile_user(request):
-    profile, created = UserProfile.objects.get_or_create(user=request.user) if request.user.is_authenticated else (None, False)
-    if request.method == 'POST':
-        if not request.user.is_authenticated:
-            messages.error(request, "Please login first to save profile.")
-            return redirect('login')
+    profile, created = UserProfile.objects.get_or_create(user=request.user)
 
-        # OLD FIELDS
+    if request.method == 'POST':
+        # OLD FIELDS (preserved)
         if 'full_name' in request.POST: profile.full_name = request.POST.get('full_name')
         if 'dob' in request.POST: profile.dob = request.POST.get('dob')
         if 'gender' in request.POST: profile.gender = request.POST.get('gender')
         if 'marital_status' in request.POST: profile.marital_status = request.POST.get('marital_status')
         if 'nationality' in request.POST: profile.nationality = request.POST.get('nationality')
-        if 'pan_number' in request.POST: profile.pan_number = request.POST.get('pan_number')
+        if 'pan_number' in request.POST or 'pan' in request.POST:
+            # 🟩 avoid duplicate assignment
+            profile.pan_number = request.POST.get('pan_number') or request.POST.get('pan')
         if 'voter_id' in request.POST: profile.voter_id = request.POST.get('voter_id')
         if 'bank_account_no' in request.POST: profile.bank_account_no = request.POST.get('bank_account_no')
         if 'ifsc_code' in request.POST: profile.ifsc_code = request.POST.get('ifsc_code')
         if 'reason_for_loan' in request.POST: profile.reason_for_loan = request.POST.get('reason_for_loan')
 
-        # NEW FIELDS
+        # NEW FIELDS (stepper form)
         if 'title' in request.POST: profile.title = request.POST.get('title')
         if 'firstName' in request.POST: profile.first_name = request.POST.get('firstName')
         if 'lastName' in request.POST: profile.last_name = request.POST.get('lastName')
@@ -125,7 +171,6 @@ def complete_profile_user(request):
         if 'pincode' in request.POST: profile.pincode = request.POST.get('pincode')
         if 'city' in request.POST: profile.city = request.POST.get('city')
         if 'state' in request.POST: profile.state = request.POST.get('state')
-        if 'pan' in request.POST: profile.pan_number = request.POST.get('pan')
         if 'aadhaar' in request.POST: profile.aadhaar = request.POST.get('aadhaar')
         if 'itr' in request.POST: profile.itr = request.POST.get('itr')
         if 'cibil' in request.POST: profile.cibil = request.POST.get('cibil')
@@ -148,6 +193,23 @@ def complete_profile_user(request):
 
         profile.save()
 
+        # ✅ also mirror basics to User & mark complete when field exists
+        try:
+            u = request.user
+            if getattr(u, "first_name", None) is not None and profile.first_name:
+                u.first_name = profile.first_name
+            if getattr(u, "last_name", None) is not None and profile.last_name:
+                u.last_name = profile.last_name
+            if getattr(u, "email", None) is not None and profile.email:
+                u.email = profile.email
+            if getattr(u, "role", None) is not None:
+                u.role = "user"
+            if hasattr(u, "is_profile_complete"):
+                u.is_profile_complete = True
+            u.save()
+        except Exception:
+            pass
+
         # --- sync with Supabase ---
         data_user = {
             "id": str(request.user.id),
@@ -161,9 +223,12 @@ def complete_profile_user(request):
             "is_active": True,
             "is_staff": False,
             "is_superuser": False,
-            "date_joined": "now()"
+            "date_joined": "now()",  # keep same behavior
         }
-        supabase.table("users").upsert(data_user).execute()
+        try:
+            supabase.table("users").upsert(data_user).execute()
+        except Exception as e:
+            print("Supabase sync error (user->users):", e)
 
         data_profile = {
             "id": str(request.user.id),
@@ -174,27 +239,29 @@ def complete_profile_user(request):
             "role": "user",
             "custom_id": f"U{request.user.id}"
         }
-        supabase.table("user_profiles").upsert(data_profile).execute()
+        try:
+            supabase.table("user_profiles").upsert(data_profile).execute()
+        except Exception as e:
+            print("Supabase sync error (user->user_profiles):", e)
 
         return redirect('dashboard_user')
 
     return render(request, 'complete_profile_user.html', {'profile': profile})
 
 
+@login_required
 def complete_profile_agent(request):
-    profile, created = AgentProfile.objects.get_or_create(user=request.user) if request.user.is_authenticated else (None, False)
+    profile, created = AgentProfile.objects.get_or_create(user=request.user)
 
     if request.method == 'POST':
-        if not request.user.is_authenticated:
-            messages.error(request, "Please login first to save profile.")
-            return redirect('login')
-
         # Basic
         profile.title = request.POST.get('title')
         profile.first_name = request.POST.get('firstName')
         profile.last_name = request.POST.get('lastName')
         profile.mobile = request.POST.get('mobile')
-        profile.email = request.POST.get('email')
+        email = request.POST.get('email')
+        if email:
+            profile.email = email
         profile.password_hash = request.POST.get('password_hash')
 
         # Personal
@@ -216,6 +283,23 @@ def complete_profile_agent(request):
 
         profile.save()
 
+        # ✅ mirror basics to User & mark complete if field exists
+        try:
+            u = request.user
+            if getattr(u, "first_name", None) is not None and profile.first_name:
+                u.first_name = profile.first_name
+            if getattr(u, "last_name", None) is not None and profile.last_name:
+                u.last_name = profile.last_name
+            if getattr(u, "email", None) is not None and profile.email:
+                u.email = profile.email
+            if getattr(u, "role", None) is not None:
+                u.role = "agent"
+            if hasattr(u, "is_profile_complete"):
+                u.is_profile_complete = True
+            u.save()
+        except Exception:
+            pass
+
         # --- sync with Supabase ---
         data_user = {
             "id": str(request.user.id),
@@ -229,9 +313,12 @@ def complete_profile_agent(request):
             "is_active": True,
             "is_staff": False,
             "is_superuser": False,
-            "date_joined": "now()"
+            "date_joined": "now()",
         }
-        supabase.table("users").upsert(data_user).execute()
+        try:
+            supabase.table("users").upsert(data_user).execute()
+        except Exception as e:
+            print("Supabase sync error (agent->users):", e)
 
         data_agent = {
             "id": str(request.user.id),
@@ -242,7 +329,10 @@ def complete_profile_agent(request):
             "role": "agent",
             "custom_id": f"A{request.user.id}"
         }
-        supabase.table("agent_profiles").upsert(data_agent).execute()
+        try:
+            supabase.table("agent_profiles").upsert(data_agent).execute()
+        except Exception as e:
+            print("Supabase sync error (agent->agent_profiles):", e)
 
         return redirect('dashboard_agent')
 
@@ -269,6 +359,8 @@ def complete_profile_admin(request):
         user.role = "admin"
         user.is_staff = True
         user.is_superuser = True
+        if hasattr(user, "is_profile_complete"):
+            user.is_profile_complete = True
         user.save()
 
         # --- sync with Supabase ---
@@ -292,7 +384,6 @@ def complete_profile_admin(request):
     return render(request, 'complete_profile_admin.html')
 
 
-
 # ------------------------
 # ADMIN LOGIN
 # ------------------------
@@ -310,7 +401,6 @@ def admin_login_view(request):
             messages.error(request, "Invalid admin credentials or unauthorized access.")
 
     return render(request, "admin_login.html")
-
 
 
 # ------------------------

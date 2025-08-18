@@ -17,7 +17,6 @@ load_dotenv(BASE_DIR / ".env")
 # SECURITY
 # ------------------------
 SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY", "dev-secret-key-change-me")
-
 DEBUG = os.environ.get("DEBUG", "1") == "1"
 
 ALLOWED_HOSTS = os.environ.get(
@@ -41,7 +40,7 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    "main",  # your core app
+    "main",  # core app
 ]
 
 # ------------------------
@@ -88,9 +87,8 @@ else:
 # ------------------------
 AUTH_USER_MODEL = "main.User"
 
-# ✅ custom authentication backends (mobile/email login)
 AUTHENTICATION_BACKENDS = [
-    "main.auth_backends.EmailOrMobileBackend",
+    "main.auth_backends.EmailOrMobileBackend",  # ✅ custom backend
     "django.contrib.auth.backends.ModelBackend",
 ]
 
@@ -179,4 +177,3 @@ LOGOUT_REDIRECT_URL = '/'
 # ------------------------
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY")
-

@@ -1,0 +1,55 @@
+# ------------------------
+# Python
+# ------------------------
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.py.class
+
+# ------------------------
+# Virtual Environment
+# ------------------------
+.venv/
+env/
+venv/
+
+# ------------------------
+# Django
+# ------------------------
+db.sqlite3
+*.log
+media/
+
+# ------------------------
+# Environment & Config
+# ------------------------
+.env
+.env.local
+.env.*.local
+
+# ------------------------
+# Static & Build
+# ------------------------
+staticfiles/
+static/
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# ------------------------
+# IDE & OS
+# ------------------------
+.vscode/
+.idea/
+*.swp
+.DS_Store
+Thumbs.db
+
+# ------------------------
+# Backup & Misc
+# ------------------------
+*.bak
+*.tmp
+*.old

@@ -322,6 +322,7 @@ def dashboard_admin(request):
     loans = LoanRequest.objects.all()
 
     # --- Sync snapshot to Supabase ---
+if supabase:
     try:
         supabase.table("user_profiles").upsert(
             [dict(id=str(u.id), first_name=u.first_name, last_name=u.last_name, email=u.email, mobile=u.mobile, role="user") for u in users]

@@ -1,0 +1,126 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Loan Saathi Hub - Lender Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: #f5f8fa;
+            margin: 0;
+            padding: 0;
+        }
+        header, footer {
+            background: #0d6efd;
+            color: #fff;
+            padding: 15px 30px;
+        }
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        header a {
+            color: #fff;
+            text-decoration: none;
+            margin-left: 15px;
+            font-weight: 600;
+        }
+        h1 {
+            margin: 20px;
+            font-size: 24px;
+            color: #333;
+        }
+        table {
+            width: 95%;
+            margin: 20px auto;
+            border-collapse: collapse;
+            background: #fff;
+            box-shadow: 0px 0px 8px rgba(0,0,0,0.1);
+        }
+        table th, table td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: center;
+        }
+        table th {
+            background: #0d6efd;
+            color: #fff;
+        }
+        .btn { padding: 6px 12px; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; text-decoration: none; }
+        .btn-view { background: #0d6efd; color: #fff; }
+        .btn-approve { background: #28a745; color: #fff; }
+        .btn-reject { background: #dc3545; color: #fff; }
+        .btn-active { background: #ffc107; color: #000; }
+        footer { text-align: center; font-size: 14px; }
+        footer a { color: #fff; margin: 0 5px; text-decoration: none; }
+    </style>
+</head>
+<body>
+
+<header>
+    <div>Loan Saathi Hub</div>
+    <div>
+        <span>Welcome, {{ request.user.first_name }}</span>
+        <a href="{% url 'home' %}">Home</a>
+        <a href="{% url 'logout' %}">Logout</a>
+    </div>
+</header>
+
+<h1>Lender Dashboard</h1>
+
+<table>
+    <thead>
+        <tr>
+            <th>Sl No.</th>
+            <th>Loan ID</th>
+            <th>Applicant</th>
+            <th>Amount</th>
+            <th>Duration</th>
+            <th>ROI</th>
+            <th>Status</th>
+            <th>Remarks</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for loan in loans %}
+        <tr>
+            <td>{{ forloop.counter }}</td>
+            <td>{{ loan.loan_id }}</td>
+            <td>{{ loan.applicant.first_name }} {{ loan.applicant.last_name }}</td>
+            <td>₹{{ loan.amount_requested }}</td>
+            <td>{{ loan.duration_months }} months</td>
+            <td>{{ loan.interest_rate }}%</td>
+            <td>{{ loan.status }}</td>
+            <td>{{ loan.remarks }}</td>
+            <td>
+                <a href="{% url 'payment_page' loan.id %}" class="btn btn-approve">Make Payment</a>
+                <button class="btn-view" onclick="openProfile('{{ loan.loan_id }}')">View Profile</button>
+            </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="9">No loan requests found.</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<footer>
+    © 2025 LoanSaathiHub. All rights reserved. |
+    <a href="#">About us</a> |
+    <a href="#">Terms & Conditions</a> |
+    <a href="#">Privacy Policy</a> |
+    <a href="#">FAQ</a> |
+    <a href="#">Support</a>
+</footer>
+
+<script>
+    function openProfile(loanId) {
+        alert("Profile for Loan " + loanId);
+    }
+</script>
+
+</body>
+</html>

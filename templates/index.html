@@ -2,126 +2,485 @@
 {% load static %}
 {% block content %}
 
-<style>
-/* Top bar logo बड़ा */
-.logo img {
-    height: 70px;   /* पहले 40px था, अब बड़ा */
-    margin-right: 10px;
-}
+{% load static %}
 
-/* Main section */
-.main-section {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 80px;
-    flex-wrap: nowrap;
-}
+<!doctype html>
+<html lang="en">
+  <head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Loan Saathi Hub – Fast, Transparent Loans</title>
+  <meta name="description" content="Loan Saathi Hub: Compare, apply, and track loans..." />
 
-/* Left section */
-.left-side h1 {
-    font-size: 36px;
-    font-weight: 700;
-    margin-bottom: 10px;
-}
-.left-side p {
-    font-size: 18px;
-    margin-bottom: 25px;
-}
-.left-side a {
-    display: block;
-    width: 200px;
-    padding: 14px;
-    margin-bottom: 15px;
-    font-size: 18px;
-    font-weight: 600;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    text-align: center;
-    text-decoration: none;
-}
-.loan-user { background-color: #28A745; color: white; }
-.loan-agent { background-color: #007BFF; color: white; }
+  <!-- Fonts & Tailwind -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <script src="https://cdn.tailwindcss.com"></script>
 
-/* Right section */
-.right-side {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-}
-.main-img {
-    width: 500px;   /* बड़ा कर दिया */
-    height: auto;
-    border-radius: 12px;
-    margin-bottom: 20px;
-    object-fit: cover;
-}
+  <!-- ✅ Bootstrap CSS (needed for modal) -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
 
-/* Slider thumbnails */
-.slider {
-    width: 500px;
-    overflow: hidden;
-    border-radius: 10px;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-}
-.slider-track {
-    display: flex;
-    width: calc(500px * 6); /* 3 images × 2 (loop) */
-    animation: scroll 20s linear infinite; /* slow speed scroll */
-}
-.slider-track img {
-    width: 500px;
-    height: 250px;
-    object-fit: cover;
-}
-
-/* Animation for continuous scroll */
-@keyframes scroll {
-    0% { transform: translateX(0); }
-    100% { transform: translateX(-1500px); } /* 3 × 500px */
-}
-</style>
-
-<div class="landing-page">
-
-    <!-- Top bar -->
-    <div class="top-bar">
-        <div class="logo">
-            <img src="{% static 'logo.png' %}" alt="Logo">
-            LoanSaathiHub
-        </div>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#f3f6ff', 100: '#e7edff', 200: '#c8d5ff', 300: '#a9bdff',
+              400: '#7c99ff', 500: '#4f75ff', 600: '#2f5df2', 700: '#2347c1',
+              800: '#193391', 900: '#112266'
+            },
+            ink: '#0b1220'
+          },
+          boxShadow: { soft: '0 10px 30px rgba(17, 34, 102, 0.08)' }
+        }
+      }
+    }
+  </script>
+</head>
+  <body class="bg-white text-ink selection:bg-brand-100 selection:text-brand-800">
+    <!-- Top notice -->
+    <div class="bg-gradient-to-r from-brand-50 to-white border-b border-brand-100">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2 text-center text-sm">
+        🇮🇳 Trusted by applicants & lenders across India. Get pre-qualified in minutes.
+      </div>
     </div>
 
-    <!-- Main section -->
-    <div class="main-section">
-        <!-- Left content -->
-        <div class="left-side">
-            <h1>Welcome to LoanSaathiHub</h1>
-            <p>Please select your account type:</p>
-            <a href="{% url 'complete_profile_user' %}" class="btn btn-primary">Loan User</a>
-            <a href="{% url 'complete_profile_agent' %}" class="btn btn-secondary">Loan Agent</a>
+    <!-- Header / Nav -->
+    <header class="sticky top-0 z-50 bg-white/80 backdrop-blur border-b border-gray-100">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex items-center justify-between h-16">
+          <a href="#home" class="flex items-center gap-2">
+            <div class="h-9 w-9 rounded-2xl bg-brand-600 text-white grid place-items-center font-bold">LS</div>
+            <span class="sr-only">Loan Saathi Hub</span>
+          </a>
+          <nav class="hidden md:flex items-center gap-8 text-sm">
+            <a href="#products" class="hover:text-brand-700">Products</a>
+            <a href="#how" class="hover:text-brand-700">How it works</a>
+            <a href="#calculator" class="hover:text-brand-700">EMI Calculator</a>
+            <a href="#faqs" class="hover:text-brand-700">FAQs</a>
+          </nav>
+          <div class="hidden md:flex items-center gap-3">
+            <a href="#login" class="px-3 py-2 rounded-xl hover:bg-gray-50">Log in</a>
+            <!-- Updated Apply button -->
+            <button 
+              class="px-4 py-2 rounded-xl bg-brand-600 text-white hover:bg-brand-700 shadow-soft"
+              data-bs-toggle="modal" 
+              data-bs-target="#applyModal">
+              Apply Now
+            </button>
+          </div>
+          <button id="menuBtn" class="md:hidden inline-flex items-center justify-center p-2 rounded-xl border border-gray-200" aria-label="Open menu" aria-expanded="false">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" /></svg>
+          </button>
         </div>
+      </div>
+    </header>
 
-        <!-- Right images -->
-        <div class="right-side">
-            <!-- Big image -->
-            <img class="main-img" src="{% static 'main.jpg' %}" alt="Main Banner">
+    <main id="home">
+      <!-- Mobile Menu -->
+      <div id="mobileNav" class="md:hidden hidden border-t border-gray-100 bg-white">
+        <div class="px-4 py-3 space-y-2">
+          <a href="#products" class="block px-3 py-2 rounded-lg hover:bg-gray-50">Products</a>
+          <a href="#how" class="block px-3 py-2 rounded-lg hover:bg-gray-50">How it works</a>
+          <a href="#calculator" class="block px-3 py-2 rounded-lg hover:bg-gray-50">EMI Calculator</a>
+          <a href="#faqs" class="block px-3 py-2 rounded-lg hover:bg-gray-50">FAQs</a>
+          <div class="flex gap-2 pt-2">
+            <a href="#login" class="flex-1 px-3 py-2 rounded-lg border border-gray-200 text-center">Log in</a>
+            <a href="#apply" class="flex-1 px-3 py-2 rounded-lg bg-brand-600 text-white text-center">Apply</a>
+          </div>
+        </div>
+      </div>
 
-            <!-- Running slider -->
-            <div class="slider">
-                <div class="slider-track">
-                    <img src="{% static 'thumb1.jpg' %}" alt="Thumbnail 1">
-                    <img src="{% static 'thumb2.jpg' %}" alt="Thumbnail 2">
-                    <img src="{% static 'thumb3.jpg' %}" alt="Thumbnail 3">
-                    <!-- repeat for infinite effect -->
-                    <img src="{% static 'thumb1.jpg' %}" alt="Thumbnail 1">
-                    <img src="{% static 'thumb2.jpg' %}" alt="Thumbnail 2">
-                    <img src="{% static 'thumb3.jpg' %}" alt="Thumbnail 3">
-                </div>
+      <!-- Hero -->
+      <section class="relative overflow-hidden">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14 sm:py-20">
+          <div class="grid lg:grid-cols-2 gap-8 items-center">
+            <div>
+              <h1 class="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight leading-tight">
+                Your trusted <span class="text-brand-600">Saathi</span> for smarter loans
+              </h1>
+              <p class="mt-4 text-gray-600 text-base sm:text-lg">
+                Compare offers, check eligibility, and apply in minutes. No hidden charges. Full transparency.
+              </p>
+              <div class="mt-6 flex flex-col sm:flex-row gap-3">
+                <a href="#apply" class="px-5 py-3 rounded-xl bg-brand-600 text-white text-center hover:bg-brand-700 shadow-soft">Get pre-qualified</a>
+                <a href="#calculator" class="px-5 py-3 rounded-xl border border-gray-200 text-center hover:bg-gray-50">Calculate EMI</a>
+              </div>
+              <div class="mt-6 flex items-center gap-6 text-sm text-gray-500">
+                <div class="flex items-center gap-2"><span class="inline-block h-2.5 w-2.5 rounded-full bg-emerald-500"></span>Instant status tracking</div>
+                <div class="hidden sm:flex items-center gap-2"><span class="inline-block h-2.5 w-2.5 rounded-full bg-emerald-500"></span>Bank-grade security</div>
+              </div>
             </div>
+            <div class="relative lg:pl-8">
+              <div class="rounded-[var(--radius)] border border-gray-100 shadow-soft p-4 sm:p-6 bg-white">
+                <div class="flex items-center justify-between">
+                  <div>
+                    <h3 class="text-lg font-semibold">Quick Eligibility</h3>
+                    <p class="text-sm text-gray-500">Takes less than 60 seconds</p>
+                  </div>
+                  <span class="px-2 py-1 text-xs rounded-full bg-emerald-50 text-emerald-700">No credit impact</span>
+                </div>
+                <form id="quickCheck" class="mt-4 grid grid-cols-1 gap-3">
+                  <label class="text-sm">
+                    Monthly Income (₹)
+                    <input id="income" name="income" type="number" min="0" required class="mt-1 w-full px-3 py-2 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-brand-200" />
+                  </label>
+                  <label class="text-sm">
+                    Existing EMIs (₹ / month)
+                    <input id="emis" name="emis" type="number" min="0" required class="mt-1 w-full px-3 py-2 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-brand-200" />
+                  </label>
+                  <label class="text-sm">
+                    Desired Loan Amount (₹)
+                    <input id="desired" name="desired" type="number" min="0" required class="mt-1 w-full px-3 py-2 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-brand-200" />
+                  </label>
+                  <button class="mt-2 px-4 py-2.5 rounded-xl bg-brand-600 text-white hover:bg-brand-700" type="submit">Check</button>
+                  <p id="quickResult" class="text-sm text-gray-600"></p>
+                </form>
+              </div>
+            </div>
+          </div>
         </div>
-    </div>
-</div>
+      </section>
+
+      <!-- Partners / badges -->
+      <section aria-label="Partners" class="border-y border-gray-100 bg-gradient-to-r from-white to-brand-50/30">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div class="flex flex-wrap items-center justify-center gap-x-10 gap-y-4 opacity-80">
+            <img alt="RBI compliant" class="h-8" src="https://dummyimage.com/120x32/edf2f7/1a202c&text=RBI+Compliant"/>
+            <img alt="ISO 27001" class="h-8" src="https://dummyimage.com/120x32/edf2f7/1a202c&text=ISO+27001"/>
+            <img alt="PCI DSS" class="h-8" src="https://dummyimage.com/120x32/edf2f7/1a202c&text=PCI+DSS"/>
+            <img alt="Bank Partners" class="h-8" src="https://dummyimage.com/120x32/edf2f7/1a202c&text=Bank+Partners"/>
+          </div>
+        </div>
+      </section>
+
+      <!-- Products -->
+      <section id="products" class="py-14 sm:py-20">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div class="max-w-2xl">
+            <h2 class="text-2xl sm:text-3xl font-bold">Loan products</h2>
+            <p class="mt-2 text-gray-600">Choose what fits you best. Transparent terms, flexible tenure.</p>
+          </div>
+
+          <div class="mt-8 grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
+            <!-- Card -->
+            <article class="rounded-[var(--radius)] border border-gray-100 p-5 hover:shadow-soft transition">
+              <h3 class="font-semibold">Personal Loan</h3>
+              <p class="mt-2 text-sm text-gray-600">Quick cash for travel, weddings, education, or emergencies.</p>
+              <ul class="mt-3 text-sm text-gray-600 list-disc list-inside">
+                <li>₹50k – ₹25L</li>
+                <li>1 – 5 years</li>
+                <li>Minimal docs</li>
+              </ul>
+              <a href="#apply" class="mt-4 inline-block text-brand-700 hover:underline">Check offers →</a>
+            </article>
+
+            <article class="rounded-[var(--radius)] border border-gray-100 p-5 hover:shadow-soft transition">
+              <h3 class="font-semibold">Home Loan</h3>
+              <p class="mt-2 text-sm text-gray-600">Affordable rates for buying or renovating your dream home.</p>
+              <ul class="mt-3 text-sm text-gray-600 list-disc list-inside">
+                <li>₹5L – ₹5Cr</li>
+                <li>5 – 30 years</li>
+                <li>Flexible EMIs</li>
+              </ul>
+              <a href="#apply" class="mt-4 inline-block text-brand-700 hover:underline">Check offers →</a>
+            </article>
+
+            <article class="rounded-[var(--radius)] border border-gray-100 p-5 hover:shadow-soft transition">
+              <h3 class="font-semibold">Business Loan</h3>
+              <p class="mt-2 text-sm text-gray-600">Scale your business with working capital and expansion funds.</p>
+              <ul class="mt-3 text-sm text-gray-600 list-disc list-inside">
+                <li>₹1L – ₹2Cr</li>
+                <li>1 – 7 years</li>
+                <li>No collateral (select)</li>
+              </ul>
+              <a href="#apply" class="mt-4 inline-block text-brand-700 hover:underline">Check offers →</a>
+            </article>
+
+            <article class="rounded-[var(--radius)] border border-gray-100 p-5 hover:shadow-soft transition">
+              <h3 class="font-semibold">Vehicle Loan</h3>
+              <p class="mt-2 text-sm text-gray-600">Drive home your car or bike with low down‑payment plans.</p>
+              <ul class="mt-3 text-sm text-gray-600 list-disc list-inside">
+                <li>₹1L – ₹50L</li>
+                <li>1 – 7 years</li>
+                <li>Fast disbursal</li>
+              </ul>
+              <a href="#apply" class="mt-4 inline-block text-brand-700 hover:underline">Check offers →</a>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <!-- How it works -->
+      <section id="how" class="py-14 sm:py-20 bg-gray-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div class="max-w-2xl">
+            <h2 class="text-2xl sm:text-3xl font-bold">How it works</h2>
+            <p class="mt-2 text-gray-600">Simple 3‑step process to your loan.</p>
+          </div>
+          <ol class="mt-8 grid sm:grid-cols-3 gap-5">
+            <li class="rounded-[var(--radius)] bg-white border border-gray-100 p-5">
+              <div class="text-xs font-medium text-gray-500">Step 1</div>
+              <h3 class="mt-1 font-semibold">Tell us your need</h3>
+              <p class="mt-2 text-sm text-gray-600">Answer a few questions about income, employment, and amount.</p>
+            </li>
+            <li class="rounded-[var(--radius)] bg-white border border-gray-100 p-5">
+              <div class="text-xs font-medium text-gray-500">Step 2</div>
+              <h3 class="mt-1 font-semibold">Compare offers</h3>
+              <p class="mt-2 text-sm text-gray-600">See rates, fees, and tenure side‑by‑side. No hidden charges.</p>
+            </li>
+            <li class="rounded-[var(--radius)] bg-white border border-gray-100 p-5">
+              <div class="text-xs font-medium text-gray-500">Step 3</div>
+              <h3 class="mt-1 font-semibold">Apply & track</h3>
+              <p class="mt-2 text-sm text-gray-600">Upload docs securely and track your application in real‑time.</p>
+            </li>
+          </ol>
+        </div>
+      </section>
+
+      <!-- EMI Calculator -->
+      <section id="calculator" class="py-14 sm:py-20">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div class="grid lg:grid-cols-2 gap-8 items-start">
+            <div>
+              <h2 class="text-2xl sm:text-3xl font-bold">EMI Calculator</h2>
+              <p class="mt-2 text-gray-600">Estimate your monthly instalment instantly.</p>
+              <form id="emiForm" class="mt-6 grid grid-cols-1 gap-4">
+                <label class="text-sm">Loan Amount (₹)
+                  <input id="loanAmount" type="number" min="10000" value="500000" class="mt-1 w-full px-3 py-2 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-brand-200" />
+                </label>
+                <label class="text-sm">Annual Interest Rate (%)
+                  <input id="interestRate" type="number" step="0.01" value="12" class="mt-1 w-full px-3 py-2 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-brand-200" />
+                </label>
+                <label class="text-sm">Tenure (months)
+                  <input id="tenureMonths" type="number" value="36" class="mt-1 w-full px-3 py-2 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-brand-200" />
+                </label>
+                <button type="submit" class="mt-2 px-4 py-2.5 rounded-xl bg-brand-600 text-white hover:bg-brand-700">Calculate</button>
+              </form>
+              <div id="emiOut" class="mt-4 hidden rounded-[var(--radius)] border border-gray-100 p-4">
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm">
+                  <div>
+                    <div class="text-gray-500">EMI / month</div>
+                    <div id="emiVal" class="font-semibold text-lg">—</div>
+                  </div>
+                  <div>
+                    <div class="text-gray-500">Total Interest</div>
+                    <div id="interestVal" class="font-semibold text-lg">—</div>
+                  </div>
+                  <div>
+                    <div class="text-gray-500">Total Payment</div>
+                    <div id="totalVal" class="font-semibold text-lg">—</div>
+                  </div>
+                  <div>
+                    <div class="text-gray-500">APR (approx)</div>
+                    <div id="aprVal" class="font-semibold text-lg">—</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="rounded-[var(--radius)] border border-gray-100 p-5 bg-gray-50">
+              <h3 class="font-semibold">Why calculate first?</h3>
+              <ul class="mt-3 text-sm text-gray-700 list-disc list-inside space-y-1">
+                <li>Plan your monthly budget with confidence.</li>
+                <li>Avoid over‑borrowing and keep credit score healthy.</li>
+                <li>Compare plans with different tenures and rates.</li>
+              </ul>
+              <p class="mt-3 text-xs text-gray-500">This calculator provides an estimate only and is not a loan offer.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Testimonials -->
+      <section class="py-14 sm:py-20 bg-gradient-to-b from-white to-gray-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <h2 class="text-2xl sm:text-3xl font-bold">Loved by customers</h2>
+          <div class="mt-8 grid md:grid-cols-3 gap-5">
+            <figure class="rounded-[var(--radius)] border border-gray-100 p-5 bg-white">
+              <blockquote class="text-sm text-gray-700">“Application process was smooth and I got real‑time updates. Totally hassle‑free.”</blockquote>
+              <figcaption class="mt-3 text-xs text-gray-500">— Aarti, Pune</figcaption>
+            </figure>
+            <figure class="rounded-[var(--radius)] border border-gray-100 p-5 bg-white">
+              <blockquote class="text-sm text-gray-700">“Clear comparison of offers saved me money on interest and fees.”</blockquote>
+              <figcaption class="mt-3 text-xs text-gray-500">— Raghav, Jaipur</figcaption>
+            </figure>
+            <figure class="rounded-[var(--radius)] border border-gray-100 p-5 bg-white">
+              <blockquote class="text-sm text-gray-700">“Great support team and quick disbursal through partner bank.”</blockquote>
+              <figcaption class="mt-3 text-xs text-gray-500">— Sana, Bengaluru</figcaption>
+            </figure>
+          </div>
+        </div>
+      </section>
+
+      <!-- FAQs -->
+      <section id="faqs" class="py-14 sm:py-20">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <h2 class="text-2xl sm:text-3xl font-bold">FAQs</h2>
+          <div class="mt-6 divide-y divide-gray-200 rounded-[var(--radius)] border border-gray-100">
+            <details class="group p-5">
+              <summary class="flex items-center justify-between cursor-pointer list-none">
+                <h3 class="font-medium">Is my credit score affected by using Loan Saathi Hub?</h3>
+                <span class="ml-4 transition group-open:rotate-180">▾</span>
+              </summary>
+              <p class="mt-3 text-sm text-gray-600">Checking eligibility does not impact your credit score. Only when you proceed with a formal application may a hard enquiry be placed by the lender.</p>
+            </details>
+            <details class="group p-5">
+              <summary class="flex items-center justify-between cursor-pointer list-none">
+                <h3 class="font-medium">How long does approval take?</h3>
+                <span class="ml-4 transition group-open:rotate-180">▾</span>
+              </summary>
+              <p class="mt-3 text-sm text-gray-600">Many partners provide instant in‑principle approval; final approval and disbursal timelines vary by lender and documentation.</p>
+            </details>
+            <details class="group p-5">
+              <summary class="flex items-center justify-between cursor-pointer list-none">
+                <h3 class="font-medium">What documents are required?</h3>
+                <span class="ml-4 transition group-open:rotate-180">▾</span>
+              </summary>
+              <p class="mt-3 text-sm text-gray-600">Typically PAN, Aadhaar, address proof, income proof (salary slips/ITR), bank statements, and photos. Exact list depends on loan type.</p>
+            </details>
+          </div>
+        </div>
+      </section>
+
+      <!-- CTA -->
+      <section id="apply" class="py-14 sm:py-20 bg-brand-600">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-white">
+          <div class="grid md:grid-cols-2 gap-6 items-center">
+            <div>
+              <h2 class="text-2xl sm:text-3xl font-bold">Ready to get started?</h2>
+              <p class="mt-2 text-brand-100">
+                Create your account, upload docs securely, and track everything in one place.
+              </p>
+            </div>
+            <!-- Updated buttons -->
+            <div class="flex flex-col sm:flex-row gap-3 justify-end">
+              <button 
+                class="px-5 py-3 rounded-xl bg-white text-brand-700 font-medium text-center hover:bg-gray-100 shadow-soft"
+                data-bs-toggle="modal" 
+                data-bs-target="#applyModal">
+                Apply as Applicant
+              </button>
+              <button 
+                class="px-5 py-3 rounded-xl bg-indigo-500 text-white font-medium text-center hover:bg-indigo-600 shadow-soft"
+                data-bs-toggle="modal" 
+                data-bs-target="#applyModal">
+                Apply as Lender
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Bootstrap Modal (replaces old roleModal) -->
+      <div class="modal fade" id="applyModal" tabindex="-1" aria-labelledby="applyModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+          <div class="modal-content rounded-3 shadow">
+            <div class="modal-header">
+              <h5 class="modal-title" id="applyModalLabel">Continue as</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+              <form method="POST" action="{% url 'register' %}">
+                {% csrf_token %}
+                <div class="mb-3">
+                  <label class="form-label fw-bold">Select Role</label>
+                  <select name="role" class="form-select" required>
+                    <option value="">-- Choose --</option>
+                    <option value="Applicant">Applicant</option>
+                    <option value="Lender">Lender</option>
+                  </select>
+                </div>
+                <div class="mb-3">
+                  <label class="form-label fw-bold">Email Address</label>
+                  <input type="email" class="form-control" name="email" placeholder="Enter your email" required>
+                </div>
+                <div class="mb-3">
+                  <label class="form-label fw-bold">Password</label>
+                  <input type="password" class="form-control" name="password" placeholder="Create a password (min 8 characters)" minlength="8" required>
+                </div>
+                <button type="submit" class="btn btn-success w-100">Continue</button>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="border-t border-gray-100">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+        <div class="grid md:grid-cols-4 gap-8 text-sm">
+          <div>
+            <div class="flex items-center gap-2">
+              <div class="h-9 w-9 rounded-2xl bg-brand-600 text-white grid place-items-center font-bold">LS</div>
+              <div class="font-semibold">Loan Saathi Hub</div>
+            </div>
+            <p class="mt-3 text-gray-600">Fast, transparent, mobile‑first lending experience.</p>
+          </div>
+          <div>
+            <div class="font-semibold">Company</div>
+            <ul class="mt-2 space-y-2 text-gray-600">
+              <li><a href="#" class="hover:text-brand-700">About</a></li>
+              <li><a href="#" class="hover:text-brand-700">Careers</a></li>
+              <li><a href="#" class="hover:text-brand-700">Contact</a></li>
+            </ul>
+          </div>
+          <div>
+            <div class="font-semibold">Legal</div>
+            <ul class="mt-2 space-y-2 text-gray-600">
+              <li><a href="#" class="hover:text-brand-700">Privacy</a></li>
+              <li><a href="#" class="hover:text-brand-700">Terms</a></li>
+              <li><a href="#" class="hover:text-brand-700">Grievance</a></li>
+            </ul>
+          </div>
+          <div>
+            <div class="font-semibold">Get the app</div>
+            <div class="mt-2 flex gap-2">
+              <a href="#" class="px-3 py-2 rounded-xl border border-gray-200">App Store</a>
+              <a href="#" class="px-3 py-2 rounded-xl border border-gray-200">Play Store</a>
+            </div>
+          </div>
+        </div>
+        <div class="mt-8 text-xs text-gray-500">© <span id="year"></span> Loan Saathi Hub. All rights reserved.</div>
+      </div>
+    </footer>
+
+        <!-- Scripts -->
+    <script>
+      // Mobile nav toggle
+      const menuBtn = document.getElementById('menuBtn');
+      const mobileNav = document.getElementById('mobileNav');
+      menuBtn?.addEventListener('click', () => {
+        const open = mobileNav.classList.toggle('hidden') === false;
+        menuBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+      });
+
+      // Quick eligibility check
+      document.getElementById('quickCheck')?.addEventListener('submit', function (e) {
+        e.preventDefault();
+        const income = Number(document.getElementById('income').value || 0);
+        const emis = Number(document.getElementById('emis').value || 0);
+        const desired = Number(document.getElementById('desired').value || 0);
+        const capacity = Math.max(0, (income - emis) * 0.4);
+        const result = document.getElementById('quickResult');
+
+        if (desired <= capacity * 60) {
+          result.textContent = 'Likely eligible. Proceed to detailed check.';
+          result.className = 'text-sm text-emerald-600';
+        } else {
+          result.textContent = 'Amount may be high based on income. Try lower amount or longer tenure.';
+          result.className = 'text-sm text-amber-600';
+        }
+      });
+    </script>
+
+    <!-- Bootstrap bundle JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  </body>
+</html>
+
+
 
 {% endblock %}

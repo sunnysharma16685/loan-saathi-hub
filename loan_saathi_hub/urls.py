@@ -3,38 +3,33 @@ from django.urls import path
 from main import views
 
 urlpatterns = [
-    # ------------------------
-    # CUSTOM ADMIN FLOW
-    # ------------------------
-    path("dashboard-login/", views.admin_login_view, name="admin_login"),  
-    path("complete-profile-admin/", views.complete_profile_admin, name="complete_profile_admin"),
+    # -------------------- Home --------------------
+    path("", views.home, name="home"),
+
+    # -------------------- Auth --------------------
+    path("login/", views.login_view, name="login"),
+    path("logout/", views.logout_view, name="logout"),
+    path("register/", views.register_view, name="register"),
+    path("forgot-password/", views.forgot_password_view, name="forgot_password"),
+    path("reset-password/<uidb64>/<token>/", views.reset_password_view, name="reset_password"),
+
+    # -------------------- Dashboards --------------------
+    path("dashboard/applicant/", views.dashboard_applicant, name="dashboard_applicant"),
+    path("dashboard/lender/", views.dashboard_lender, name="dashboard_lender"),
     path("dashboard/admin/", views.dashboard_admin, name="dashboard_admin"),
 
-    # ------------------------
-    # USER FLOW
-    # ------------------------
-    path("login/", views.login_view, name="login"),     # user + agent login
-    path("dashboard/user/", views.dashboard_user, name="dashboard_user"),
-    path("complete-profile-user/", views.complete_profile_user, name="complete_profile_user"),
+    # -------------------- Complete Profiles --------------------
+    path("complete-profile/applicant/", views.complete_profile_applicant, name="complete_profile_applicant"),
+    path("complete-profile/lender/", views.complete_profile_lender, name="complete_profile_lender"),
+    path("complete-profile/admin/", views.complete_profile_admin, name="complete_profile_admin"),
 
-
-    # ------------------------
-    # AGENT FLOW
-    # ------------------------
-    path("dashboard/agent/", views.dashboard_agent, name="dashboard_agent"),
-    path("complete-profile-agent/", views.complete_profile_agent, name="complete_profile_agent"),
-
-
-    # ------------------------
-    # COMMON
-    # ------------------------
-    path("", views.index, name="index"),
-    path("logout/", views.logout_view, name="logout"),
+    # -------------------- Loan + Payment --------------------
     path("loan-request/", views.loan_request, name="loan_request"),
-    path("payment/<int:loan_id>/", views.payment_page, name="payment_page"),
+    path("payment/<uuid:loan_id>/", views.payment_page, name="payment_page"),
 
-    # ------------------------
-    # DJANGO BUILT-IN ADMIN (for developer)
-    # ------------------------
-    path("admin/", admin.site.urls),
+    # -------------------- Admin Login --------------------
+    path("dashboard-login/", views.admin_login_view, name="admin_login"),
+
+    # -------------------- Utility --------------------
+    path("send-test-email/", views.send_test_email, name="send_test_email"),
 ]

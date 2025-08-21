@@ -3,49 +3,99 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Dashboard - Loan Saathi Hub</title>
+    <title>Loan Saathi Hub - Admin Dashboard</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="{% static 'css/style.css' %}">
     <style>
-        table { border-collapse: collapse; width: 100%; margin-bottom: 40px; }
-        th, td { border: 1px solid #ddd; padding: 8px; text-align: center; }
-        th { background-color: #0d6efd; color: white; }
-        select { padding: 5px; border-radius: 4px; border: 1px solid #ccc; }
-        button { padding: 5px 10px; border-radius: 4px; border: none; cursor: pointer; }
-        .btn-approve { background: #198754; color: white; }
-        .btn-reject { background: #dc3545; color: white; }
+        body { font-family: 'Poppins', sans-serif; background: #f5f8fa; margin: 0; padding: 0; }
+        header, footer { background: #212529; color: #fff; padding: 15px 30px; }
+        header { display: flex; justify-content: space-between; align-items: center; }
+        header a { color: #fff; text-decoration: none; margin-left: 15px; font-weight: 600; }
+        h1 { margin: 20px; font-size: 24px; color: #333; }
+        section { margin: 20px; }
+        .card { background: #fff; padding: 20px; border-radius: 6px; box-shadow: 0 0 8px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        table th, table td { border: 1px solid #ddd; padding: 8px; text-align: center; }
+        table th { background: #212529; color: #fff; }
+        footer { text-align: center; font-size: 14px; }
+        footer a { color: #fff; margin: 0 5px; text-decoration: none; }
     </style>
 </head>
-<body style="font-family: 'Poppins', sans-serif; background-color: #f8f9fa;">
+<body>
 
-    <!-- Header -->
-    <header style="background-color: #0d6efd; padding: 15px; display: flex; justify-content: space-between; align-items: center; color: #fff;">
-        <h2 style="margin: 0;">Loan Saathi Hub - Admin Dashboard</h2>
-        <div>
-            <a href="{% url 'home' %}" style="color: white; margin-right: 20px; text-decoration: none;">Home</a>
-            <a href="{% url 'logout' %}" style="color: white; text-decoration: none;">Logout</a>
-        </div>
-    </header>
+<header>
+    <div>Loan Saathi Hub - Admin</div>
+    <div>
+        <span>Welcome, {{ request.user.first_name }}</span>
+        <a href="{% url 'home' %}">Home</a>
+        <a href="{% url 'logout' %}">Logout</a>
+    </div>
+</header>
 
-    <div style="padding: 20px;">
-        <h3>Welcome, {{ request.user.first_name }} (Admin)</h3>
+<h1>Admin Dashboard</h1>
 
-        <!-- Loan Requests Table -->
-        <h4>All Loan Requests</h4>
+<section>
+    <div class="card">
+        <h2>Applicants</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Sl No.</th>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Mobile</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for applicant in users %}
+                <tr>
+                    <td>{{ forloop.counter }}</td>
+                    <td>{{ applicant.first_name }} {{ applicant.last_name }}</td>
+                    <td>{{ applicant.email }}</td>
+                    <td>{{ applicant.mobile }}</td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="4">No applicants found.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="card">
+        <h2>Lenders</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Sl No.</th>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Mobile</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for lender in agents %}
+                <tr>
+                    <td>{{ forloop.counter }}</td>
+                    <td>{{ lender.first_name }} {{ lender.last_name }}</td>
+                    <td>{{ lender.email }}</td>
+                    <td>{{ lender.mobile }}</td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="4">No lenders found.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="card">
+        <h2>Loan Requests</h2>
         <table>
             <thead>
                 <tr>
                     <th>Sl No.</th>
                     <th>Loan ID</th>
-                    <th>User Name</th>
-                    <th>Loan Type</th>
+                    <th>Type</th>
                     <th>Amount</th>
-                    <th>Duration</th>
-                    <th>Rate of Interest</th>
                     <th>Status</th>
-                    <th>Agent Assigned</th>
-                    <th>Actions</th>
                 </tr>
             </thead>
             <tbody>
@@ -53,147 +103,54 @@
                 <tr>
                     <td>{{ forloop.counter }}</td>
                     <td>{{ loan.loan_id }}</td>
-                    <td>{{ loan.user.first_name }} {{ loan.user.last_name }}</td>
                     <td>{{ loan.loan_type }}</td>
                     <td>₹{{ loan.amount_requested }}</td>
-                    <td>{{ loan.duration_months }} months</td>
-                    <td>{{ loan.interest_rate }}%</td>
                     <td>{{ loan.status }}</td>
-                    <td>{% if loan.agent %}{{ loan.agent.first_name }}{% else %}-{% endif %}</td>
-                    <td>
-                        <button class="btn-approve">Approve</button>
-                        <button class="btn-reject">Reject</button>
-                    </td>
                 </tr>
                 {% empty %}
-                <tr><td colspan="10">No Loan Requests Found</td></tr>
+                <tr><td colspan="5">No loan requests found.</td></tr>
                 {% endfor %}
             </tbody>
         </table>
-
-        <!-- Users Table -->
-        <h4>All Users</h4>
-        <table>
-            <thead>
-                <tr>
-                    <th>Sl No.</th>
-                    <th>Full Name</th>
-                    <th>Email</th>
-                    <th>Mobile</th>
-                    <th>Status</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for u in users %}
-                <tr>
-                    <td>{{ forloop.counter }}</td>
-                    <td>{{ u.first_name }} {{ u.last_name }}</td>
-                    <td>{{ u.email }}</td>
-                    <td>{{ u.mobile }}</td>
-                    <td>
-                        <select>
-                            <option value="active" {% if u.is_active %}selected{% endif %}>Active</option>
-                            <option value="inactive" {% if not u.is_active %}selected{% endif %}>Inactive</option>
-                        </select>
-                    </td>
-                </tr>
-                {% empty %}
-                <tr><td colspan="5">No Users Found</td></tr>
-                {% endfor %}
-            </tbody>
-        </table>
-
-        <!-- Agents Table -->
-        <h4>All Agents</h4>
-        <table>
-            <thead>
-                <tr>
-                    <th>Sl No.</th>
-                    <th>Full Name</th>
-                    <th>Business Type</th>
-                    <th>Mobile</th>
-                    <th>Status</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for a in agents %}
-                <tr>
-                    <td>{{ forloop.counter }}</td>
-                    <td>{{ a.first_name }} {{ a.last_name }}</td>
-                    <td>{{ a.business_type }}</td>
-                    <td>{{ a.mobile }}</td>
-                    <td>
-                        <select>
-                            <option value="active" {% if a.is_active %}selected{% endif %}>Active</option>
-                            <option value="inactive" {% if not a.is_active %}selected{% endif %}>Inactive</option>
-                        </select>
-                    </td>
-                </tr>
-                {% empty %}
-                <tr><td colspan="5">No Agents Found</td></tr>
-                {% endfor %}
-            </tbody>
-        </table>
-
-        <!-- Payments Table -->
-        <h4>All Payments</h4>
-        <table>
-            <thead>
-                <tr>
-                    <th>Sl No.</th>
-                    <th>Payment ID</th>
-                    <th>Loan ID</th>
-                    <th>Agent Name</th>
-                    <th>Amount</th>
-                    <th>Method</th>
-                    <th>Status</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for p in payments %}
-                <tr>
-                    <td>{{ forloop.counter }}</td>
-                    <td>{{ p.id }}</td>
-                    <td>{{ p.loan_request.loan_id }}</td>
-                    <td>{{ p.agent.first_name }}</td>
-                    <td>₹{{ p.amount }}</td>
-                    <td>{{ p.payment_method }}</td>
-                    <td>{{ p.status }}</td>
-                </tr>
-                {% empty %}
-                <tr><td colspan="7">No Payments Found</td></tr>
-                {% endfor %}
-            </tbody>
-        </table>
-
-        <!-- Reports Table -->
-        <h4>Loan Reports</h4>
-        <table>
-            <thead>
-                <tr>
-                    <th>Loan Type</th>
-                    <th>Total Applications</th>
-                    <th>Approved</th>
-                    <th>Rejected</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for report in reports %}
-                <tr>
-                    <td>{{ report.loan_type }}</td>
-                    <td>{{ report.total }}</td>
-                    <td>{{ report.approved }}</td>
-                    <td>{{ report.rejected }}</td>
-                </tr>
-                {% empty %}
-                <tr><td colspan="4">No Reports Found</td></tr>
-                {% endfor %}
-            </tbody>
-        </table>
-
     </div>
 
-    <!-- Footer -->
-    {% include 'footer.html' %}
+    <div class="card">
+        <h2>Payments</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Sl No.</th>
+                    <th>Loan ID</th>
+                    <th>Lender</th>
+                    <th>Amount</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for payment in payments %}
+                <tr>
+                    <td>{{ forloop.counter }}</td>
+                    <td>{{ payment.loan_request.loan_id }}</td>
+                    <td>{{ payment.agent.first_name }}</td>
+                    <td>₹{{ payment.amount }}</td>
+                    <td>{{ payment.status }}</td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="5">No payments found.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+
+<footer>
+    © 2025 LoanSaathiHub. All rights reserved. |
+    <a href="#">About us</a> |
+    <a href="#">Terms & Conditions</a> |
+    <a href="#">Privacy Policy</a> |
+    <a href="#">FAQ</a> |
+    <a href="#">Support</a>
+</footer>
+
 </body>
 </html>

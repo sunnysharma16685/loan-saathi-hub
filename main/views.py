@@ -2,18 +2,27 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-from .models import LoanRequest, Payment, ApplicantProfile, LenderProfile, User
 from django.utils.crypto import get_random_string
-from django.db.models import Q
-from .supabase_client import supabase
-from django.core.mail import send_mail
+from django.mail import send_mail
 from django.conf import settings
 from django.http import HttpResponse
 from django.utils.timezone import now
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
+from django.utils.encoding import force_bytes
 from django.contrib.auth.tokens import default_token_generator
 from django.contrib.auth.forms import SetPasswordForm
 import uuid
+
+from core.supabase_client import (
+    supabase,
+    supabase_admin,
+    create_user_in_supabase,
+    upsert_profile_in_supabase,
+    sync_loan_request_to_supabase,
+    sync_payment_to_supabase,
+)
+
+from .models import User, Profile, ApplicantDetails, LenderDetails, LoanRequest, Payment
 
 
 # -------------------- Home --------------------
@@ -21,102 +30,104 @@ def home(request):
     return render(request, "index.html")
 
 
-# ------------------------
-# Helper: profile complete?
-# ------------------------
-def is_profile_complete(applicant):
-    try:
-        if hasattr(applicant, "is_profile_complete"):
-            return bool(getattr(applicant, "is_profile_complete"))
-    except Exception:
-        pass
+# -------------------- Helper: profile complete? --------------------
+def is_profile_complete(user):
+    if not Profile.objects.filter(user=user).exists():
+        return False
 
-    role = getattr(applicant, "role", "")
-    if role == "applicant":
-        try:
-            p = applicant.applicantprofile
-            return bool(p.first_name and p.mobile)
-        except Exception:
-            return False
-    if role == "lender":
-        try:
-            p = applicant.lenderprofile
-            return bool(p.first_name and p.mobile)
-        except Exception:
-            return False
-    if role == "admin":
+    if user.role == "applicant":
+        return ApplicantDetails.objects.filter(user=user).exists()
+    if user.role == "lender":
+        return LenderDetails.objects.filter(user=user).exists()
+    if user.role == "admin":
         return True
     return False
 
 
 # -------------------- Register --------------------
 def register_view(request):
-    role = request.GET.get("role")  # Applicant / Lender
+    role = (request.GET.get("role") or "").lower()
 
     if request.method == "POST":
-        email = request.POST.get("email")
-        password = request.POST.get("password")
-        form_role = request.POST.get("role") or role
+        email = (request.POST.get("email") or "").strip().lower()
+        password = request.POST.get("password") or ""
+        form_role = (request.POST.get("role") or role or "").lower()
+
+        if form_role not in ("applicant", "lender"):
+            messages.error(request, "Please select Applicant or Lender.")
+            return redirect(f"/register/?role={role or ''}")
+
+        if not email or not password:
+            messages.error(request, "Email and password are required.")
+            return redirect(f"/register/?role={form_role}")
+
+        if User.objects.filter(email=email).exists():
+            messages.error(request, "Email is already registered.")
+            return redirect(f"/register/?role={form_role}")
 
         try:
-            print("📌 Trying Supabase signup for:", email)
+            # Supabase signup
             auth_res = supabase.auth.sign_up({"email": email, "password": password})
-            if not auth_res.user:
+            if not getattr(auth_res, "user", None):
                 messages.error(request, "Supabase signup failed.")
                 return redirect(f"/register/?role={form_role}")
 
             auth_user_id = str(auth_res.user.id)
-            applicant_id = str(uuid.uuid4())
 
-            supabase.table("users").insert({
-                "id": applicant_id,
-                "auth_user_id": auth_user_id,
-                "email": email,
-                "role": form_role
-            }).execute()
+            prefix = "LSHA" if form_role == "applicant" else "LSHL"
+            display_user_id = f"{prefix}{get_random_string(4, allowed_chars='0123456789')}"
 
-            # ✅ Send Welcome Email
+            local_uuid = uuid.uuid4()
+            user = User(
+                id=local_uuid,
+                email=email,
+                role=form_role,
+                user_id=display_user_id,
+            )
+            user.set_password(password)
+            user.save()
+
+            # Sync with Supabase
+            create_user_in_supabase(local_uuid, auth_user_id, email, form_role)
+
+            # Welcome email
             subject = "🎉 Welcome to Loan Saathi Hub!"
             message = f"""
 Hi {email},
 
-Thank you for registering as a {form_role} with Loan Saathi Hub 🚀
+Thank you for registering as a {form_role.title()} 🚀
+👉 Continue here: http://127.0.0.1:8000/profile/basic/{user.id}/
+"""
+            send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [email], fail_silently=True)
 
-We’re excited to have you on board. 
-You can now log in and complete your profile to get started.
-
-👉 Login here: http://127.0.0.1:8000/login/?role={form_role}
-
-Cheers,  
-Team Loan Saathi Hub
-            """
-            try:
-                send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [email], fail_silently=False)
-                print("✅ Welcome email sent to", email)
-            except Exception as e:
-                print("❌ Failed to send welcome email:", str(e))
-
-            if form_role == "Applicant":
-                return redirect(f"/complete-profile/applicant/?user_id={applicant_id}")
+            # Auto login
+            auth_user = authenticate(request, username=email, password=password)
+            if auth_user:
+                login(request, auth_user)
             else:
-                return redirect(f"/complete-profile/lender/?user_id={applicant_id}")
+                login(request, user, backend="django.contrib.auth.backends.ModelBackend")
+
+            return redirect("basic_profile", user_id=user.id)
 
         except Exception as e:
             print("❌ Error during registration:", str(e))
-            messages.error(request, f"Error: {e}")
+            messages.error(request, f"Registration error: {e}")
             return redirect(f"/register/?role={form_role}")
 
     return render(request, "register.html", {"role": role})
 
 
+
 # -------------------- Test Email --------------------
 def send_test_email(request):
-    subject = "✅ Loan Saathi Hub Test Email"
-    message = "Hello! This is a test email from Loan Saathi Hub SMTP setup 🚀"
-    recipient = ["loansaathihub@gmail.com"]
-
     try:
-        send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, recipient, fail_silently=False)
+        send_mail(
+            "✅ Loan Saathi Hub Test Email",
+            "Hello! This is a test email 🚀",
+            settings.DEFAULT_FROM_EMAIL,
+            ["loansaathihub@gmail.com"],
+            fail_silently=False,
+        )
         return HttpResponse("✅ Test email sent successfully!")
     except Exception as e:
         return HttpResponse(f"❌ Failed to send email: {e}")
@@ -127,29 +138,27 @@ def login_view(request):
     role = request.GET.get("role")
 
     if request.method == "POST":
-        email = request.POST.get("email")
-        password = request.POST.get("password")
+        email = (request.POST.get("email") or "").strip().lower()
+        password = request.POST.get("password") or ""
 
         user = authenticate(request, username=email, password=password)
         if user is not None:
             login(request, user)
 
             if not is_profile_complete(user):
+                if not Profile.objects.filter(user=user).exists():
+                    return redirect("basic_profile", user_id=user.id)
                 if user.role == "applicant":
-                    return redirect("complete_profile_applicant")
+                    return redirect("complete_profile_applicant", user_id=user.id)
                 elif user.role == "lender":
-                    return redirect("complete_profile_lender")
-                elif user.role == "admin":
-                    return redirect("complete_profile_admin")
+                    return redirect("complete_profile_lender", user_id=user.id)
 
             if user.role == "applicant":
                 return redirect("dashboard_applicant")
             elif user.role == "lender":
                 return redirect("dashboard_lender")
-            elif user.role == "admin":
-                return redirect("dashboard_admin")
-        else:
-            messages.error(request, "❌ Invalid email or password")
+
+        messages.error(request, "❌ Invalid email or password")
 
     return render(request, "login.html", {"role": role})
 
@@ -161,10 +170,115 @@ def logout_view(request):
     return redirect("/")
 
 
+# -------------------- Basic Profile --------------------
+@login_required
+def basic_profile(request, user_id):
+    user = get_object_or_404(User, id=user_id)
+    if request.user.id != user.id and not request.user.is_superuser:
+        messages.error(request, "You are not allowed to edit this profile.")
+        return redirect("home")
+
+    if request.method == "POST":
+        profile, _ = Profile.objects.get_or_create(user=user)
+        profile.full_name = request.POST.get("full_name") or profile.full_name
+        profile.dob = request.POST.get("dob") or profile.dob
+        profile.marital_status = request.POST.get("marital_status") or profile.marital_status
+        profile.gender = request.POST.get("gender") or profile.gender
+        profile.pan_number = request.POST.get("pan_number") or profile.pan_number
+        profile.aadhaar = request.POST.get("aadhaar") or profile.aadhaar
+        profile.mobile = request.POST.get("mobile") or profile.mobile
+        profile.address = request.POST.get("address") or profile.address
+        profile.pincode = request.POST.get("pincode") or profile.pincode
+        profile.city = request.POST.get("city") or profile.city
+        profile.state = request.POST.get("state") or profile.state
+        profile.save()
+
+        if user.role == "applicant":
+            return redirect("complete_profile_applicant", user_id=user.id)
+        else:
+            return redirect("complete_profile_lender", user_id=user.id)
+
+    return render(request, "basic_profile.html", {"user": user})
+
+
+# -------------------- Complete Profile Applicant --------------------
+@login_required
+def complete_profile_applicant(request, user_id):
+    user = get_object_or_404(User, id=user_id)
+    if request.user.id != user.id and not request.user.is_superuser:
+        messages.error(request, "You are not allowed to edit this profile.")
+        return redirect("home")
+
+    if request.method == "POST":
+        details, _ = ApplicantDetails.objects.get_or_create(user=user)
+        details.loan_purpose = request.POST.get("loan_purpose") or details.loan_purpose
+        details.employment_type = request.POST.get("employment_type") or details.employment_type
+        details.job_type = request.POST.get("job_type") or details.job_type
+        details.monthly_income = request.POST.get("monthly_income") or details.monthly_income
+        details.other_income = request.POST.get("other_income") or details.other_income
+        details.cibil_score = request.POST.get("cibil_score") or details.cibil_score
+        details.itr = request.POST.get("itr") or details.itr
+        details.save()
+
+        user.role = "applicant"
+        user.save()
+
+        messages.success(request, "✅ Applicant profile completed successfully")
+        return redirect("dashboard_applicant")
+
+    return render(request, "complete_profile_applicant.html", {"user": user})
+
+
+# -------------------- Complete Profile Lender --------------------
+@login_required
+def complete_profile_lender(request, user_id):
+    user = get_object_or_404(User, id=user_id)
+    if request.user.id != user.id and not request.user.is_superuser:
+        messages.error(request, "You are not allowed to edit this profile.")
+        return redirect("home")
+
+    if request.method == "POST":
+        details, _ = LenderDetails.objects.get_or_create(user=user)
+        details.business_type = request.POST.get("business_type") or details.business_type
+        details.gst_number = request.POST.get("gst_number") or details.gst_number
+        details.turnover = request.POST.get("turnover") or details.turnover
+        details.dsa_code = request.POST.get("dsa_code") or details.dsa_code
+        details.designation = request.POST.get("designation") or details.designation
+        details.save()
+
+        user.role = "lender"
+        user.save()
+
+        messages.success(request, "✅ Lender profile completed successfully")
+        return redirect("dashboard_lender")
+
+    return render(request, "complete_profile_lender.html", {"user": user})
+
+
+# -------------------- Admin Dashboard --------------------
+@login_required
+def dashboard_admin(request):
+    if not request.user.is_superuser:
+        messages.error(request, "Access denied. Admins only.")
+        return redirect("home")
+
+    applicants = ApplicantDetails.objects.all()
+    lenders = LenderDetails.objects.all()
+    payments = Payment.objects.all()
+    loans = LoanRequest.objects.all()
+
+    return render(request, "dashboard_admin.html", {
+        "applicants": applicants,
+        "lenders": lenders,
+        "payments": payments,
+        "loans": loans,
+    })
+
+
 # -------------------- Dashboards --------------------
 @login_required
 def dashboard_applicant(request):
-    loans = LoanRequest.objects.filter(user=request.user)
+    loans = LoanRequest.objects.filter(applicant=request.user)
     return render(request, "dashboard_applicant.html", {"loans": loans})
 
 
@@ -174,38 +288,49 @@ def dashboard_lender(request):
     return render(request, "dashboard_lender.html", {"loans": loans})
 
 
-@login_required
-def dashboard_admin(request):
-    return render(request, "dashboard_admin.html")
+# -------------------- Dashboard Router --------------------
+def dashboard_router(request):
+    user_id = getattr(request, "user_id", None)
+    if not user_id:
+        return redirect("login")
+
+    row = (
+        supabase_admin()
+        .table("main_profile")
+        .select("role")
+        .eq("user_id", user_id)
+        .limit(1)
+        .execute()
+        .data
+    )
+    role = (row[0]["role"] if row else "applicant")
+
+    if role == "lender":
+        return redirect("dashboard_lender")
+    return redirect("dashboard_applicant")
+
+
 # -------------------- Forgot Password --------------------
 def forgot_password_view(request):
     if request.method == "POST":
-        email = request.POST.get("email")
+        email = (request.POST.get("email") or "").strip().lower()
         try:
             user = User.objects.get(email=email)
-
             uid = urlsafe_base64_encode(force_bytes(user.pk))
             token = default_token_generator.make_token(user)
             reset_link = f"http://127.0.0.1:8000/reset-password/{uid}/{token}/"
 
             subject = "🔑 Reset your Loan Saathi Hub password"
             message = f"""
-Hi {user.username},
+Hi {email},
 
-We received a request to reset your password. 
-Click the link below to set a new password:
-
+Click the link to reset your password:
 👉 {reset_link}
-
-If you didn’t request this, you can safely ignore this email.
-
-Team Loan Saathi Hub
-            """
+"""
             send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [email], fail_silently=False)
-            messages.success(request, "✅ Password reset email sent. Please check your inbox.")
-
+            messages.success(request, "✅ Password reset email sent.")
         except User.DoesNotExist:
-            messages.error(request, "❌ Email not found in our records.")
+            messages.error(request, "❌ Email not found.")
 
     return render(request, "forgot_password.html")
 
@@ -223,13 +348,13 @@ def reset_password_view(request, uidb64, token):
             form = SetPasswordForm(user, request.POST)
             if form.is_valid():
                 form.save()
-                messages.success(request, "✅ Your password has been reset successfully. Please log in.")
+                messages.success(request, "✅ Password reset successful.")
                 return redirect("login")
         else:
             form = SetPasswordForm(user)
         return render(request, "reset_password.html", {"form": form})
     else:
-        messages.error(request, "❌ Invalid or expired reset link.")
+        messages.error(request, "❌ Invalid or expired link.")
         return redirect("forgot_password")
 
 
@@ -246,7 +371,7 @@ def loan_request(request):
         loan_id = "LSH" + get_random_string(4, allowed_chars="0123456789")
         LoanRequest.objects.create(
             loan_id=loan_id,
-            user=request.user,
+            applicant=request.user,
             loan_type=loan_type,
             amount_requested=amount_requested,
             duration_months=duration_months,
@@ -273,105 +398,3 @@ def payment_page(request, loan_id):
         return redirect("dashboard_lender")
 
     return render(request, "payment.html", {"loan": loan})
-
-
-# -------------------- Complete Profile Applicant --------------------
-@login_required
-def complete_profile_applicant(request):
-    if request.method == "POST":
-        profile = request.user.applicantprofile
-
-        profile.first_name = request.POST.get("firstName")
-        profile.last_name = request.POST.get("lastName")
-        profile.mobile = request.POST.get("mobile")
-        profile.email = request.POST.get("email")
-        profile.address = request.POST.get("address")
-        profile.city = request.POST.get("city")
-        profile.state = request.POST.get("state")
-        profile.pincode = request.POST.get("pincode")
-        profile.pan_number = request.POST.get("pan")
-        profile.aadhaar = request.POST.get("aadhaar")
-        profile.reason_for_loan = request.POST.get("reason_for_loan")
-        profile.monthly_salary = request.POST.get("monthlySalary")
-
-        profile.save()
-
-        request.user.role = "applicant"
-        request.user.is_profile_complete = True
-        request.user.save()
-
-        messages.success(request, "✅ Applicant profile completed successfully")
-        return redirect("dashboard_applicant")
-
-    return render(request, "complete_profile_applicant.html")
-
-
-# -------------------- Complete Profile Lender --------------------
-@login_required
-def complete_profile_lender(request):
-    if request.method == "POST":
-        profile = request.user.lenderprofile
-
-        profile.first_name = request.POST.get("firstName")
-        profile.last_name = request.POST.get("lastName")
-        profile.mobile = request.POST.get("mobile")
-        profile.email = request.POST.get("email")
-        profile.address = request.POST.get("address")
-        profile.city = request.POST.get("city")
-        profile.state = request.POST.get("state")
-        profile.pincode = request.POST.get("pincode")
-        profile.business_name = request.POST.get("businessName")
-        profile.dsa_code = request.POST.get("dsaCode")
-        profile.gst_no = request.POST.get("gstNo")
-
-        profile.save()
-
-        request.user.role = "lender"
-        request.user.is_profile_complete = True
-        request.user.save()
-
-        messages.success(request, "✅ Lender profile completed successfully")
-        return redirect("dashboard_lender")
-
-    return render(request, "complete_profile_lender.html")
-
-
-# -------------------- Complete Profile Admin --------------------
-@login_required
-def complete_profile_admin(request):
-    if request.method == "POST":
-        user = request.user
-        user.first_name = request.POST.get("first_name")
-        user.last_name = request.POST.get("last_name")
-        user.email = request.POST.get("email")
-        user.mobile = request.POST.get("mobile")
-        user.role = "admin"
-        user.is_staff = True
-        user.is_superuser = True
-        user.is_profile_complete = True
-        user.save()
-
-        messages.success(request, "✅ Admin profile completed successfully")
-        return redirect("dashboard_admin")
-
-    return render(request, "complete_profile_admin.html")
-
-
-# -------------------- Admin Dashboard --------------------
-@login_required
-def dashboard_admin(request):
-    if request.user.role != "admin":
-        messages.error(request, "Access denied. Admins only.")
-        return redirect("home")
-
-    applicants = ApplicantProfile.objects.all()
-    lenders = LenderProfile.objects.all()
-    payments = Payment.objects.all()
-    loans = LoanRequest.objects.all()
-
-    return render(request, "admin_dashboard.html", {
-        "applicants": applicants,
-        "lenders": lenders,
-        "payments": payments,
-        "loans": loans,
-    })

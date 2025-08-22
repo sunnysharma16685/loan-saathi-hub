@@ -1,37 +1,50 @@
 from django.contrib import admin
-from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
-from .models import User, UserProfile, AgentProfile, LoanRequest, Payment
+from .models import (
+    User,
+    Profile,
+    ApplicantDetails,
+    LenderDetails,
+    LoanRequest,
+    Payment,
+)
 
 
-class CustomUserAdmin(BaseUserAdmin):
-    # username ke jagah email/mobile ka use
-    ordering = ("email",)
-    list_display = ("email", "mobile", "role", "is_active")
-    list_filter = ("role", "is_active", "is_staff")
+# ------------------ Custom Admin Classes ------------------
 
-    # jo fields admin panel me dikhengi (update ke liye)
-    fieldsets = (
-        (None, {"fields": ("email", "mobile", "password")}),
-        ("Permissions", {"fields": ("is_active", "is_staff", "is_superuser", "groups", "user_permissions")}),
-        ("Important dates", {"fields": ("last_login", "date_joined")}),
-        ("Role", {"fields": ("role",)}),
-    )
-
-    # user add karte waqt admin panel me jo fields dikhengi
-    add_fieldsets = (
-        (None, {
-            "classes": ("wide",),
-            "fields": ("email", "mobile", "role", "password1", "password2"),
-        }),
-    )
-
-    search_fields = ("email", "mobile")
+@admin.register(User)
+class UserAdmin(admin.ModelAdmin):
+    list_display = ("user_id", "email", "role", "created_at")
+    list_filter = ("role",)
+    search_fields = ("email", "user_id")
 
 
-# models ko register karo
-admin.site.register(User, CustomUserAdmin)
-admin.site.register(UserProfile)
-admin.site.register(AgentProfile)
-admin.site.register(LoanRequest)
-admin.site.register(Payment)
+@admin.register(Profile)
+class ProfileAdmin(admin.ModelAdmin):
+    list_display = ("user", "full_name", "mobile", "pan_number", "city", "state")
+    search_fields = ("full_name", "mobile", "pan_number")
 
+
+@admin.register(ApplicantDetails)
+class ApplicantDetailsAdmin(admin.ModelAdmin):
+    list_display = ("user", "loan_purpose", "employment_type", "monthly_income", "cibil_score")
+    search_fields = ("user__email", "loan_purpose")
+
+
+@admin.register(LenderDetails)
+class LenderDetailsAdmin(admin.ModelAdmin):
+    list_display = ("user", "business_type", "gst_number", "turnover", "dsa_code")
+    search_fields = ("user__email", "business_type", "gst_number")
+
+
+@admin.register(LoanRequest)
+class LoanRequestAdmin(admin.ModelAdmin):
+    list_display = ("loan_id", "applicant", "loan_type", "amount_requested", "status", "created_at")
+    search_fields = ("loan_id", "applicant__email")
+    list_filter = ("status", "loan_type")
+
+
+@admin.register(Payment)
+class PaymentAdmin(admin.ModelAdmin):
+    list_display = ("loan_request", "lender", "amount", "status", "created_at")
+    search_fields = ("loan_request__loan_id", "lender__email")
+    list_filter = ("status", "payment_method")

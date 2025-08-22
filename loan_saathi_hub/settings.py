@@ -1,38 +1,35 @@
-from pathlib import Path
 import os
+from pathlib import Path
 from dotenv import load_dotenv
-import dj_database_url
 
-# ------------------------
+# Load environment variables
+load_dotenv()
+
+# -----------------------------
 # BASE DIR
-# ------------------------
+# -----------------------------
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# ------------------------
-# ENV LOAD
-# ------------------------
-load_dotenv(BASE_DIR / ".env")
-
-# ------------------------
+# -----------------------------
 # SECURITY
-# ------------------------
-SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY", "dev-secret-key-change-me")
-DEBUG = os.environ.get("DEBUG", "1") == "1"
+# -----------------------------
+SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "change-me-in-prod")
+DEBUG = os.getenv("DEBUG", "True").lower() == "true"
+ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "127.0.0.1,localhost").split(",")
 
-ALLOWED_HOSTS = os.environ.get(
-    "ALLOWED_HOSTS",
-    "localhost,127.0.0.1,0.0.0.0,loan-saathi-hub.onrender.com,www.loansaathihub.in,loansaathihub.in"
-).split(",")
+# -----------------------------
+# CSRF (local dev helpers)
+# -----------------------------
+CSRF_TRUSTED_ORIGINS = list(set((
+    globals().get("CSRF_TRUSTED_ORIGINS", [])
+) + [
+    "http://127.0.0.1:8000",
+    "http://localhost:8000",
+]))
 
-CSRF_TRUSTED_ORIGINS = [
-    "https://loan-saathi-hub.onrender.com",
-    "https://www.loansaathihub.in",
-    "https://loansaathihub.in",
-]
-
-# ------------------------
+# -----------------------------
 # APPS
-# ------------------------
+# -----------------------------
 INSTALLED_APPS = [
     "django.contrib.admin",
     "django.contrib.auth",
@@ -40,65 +37,49 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    "main",  # core app
+    "main",   # your app
 ]
 
-# ------------------------
+# If you truly still use a custom Django user model, keep this.
+# (Safe to keep during migration; you can remove later if unused.)
+AUTH_USER_MODEL = "main.User"
+
+# -----------------------------
+# SUPABASE CONFIG
+# -----------------------------
+SUPABASE_URL = os.getenv("SUPABASE_URL", "https://your-project.supabase.co")
+SUPABASE_ANON_KEY = os.getenv("SUPABASE_ANON_KEY", "")
+SUPABASE_SERVICE_ROLE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY", "")  # server-only
+SUPABASE_JWT_SECRET = os.getenv("SUPABASE_JWT_SECRET", "")
+
+SUPABASE_ACCESS_COOKIE = "sb-access-token"
+SUPABASE_REFRESH_COOKIE = "sb-refresh-token"
+
+# -----------------------------
 # MIDDLEWARE
-# ------------------------
+# -----------------------------
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
-    "whitenoise.middleware.WhiteNoiseMiddleware",  # static files
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+
+    # ✅ Supabase JWT middleware (correct path; keep at end)
+    "main.supabase_auth.SupabaseAuthMiddleware",
 ]
 
-# ------------------------
-# URLS & WSGI
-# ------------------------
 ROOT_URLCONF = "loan_saathi_hub.urls"
-WSGI_APPLICATION = "loan_saathi_hub.wsgi.application"
 
-# ------------------------
-# DATABASE
-# ------------------------
-DATABASE_URL = os.getenv("DATABASE_URL")
-
-if DATABASE_URL and DATABASE_URL.startswith(("postgres://", "postgresql://")):
-    DATABASES = {
-        "default": dj_database_url.parse(
-            DATABASE_URL, conn_max_age=600, ssl_require=True
-        )
-    }
-else:
-    DATABASES = {
-        "default": {
-            "ENGINE": "django.db.backends.sqlite3",
-            "NAME": BASE_DIR / "db.sqlite3",
-        }
-    }
-
-# ------------------------
-# AUTH
-# ------------------------
-AUTH_USER_MODEL = "main.User"
-
-AUTHENTICATION_BACKENDS = [
-    "main.auth_backends.EmailOrMobileBackend",  # ✅ custom backend
-    "django.contrib.auth.backends.ModelBackend",
-]
-
-# ------------------------
+# -----------------------------
 # TEMPLATES
-# ------------------------
+# -----------------------------
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [BASE_DIR / "templates"],
+        "DIRS": [BASE_DIR / "templates"],  # custom templates dir
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
@@ -111,9 +92,26 @@ TEMPLATES = [
     },
 ]
 
-# ------------------------
-# PASSWORD VALIDATORS
-# ------------------------
+WSGI_APPLICATION = "loan_saathi_hub.wsgi.application"
+ASGI_APPLICATION = "loan_saathi_hub.asgi.application"
+
+# -----------------------------
+# DATABASE
+# -----------------------------
+DATABASES = {
+    "default": {
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": os.getenv("DB_NAME", "postgres"),
+        "USER": os.getenv("DB_USER", "postgres"),
+        "PASSWORD": os.getenv("DB_PASSWORD", ""),
+        "HOST": os.getenv("DB_HOST", "aws-0-ap-southeast-1.pooler.supabase.com"),
+        "PORT": os.getenv("DB_PORT", "6543"),  # use 5432 if direct connection
+    }
+}
+
+# -----------------------------
+# PASSWORDS / AUTH
+# -----------------------------
 AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
     {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator"},
@@ -121,59 +119,32 @@ AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
 ]
 
-# ------------------------
-# STATIC & MEDIA
-# ------------------------
+# -----------------------------
+# LANGUAGE & TIMEZONE
+# -----------------------------
+LANGUAGE_CODE = "en-us"
+TIME_ZONE = "Asia/Kolkata"
+USE_I18N = True
+USE_TZ = True
+
+# -----------------------------
+# STATIC / MEDIA
+# -----------------------------
 STATIC_URL = "/static/"
-STATIC_ROOT = BASE_DIR / "staticfiles"
 STATICFILES_DIRS = [BASE_DIR / "static"] if (BASE_DIR / "static").exists() else []
-
-STORAGES = {
-    "staticfiles": {
-        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
-    }
-}
-
-WHITENOISE_KEEP_ONLY_HASHED_FILES = True
 
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
 
-# ------------------------
-# LANGUAGE & TIMEZONE
-# ------------------------
-LANGUAGE_CODE = "en-us"
-TIME_ZONE = "UTC"
-USE_I18N = True
-USE_TZ = True
-
-# ------------------------
-# DEFAULT PRIMARY KEY
-# ------------------------
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-# ------------------------
-# SECURITY (Production)
-# ------------------------
-SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
-SESSION_COOKIE_SECURE = True
-CSRF_COOKIE_SECURE = True
-SECURE_SSL_REDIRECT = True
-
-if DEBUG:
-    SECURE_SSL_REDIRECT = False
-    SESSION_COOKIE_SECURE = False
-    CSRF_COOKIE_SECURE = False
-
-# ------------------------
-# AUTH REDIRECT SETTINGS
-# ------------------------
-LOGIN_URL = '/login/'
-LOGIN_REDIRECT_URL = '/dashboard/user/'
-LOGOUT_REDIRECT_URL = '/'
-
-# ------------------------
-# SUPABASE CONFIG
-# ------------------------
-SUPABASE_URL = os.getenv("SUPABASE_URL")
-SUPABASE_KEY = os.getenv("SUPABASE_KEY")
+# -----------------------------
+# EMAIL (use env; don't hardcode secrets)
+# -----------------------------
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+EMAIL_HOST = os.getenv("EMAIL_HOST", "smtp.gmail.com")
+EMAIL_PORT = int(os.getenv("EMAIL_PORT", "587"))
+EMAIL_USE_TLS = os.getenv("EMAIL_USE_TLS", "True").lower() == "true"
+EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER", "")
+EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD", "")
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER

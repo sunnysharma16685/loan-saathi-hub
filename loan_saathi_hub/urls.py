@@ -19,10 +19,9 @@ urlpatterns = [
     path("dashboard/lender/", views.dashboard_lender, name="dashboard_lender"),
     path("dashboard/admin/", views.dashboard_admin, name="dashboard_admin"),
 
-    # -------------------- Complete Profiles --------------------
-    path("complete-profile/applicant/", views.complete_profile_applicant, name="complete_profile_applicant"),
-    path("complete-profile/lender/", views.complete_profile_lender, name="complete_profile_lender"),
-    
+    # -------------------- Profile (Unified) --------------------
+    path("profile/<uuid:user_id>/", views.profile_form, name="profile_form"),
+
     # -------------------- Loan + Payment --------------------
     path("loan-request/", views.loan_request, name="loan_request"),
     path("payment/<uuid:loan_id>/", views.payment_page, name="payment_page"),

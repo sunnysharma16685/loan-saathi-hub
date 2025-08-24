@@ -25,7 +25,7 @@
 
 <header>
     <div>Loan Saathi Hub</div>
-    <a href="{% url 'dashboard_agent' %}">Back to Dashboard</a>
+    <a href="{% url 'dashboard_lender' %}">Back to Dashboard</a>
 </header>
 
 <div class="container">
@@ -38,6 +38,8 @@
         {% endfor %}
     {% endif %}
 
+    <!-- ✅ Loan ID Information -->
+    <p>Accessing profile for <strong>Loan ID: {{ loan_id }}</strong></p>
     <p>Company: <strong>S M Enterprises</strong></p>
     <p>Please select a payment method to proceed:</p>
 
@@ -57,8 +59,9 @@
             <label for="netbanking">Net Banking</label>
         </div>
 
+        <!-- ✅ Auto-fill Amount -->
         <label for="amount">Amount (₹)</label>
-        <input type="number" name="amount" min="1" required>
+        <input type="number" name="amount" min="1" value="500" required>
 
         <button type="submit">Confirm Payment</button>
     </form>
@@ -74,6 +77,15 @@
     <a href="#">Contacts</a> |
     <a href="#">Feedback Stars</a>
 </footer>
+
+<!-- ✅ Auto redirect after success -->
+{% if messages %}
+<script>
+    setTimeout(function() {
+        window.location.href = "{% url 'dashboard_lender' %}";
+    }, 2000); // 2 sec after showing success msg
+</script>
+{% endif %}
 
 </body>
 </html>

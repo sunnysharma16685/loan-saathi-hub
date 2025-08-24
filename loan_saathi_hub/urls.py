@@ -25,7 +25,4 @@ urlpatterns = [
     # -------------------- Loan + Payment --------------------
     path("loan-request/", views.loan_request, name="loan_request"),
     path("payment/<uuid:loan_id>/", views.payment_page, name="payment_page"),
-
-    # -------------------- Utility --------------------
-    path("send-test-email/", views.send_test_email, name="send_test_email"),
 ]

@@ -364,8 +364,7 @@
         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
       <div class="modal-body">
-        <form method="POST" action="{% url 'complete_form' %}">
-          {% csrf_token %}
+        {% csrf_token %}
           
           <!-- Email -->
           <div class="mb-3">

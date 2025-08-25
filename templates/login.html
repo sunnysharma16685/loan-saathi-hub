@@ -18,7 +18,10 @@
         button:hover { background: #000; }
         .links { text-align: center; margin-top: 10px; }
         .links a { color: #212529; text-decoration: none; margin: 0 5px; font-size: 14px; }
-        .msg { text-align: center; margin-top: 10px; color: red; }
+        .messages { margin-top: 15px; text-align: center; padding: 10px; border-radius: 4px; }
+        .messages li { list-style: none; margin: 5px 0; }
+        .messages .error { color: red; }
+        .messages .success { color: green; }
         footer { text-align: center; font-size: 14px; margin-top: 40px; }
         footer a { color: #fff; margin: 0 5px; text-decoration: none; }
     </style>
@@ -38,30 +41,37 @@
 <form method="POST">
     {% csrf_token %}
 
+    <!-- Role -->
     <label for="role">Login as</label>
     <select name="role" id="role" required>
-        <option value="Applicant" {% if role == "Applicant" %}selected{% endif %}>Applicant</option>
-        <option value="Lender" {% if role == "Lender" %}selected{% endif %}>Lender</option>
+        <option value="">-- Select Role --</option>
+        <option value="applicant" {% if role == "applicant" %}selected{% endif %}>Applicant</option>
+        <option value="lender" {% if role == "lender" %}selected{% endif %}>Lender</option>
     </select>
 
+    <!-- Email -->
     <label for="email">Email</label>
     <input type="email" name="email" id="email" required>
 
+    <!-- Password -->
     <label for="password">Password</label>
     <input type="password" name="password" id="password" required>
 
+    <!-- Submit -->
     <button type="submit">Login</button>
 
+    <!-- Messages -->
     {% if messages %}
-        <div class="msg">
+        <ul class="messages">
             {% for message in messages %}
-                {{ message }}
+                <li class="{{ message.tags }}">{{ message }}</li>
             {% endfor %}
-        </div>
+        </ul>
     {% endif %}
 
     <div class="links">
-        <a href="{% url 'forgot_password' %}">Forgot Password?</a>
+        <a href="{% url 'forgot_password' %}">Forgot Password?</a> |
+        <a href="{% url 'register' %}">New User? Register</a>
     </div>
 </form>
 

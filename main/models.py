@@ -1,4 +1,5 @@
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin, BaseUserManager
+from django.core.exceptions import ValidationError
 from django.db import models
 import uuid
 from django.utils.timezone import now
@@ -22,11 +23,12 @@ class UserManager(BaseUserManager):
         """Create and save a superuser (Django admin)."""
         extra_fields.setdefault("is_staff", True)
         extra_fields.setdefault("is_superuser", True)
+        extra_fields.setdefault("role", "admin")   # ensure admin role
         return self.create_user(email, password, **extra_fields)
 
 
 # ---------------------------
-# CUSTOM USER MODEL (Applicants + Lenders)
+# CUSTOM USER MODEL
 # ---------------------------
 class User(AbstractBaseUser, PermissionsMixin):
     ROLE_CHOICES = [
@@ -36,7 +38,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     ]
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    user_id = models.CharField(max_length=20, unique=True, editable=False)  # LSHA0001 / LSHL0001
+    user_id = models.CharField(max_length=20, unique=True, editable=False)  # LSHA0001 / LSHL0001 / LSHAD0001
     email = models.EmailField(unique=True)
     role = models.CharField(max_length=20, choices=ROLE_CHOICES)
     created_at = models.DateTimeField(default=now)
@@ -46,9 +48,33 @@ class User(AbstractBaseUser, PermissionsMixin):
     is_staff = models.BooleanField(default=False)
 
     USERNAME_FIELD = "email"
-    REQUIRED_FIELDS: list[str] = []   # ⚡ Fixed REQUIRED_FIELDS error
+    REQUIRED_FIELDS: list[str] = []
 
     objects = UserManager()
+
+    def save(self, *args, **kwargs):
+        """Auto-generate user_id based on role."""
+        if not self.user_id:
+            if self.role == "applicant":
+                prefix = "LSHA"
+            elif self.role == "lender":
+                prefix = "LSHL"
+            else:  # admin
+                prefix = "LSHAD"
+
+            last_user = User.objects.filter(role=self.role).order_by("-created_at").first()
+            if last_user and last_user.user_id:
+                try:
+                    last_number = int(last_user.user_id[-4:])
+                except ValueError:
+                    last_number = 0
+                new_number = str(last_number + 1).zfill(4)
+            else:
+                new_number = "0001"
+
+            self.user_id = f"{prefix}{new_number}"
+
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return f"{self.user_id} - {self.email} ({self.role})"
@@ -138,6 +164,10 @@ class LoanRequest(models.Model):
     status = models.CharField(max_length=20, default="pending")
     created_at = models.DateTimeField(default=now)
 
+    def clean(self):
+        if self.applicant.role != "applicant":
+            raise ValidationError("Only Applicant users can create Loan Requests.")
+
     def __str__(self):
         return f"{self.loan_id} - {self.applicant.email}"
 
@@ -153,6 +183,10 @@ class Payment(models.Model):
     amount = models.DecimalField(max_digits=12, decimal_places=2)
     status = models.CharField(max_length=20, default="pending")
     created_at = models.DateTimeField(default=now)
+
+    def clean(self):
+        if self.lender.role != "lender":
+            raise ValidationError("Only Lender users can make Payments.")
 
     def __str__(self):
         return f"Payment {self.id} - {self.amount} ({self.status})"

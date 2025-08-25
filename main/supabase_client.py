@@ -10,28 +10,29 @@ load_dotenv()
 # Supabase Config
 # ------------------------
 SUPABASE_URL = os.getenv("SUPABASE_URL", settings.SUPABASE_URL)
-SUPABASE_KEY = os.getenv("SUPABASE_KEY", settings.SUPABASE_ANON_KEY)
+SUPABASE_ANON_KEY = os.getenv("SUPABASE_ANON_KEY", settings.SUPABASE_ANON_KEY)
+SUPABASE_SERVICE_ROLE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY", settings.SUPABASE_SERVICE_ROLE_KEY)
 
-# Default client (anon)
-supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
-
+# Default clients
+supabase: Client = create_client(SUPABASE_URL, SUPABASE_ANON_KEY)          # anon
+supabase_admin: Client = create_client(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)  # service role
 
 # ------------------------
 # CLIENT HELPERS
 # ------------------------
 def _make_client(key: str) -> Client:
     """Return a Supabase client with a specific key"""
-    return create_client(settings.SUPABASE_URL, key)
+    return create_client(SUPABASE_URL, key)
 
 
 def supabase_public() -> Client:
-    """Public (anon) client"""
-    return _make_client(settings.SUPABASE_ANON_KEY)
+    """Anon (public) client"""
+    return _make_client(SUPABASE_ANON_KEY)
 
 
-def supabase_admin() -> Client:
+def supabase_admin_client() -> Client:
     """Admin client – full access, use only server-side"""
-    return _make_client(settings.SUPABASE_SERVICE_ROLE_KEY)
+    return supabase_admin
 
 
 def supabase_as_user(access_token: str, refresh_token: str | None = None) -> Client:
@@ -45,7 +46,7 @@ def supabase_as_user(access_token: str, refresh_token: str | None = None) -> Cli
 # SYNC / UPSERT HELPERS
 # ------------------------
 def create_user_in_supabase(user_id, auth_user_id, email, role):
-    """Insert new user into Supabase `main_user` table"""
+    """Insert new user into Supabase `main_user` table using ADMIN client"""
     try:
         data = {
             "id": str(user_id),
@@ -53,7 +54,7 @@ def create_user_in_supabase(user_id, auth_user_id, email, role):
             "email": email,
             "role": role,
         }
-        res = supabase.table("main_user").insert(data).execute()
+        res = supabase_admin.table("main_user").insert(data).execute()
         print("✅ Supabase user created:", res)
         return res
     except Exception as e:
@@ -64,7 +65,7 @@ def create_user_in_supabase(user_id, auth_user_id, email, role):
 def upsert_profile_in_supabase(profile_data: dict):
     """Upsert profile into Supabase `main_profile`"""
     try:
-        res = supabase.table("main_profile").upsert(profile_data).execute()
+        res = supabase_admin.table("main_profile").upsert(profile_data).execute()
         print("✅ Supabase profile upsert:", res)
         return res
     except Exception as e:
@@ -75,7 +76,7 @@ def upsert_profile_in_supabase(profile_data: dict):
 def sync_loan_request_to_supabase(loan_data: dict):
     """Sync loan request into Supabase `main_loanrequest`"""
     try:
-        res = supabase.table("main_loanrequest").insert({
+        res = supabase_admin.table("main_loanrequest").insert({
             "loan_id": loan_data.get("loan_id"),
             "applicant_id": str(loan_data.get("applicant").id),
             "loan_type": loan_data.get("loan_type"),
@@ -94,7 +95,7 @@ def sync_loan_request_to_supabase(loan_data: dict):
 def sync_payment_to_supabase(payment_data: dict):
     """Sync payment into Supabase `main_payment`"""
     try:
-        res = supabase.table("main_payment").insert({
+        res = supabase_admin.table("main_payment").insert({
             "lender_id": str(payment_data.get("lender").id),
             "loan_request_id": str(payment_data.get("loan_request").id),
             "payment_method": payment_data.get("payment_method"),

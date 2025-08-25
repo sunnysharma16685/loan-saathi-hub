@@ -11,13 +11,15 @@
         header { display: flex; justify-content: space-between; align-items: center; }
         header a { color: #fff; text-decoration: none; margin-left: 15px; font-weight: 600; }
         h1 { margin: 20px; font-size: 24px; color: #333; text-align: center; }
-        form { max-width: 400px; margin: 20px auto; background: #fff; padding: 25px; border-radius: 6px; box-shadow: 0 0 8px rgba(0,0,0,0.1); }
+        form { max-width: 420px; margin: 20px auto; background: #fff; padding: 25px; border-radius: 6px; box-shadow: 0 0 8px rgba(0,0,0,0.1); }
         label { display: block; margin: 12px 0 6px; font-weight: 600; color: #333; }
         input, select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; }
-        button { background: #212529; color: #fff; border: none; padding: 10px 15px; border-radius: 4px; cursor: pointer; margin-top: 15px; width: 100%; }
+        button { background: #212529; color: #fff; border: none; padding: 10px 15px; border-radius: 4px; cursor: pointer; margin-top: 15px; width: 100%; font-weight: 600; }
         button:hover { background: #000; }
-        .msg { text-align: center; margin-top: 10px; color: red; }
-        footer { text-align: center; font-size: 14px; }
+        .messages { margin: 15px auto; max-width: 420px; }
+        .messages .success { color: green; text-align: center; font-weight: 600; }
+        .messages .error { color: red; text-align: center; font-weight: 600; }
+        footer { text-align: center; font-size: 14px; margin-top: 30px; }
         footer a { color: #fff; margin: 0 5px; text-decoration: none; }
     </style>
 </head>
@@ -33,13 +35,22 @@
 
 <h1>Create Your Account</h1>
 
+<!-- Django messages -->
+<div class="messages">
+    {% if messages %}
+        {% for message in messages %}
+            <p class="{% if message.tags %}{{ message.tags }}{% endif %}">{{ message }}</p>
+        {% endfor %}
+    {% endif %}
+</div>
+
 <form method="POST">
     {% csrf_token %}
     
     <label for="role">Register as</label>
     <select name="role" id="role" required>
-        <option value="Applicant" {% if role == "Applicant" %}selected{% endif %}>Applicant</option>
-        <option value="Lender" {% if role == "Lender" %}selected{% endif %}>Lender</option>
+        <option value="applicant" {% if role == "applicant" %}selected{% endif %}>Applicant</option>
+        <option value="lender" {% if role == "lender" %}selected{% endif %}>Lender</option>
     </select>
 
     <label for="email">Email</label>
@@ -48,15 +59,10 @@
     <label for="password">Password</label>
     <input type="password" name="password" id="password" required>
 
-    <button type="submit">Register</button>
+    <label for="confirm_password">Confirm Password</label>
+    <input type="password" name="confirm_password" id="confirm_password" required>
 
-    {% if messages %}
-        <div class="msg">
-            {% for message in messages %}
-                {{ message }}
-            {% endfor %}
-        </div>
-    {% endif %}
+    <button type="submit">Register</button>
 </form>
 
 <footer>
@@ -67,6 +73,18 @@
     <a href="#">FAQ</a> |
     <a href="#">Support</a>
 </footer>
+
+<!-- Frontend confirm password check -->
+    <script>
+    document.querySelector("form").addEventListener("submit", function(e) {
+        let pass = document.getElementById("password").value;
+        let confirm = document.getElementById("confirm_password").value;
+        if (pass !== confirm) {
+            e.preventDefault();
+            alert("Passwords do not match!");
+        }
+    });
+    </script>
 
 </body>
 </html>

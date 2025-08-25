@@ -13,22 +13,19 @@ from django.contrib.auth.forms import SetPasswordForm
 import uuid
 
 from .models import User, Profile, ApplicantDetails, LenderDetails, LoanRequest, Payment
-
 from main.supabase_client import (
-    supabase,
-    supabase_admin,
     create_user_in_supabase,
     upsert_profile_in_supabase,
     sync_loan_request_to_supabase,
     sync_payment_to_supabase,
 )
 
-# -------------------- Home / Index --------------------
+# -------------------- Home --------------------
 def home(request):
     return render(request, "index.html")
 
 
-# -------------------- Helper: profile complete --------------------
+# -------------------- Helper: Profile Check --------------------
 def is_profile_complete(user):
     if not Profile.objects.filter(user=user).exists():
         return False
@@ -40,33 +37,37 @@ def is_profile_complete(user):
 
 
 # -------------------- Register --------------------
+# -------------------- Register --------------------
 def register_view(request):
     role = (request.GET.get("role") or "").lower()
     if request.method == "POST":
         email = (request.POST.get("email") or "").strip().lower()
         password = request.POST.get("password") or ""
-        form_role = (request.POST.get("role") or role or "").lower()
+        confirm_password = request.POST.get("confirm_password") or ""
+        form_role = (request.POST.get("role") or role).lower()
 
+        # Role validation
         if form_role not in ("applicant", "lender"):
             messages.error(request, "Please select Applicant or Lender.")
             return redirect(f"/register/?role={role or ''}")
 
+        # Email + password check
         if not email or not password:
             messages.error(request, "Email and password are required.")
             return redirect(f"/register/?role={form_role}")
 
+        # Password confirmation check
+        if password != confirm_password:
+            messages.error(request, "Passwords do not match.")
+            return redirect(f"/register/?role={form_role}")
+
+        # Duplicate email check
         if User.objects.filter(email=email).exists():
             messages.error(request, "Email already registered.")
             return redirect(f"/register/?role={form_role}")
 
         try:
-            auth_res = supabase.auth.sign_up({"email": email, "password": password})
-            if not getattr(auth_res, "user", None):
-                messages.error(request, "Supabase signup failed.")
-                return redirect(f"/register/?role={form_role}")
-
-            auth_user_id = str(auth_res.user.id)
-
+            # --- Step 1: Local User Create ---
             prefix = "LSHA" if form_role == "applicant" else "LSHL"
             display_user_id = f"{prefix}{get_random_string(4, allowed_chars='0123456789')}"
             local_uuid = uuid.uuid4()
@@ -79,8 +80,13 @@ def register_view(request):
             user.set_password(password)
             user.save()
 
-            create_user_in_supabase(local_uuid, auth_user_id, email, form_role)
+            # --- Step 2: Insert into Supabase Users Table ---
+            try:
+                create_user_in_supabase(local_uuid, None, email, form_role)
+            except Exception as se:
+                print("❌ Supabase users insert failed:", se)
 
+            # --- Step 3: Auto Login ---
             auth_user = authenticate(request, username=email, password=password)
             if auth_user:
                 login(request, auth_user)
@@ -124,7 +130,7 @@ def logout_view(request):
     return redirect("/")
 
 
-# -------------------- Unified Profile Form --------------------
+# -------------------- Profile Form --------------------
 @login_required
 def profile_form(request, user_id):
     user = get_object_or_404(User, id=user_id)
@@ -136,7 +142,7 @@ def profile_form(request, user_id):
     profile, _ = Profile.objects.get_or_create(user=user)
 
     if request.method == "POST":
-        # -------- Basic Profile --------
+        # Basic Profile
         profile.full_name = request.POST.get("fullName")
         profile.mobile = request.POST.get("mobile")
         profile.gender = request.POST.get("gender")
@@ -149,7 +155,7 @@ def profile_form(request, user_id):
         profile.aadhar_number = request.POST.get("aadharNumber")
         profile.save()
 
-        # -------- Applicant Fields --------
+        # Applicant Fields
         if user.role == "applicant":
             details, _ = ApplicantDetails.objects.get_or_create(user=user)
             details.cibil_score = request.POST.get("cibilScore")
@@ -177,7 +183,7 @@ def profile_form(request, user_id):
             messages.success(request, "✅ Applicant profile completed successfully")
             return redirect("dashboard_applicant")
 
-        # -------- Lender Fields --------
+        # Lender Fields
         elif user.role == "lender":
             details, _ = LenderDetails.objects.get_or_create(user=user)
             details.lender_type = request.POST.get("lenderType")
@@ -209,7 +215,7 @@ def dashboard_admin(request):
     return render(request, "dashboard_admin.html", context)
 
 
-# -------------------- Dashboards --------------------
+# -------------------- Applicant & Lender Dashboards --------------------
 @login_required
 def dashboard_applicant(request):
     loans = LoanRequest.objects.filter(applicant=request.user)
@@ -225,8 +231,6 @@ def dashboard_lender(request):
 # -------------------- Dashboard Router --------------------
 @login_required
 def dashboard_router(request):
-    if not request.user.is_authenticated:
-        return redirect("login")
     role = getattr(request.user, "role", "applicant")
     if role == "lender":
         return redirect("dashboard_lender")
@@ -279,17 +283,16 @@ def reset_password_view(request, uidb64, token):
 @login_required
 def loan_request(request):
     if request.method == "POST":
-        loan_data = {
-            "loan_type": request.POST.get("loan_type"),
-            "amount_requested": request.POST.get("amount_requested"),
-            "duration_months": request.POST.get("duration_months"),
-            "interest_rate": request.POST.get("interest_rate"),
-            "remarks": request.POST.get("remarks"),
-            "loan_id": "LSH" + get_random_string(4, allowed_chars="0123456789"),
-            "applicant": request.user,
-        }
-        LoanRequest.objects.create(**loan_data)
-        sync_loan_request_to_supabase(loan_data)
+        loan = LoanRequest.objects.create(
+            loan_type=request.POST.get("loan_type"),
+            amount_requested=request.POST.get("amount_requested"),
+            duration_months=request.POST.get("duration_months"),
+            interest_rate=request.POST.get("interest_rate"),
+            remarks=request.POST.get("remarks"),
+            loan_id="LSH" + get_random_string(4, allowed_chars="0123456789"),
+            applicant=request.user,
+        )
+        sync_loan_request_to_supabase(loan)
         return redirect("dashboard_applicant")
 
     return render(request, "loan_request.html")
@@ -300,15 +303,14 @@ def loan_request(request):
 def payment_page(request, loan_id):
     loan = get_object_or_404(LoanRequest, id=loan_id)
     if request.method == "POST":
-        payment_data = {
-            "lender": request.user,
-            "loan_request": loan,
-            "payment_method": request.POST.get("payment_method"),
-            "amount": request.POST.get("amount"),
-            "status": "done",
-        }
-        Payment.objects.create(**payment_data)
-        sync_payment_to_supabase(payment_data)
+        payment = Payment.objects.create(
+            lender=request.user,
+            loan_request=loan,
+            payment_method=request.POST.get("payment_method"),
+            amount=request.POST.get("amount"),
+            status="done",
+        )
+        sync_payment_to_supabase(payment)
         return redirect("dashboard_lender")
 
     return render(request, "payment.html", {"loan": loan})

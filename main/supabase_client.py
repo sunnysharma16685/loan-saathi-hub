@@ -62,9 +62,55 @@ def create_user_in_supabase(user_id, auth_user_id, email, role):
         return None
 
 
-def upsert_profile_in_supabase(profile_data: dict):
-    """Upsert profile into Supabase `main_profile`"""
+def upsert_profile_in_supabase(user, profile, details):
+    """
+    Upsert profile + applicant/lender details into Supabase `main_profile`
+    """
     try:
+        profile_data = {
+            "user_id": str(user.id),
+            "email": user.email,
+            "role": user.role,
+            "full_name": profile.full_name,
+            "mobile": profile.mobile,
+            "gender": profile.gender,
+            "marital_status": profile.marital_status,
+            "address": profile.address,
+            "pincode": profile.pincode,
+            "city": profile.city,
+            "state": profile.state,
+            "pan_number": profile.pan_number,
+            "aadhar_number": profile.aadhar_number,
+        }
+
+        if user.role == "applicant":
+            profile_data.update({
+                "cibil_score": details.cibil_score,
+                "company_name": details.company_name,
+                "company_type": details.company_type,
+                "designation": details.designation,
+                "itr_job": details.itr_job,
+                "current_salary": details.current_salary,
+                "other_income": details.other_income,
+                "total_emi_job": details.total_emi,
+                "business_name": details.business_name,
+                "business_type": details.business_type,
+                "business_sector": details.business_sector,
+                "turnover_3y": details.turnover_3y,
+                "turnover_1y": details.turnover_1y,
+                "total_emi_business": details.total_emi,
+                "itr_business": details.itr_business,
+            })
+
+        elif user.role == "lender":
+            profile_data.update({
+                "lender_type": details.lender_type,
+                "dsa_code": details.dsa_code,
+                "firm_name": details.firm_name,
+                "gst_number": details.gst_number,
+                "branch_name": details.branch_name,
+            })
+
         res = supabase_admin.table("main_profile").upsert(profile_data).execute()
         print("✅ Supabase profile upsert:", res)
         return res
@@ -73,18 +119,19 @@ def upsert_profile_in_supabase(profile_data: dict):
         return None
 
 
-def sync_loan_request_to_supabase(loan_data: dict):
+def sync_loan_request_to_supabase(loan):
     """Sync loan request into Supabase `main_loanrequest`"""
     try:
-        res = supabase_admin.table("main_loanrequest").insert({
-            "loan_id": loan_data.get("loan_id"),
-            "applicant_id": str(loan_data.get("applicant").id),
-            "loan_type": loan_data.get("loan_type"),
-            "amount_requested": loan_data.get("amount_requested"),
-            "duration_months": loan_data.get("duration_months"),
-            "interest_rate": loan_data.get("interest_rate"),
-            "remarks": loan_data.get("remarks"),
-        }).execute()
+        data = {
+            "loan_id": loan.loan_id,
+            "applicant_id": str(loan.applicant.id),
+            "loan_type": loan.loan_type,
+            "amount_requested": loan.amount_requested,
+            "duration_months": loan.duration_months,
+            "interest_rate": loan.interest_rate,
+            "remarks": loan.remarks,
+        }
+        res = supabase_admin.table("main_loanrequest").insert(data).execute()
         print("✅ Loan request synced:", res)
         return res
     except Exception as e:
@@ -92,16 +139,17 @@ def sync_loan_request_to_supabase(loan_data: dict):
         return None
 
 
-def sync_payment_to_supabase(payment_data: dict):
+def sync_payment_to_supabase(payment):
     """Sync payment into Supabase `main_payment`"""
     try:
-        res = supabase_admin.table("main_payment").insert({
-            "lender_id": str(payment_data.get("lender").id),
-            "loan_request_id": str(payment_data.get("loan_request").id),
-            "payment_method": payment_data.get("payment_method"),
-            "amount": payment_data.get("amount"),
-            "status": payment_data.get("status"),
-        }).execute()
+        data = {
+            "lender_id": str(payment.lender.id),
+            "loan_request_id": str(payment.loan_request.id),
+            "payment_method": payment.payment_method,
+            "amount": payment.amount,
+            "status": payment.status,
+        }
+        res = supabase_admin.table("main_payment").insert(data).execute()
         print("✅ Payment synced:", res)
         return res
     except Exception as e:

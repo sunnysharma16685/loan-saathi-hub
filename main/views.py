@@ -37,7 +37,6 @@ def is_profile_complete(user):
 
 
 # -------------------- Register --------------------
-# -------------------- Register --------------------
 def register_view(request):
     role = (request.GET.get("role") or "").lower()
     if request.method == "POST":
@@ -283,19 +282,32 @@ def reset_password_view(request, uidb64, token):
 @login_required
 def loan_request(request):
     if request.method == "POST":
+        # sirf applicant hi loan request bana sakta hai
+        if getattr(request.user, "role", "") != "applicant":
+            messages.error(request, "Only applicants can create loan requests.")
+            return redirect("dashboard_router")
+
         loan = LoanRequest.objects.create(
-            loan_type=request.POST.get("loan_type"),
-            amount_requested=request.POST.get("amount_requested"),
-            duration_months=request.POST.get("duration_months"),
-            interest_rate=request.POST.get("interest_rate"),
-            remarks=request.POST.get("remarks"),
             loan_id="LSH" + get_random_string(4, allowed_chars="0123456789"),
-            applicant=request.user,
+            applicant=request.user,                               # ✅ correct field
+            loan_type=request.POST.get("loan_type") or "",
+            amount_requested=request.POST.get("amount_requested") or 0,
+            duration_months=request.POST.get("duration_months") or 0,
+            interest_rate=request.POST.get("interest_rate") or 0,
+            reason_for_loan=request.POST.get("reason") or None,   # ✅ correct field
         )
-        sync_loan_request_to_supabase(loan)
-        return redirect("dashboard_applicant")
+
+        # (optional) Supabase sync — safe guard with try/except
+        try:
+            from main.supabase_client import sync_loan_request_to_supabase
+            sync_loan_request_to_supabase(loan)
+        except Exception as e:
+            print("Supabase sync failed:", e)
+
+        return redirect("dashboard_router")
 
     return render(request, "loan_request.html")
+
 
 
 # -------------------- Payment --------------------

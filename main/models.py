@@ -149,6 +149,7 @@ class LenderDetails(models.Model):
         return f"Lender Details for {self.user.user_id}"
 
 
+
 # -------------------------------
 # LOAN REQUESTS
 # -------------------------------
@@ -156,11 +157,21 @@ class LoanRequest(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     loan_id = models.CharField(max_length=20, unique=True)
     applicant = models.ForeignKey(User, on_delete=models.CASCADE, related_name="loan_requests")
+
     loan_type = models.CharField(max_length=100)
     amount_requested = models.DecimalField(max_digits=12, decimal_places=2)
     duration_months = models.IntegerField()
-    interest_rate = models.DecimalField(max_digits=5, decimal_places=2)
+
+    # Textbox me applicant 1% - 100% tak daale
+    interest_rate = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        help_text="Enter interest rate between 1% and 100%"
+    )
+
+    reason_for_loan = models.CharField(max_length=200, null=True, blank=True)
     remarks = models.TextField(blank=True, null=True)
+
     status = models.CharField(max_length=20, default="pending")
     created_at = models.DateTimeField(default=now)
 
@@ -168,8 +179,12 @@ class LoanRequest(models.Model):
         if self.applicant.role != "applicant":
             raise ValidationError("Only Applicant users can create Loan Requests.")
 
+        if self.interest_rate < 1 or self.interest_rate > 100:
+            raise ValidationError("Interest rate must be between 1% and 100%.")
+
     def __str__(self):
         return f"{self.loan_id} - {self.applicant.email}"
+
 
 
 # -------------------------------

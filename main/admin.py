@@ -26,21 +26,21 @@ class ProfileAdmin(admin.ModelAdmin):
 
 @admin.register(ApplicantDetails)
 class ApplicantDetailsAdmin(admin.ModelAdmin):
-    list_display = ("user", "loan_purpose", "employment_type", "monthly_income", "cibil_score")
-    search_fields = ("user__email", "loan_purpose")
+    list_display = ("user", "company_name", "business_name","employment_type", "current_salary", "cibil_score")
+    search_fields = ("user__email", "employment_type")
 
 
 @admin.register(LenderDetails)
 class LenderDetailsAdmin(admin.ModelAdmin):
-    list_display = ("user", "business_type", "gst_number", "turnover", "dsa_code")
-    search_fields = ("user__email", "business_type", "gst_number")
+    list_display = ("user", "lender_type", "bank_firm_name", "gst_number", "dsa_code")
+    search_fields = ("user__email", "lender_type", "gst_number")
 
 
 @admin.register(LoanRequest)
 class LoanRequestAdmin(admin.ModelAdmin):
     list_display = ("loan_id", "applicant", "loan_type", "amount_requested", "status", "created_at")
-    search_fields = ("loan_id", "applicant__email")
-    list_filter = ("status", "loan_type")
+    list_filter = ("status", "created_at", "loan_type")
+    search_fields = ("loan_id", "applicant__username", "applicant__email")
 
 
 @admin.register(Payment)

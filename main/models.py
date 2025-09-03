@@ -1,16 +1,14 @@
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin, BaseUserManager
-from django.core.exceptions import ValidationError
 from django.db import models
+from django.utils import timezone
+from django.conf import settings
 import uuid
-from django.utils.timezone import now
-
 
 # ---------------------------
 # USER MANAGER
 # ---------------------------
 class UserManager(BaseUserManager):
     def create_user(self, email, password=None, **extra_fields):
-        """Create and save a regular user with email + password."""
         if not email:
             raise ValueError("Users must have an email address")
         email = self.normalize_email(email)
@@ -20,10 +18,9 @@ class UserManager(BaseUserManager):
         return user
 
     def create_superuser(self, email, password=None, **extra_fields):
-        """Create and save a superuser (Django admin)."""
         extra_fields.setdefault("is_staff", True)
         extra_fields.setdefault("is_superuser", True)
-        extra_fields.setdefault("role", "admin")   # ensure admin role
+        extra_fields.setdefault("role", "admin")
         return self.create_user(email, password, **extra_fields)
 
 
@@ -41,9 +38,8 @@ class User(AbstractBaseUser, PermissionsMixin):
     user_id = models.CharField(max_length=20, unique=True, editable=False)  # LSHA0001 / LSHL0001 / LSHAD0001
     email = models.EmailField(unique=True)
     role = models.CharField(max_length=20, choices=ROLE_CHOICES)
-    created_at = models.DateTimeField(default=now)
+    created_at = models.DateTimeField(default=timezone.now)
 
-    # Django required fields
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
 
@@ -53,13 +49,12 @@ class User(AbstractBaseUser, PermissionsMixin):
     objects = UserManager()
 
     def save(self, *args, **kwargs):
-        """Auto-generate user_id based on role."""
         if not self.user_id:
             if self.role == "applicant":
                 prefix = "LSHA"
             elif self.role == "lender":
                 prefix = "LSHL"
-            else:  # admin
+            else:
                 prefix = "LSHAD"
 
             last_user = User.objects.filter(role=self.role).order_by("-created_at").first()
@@ -81,26 +76,25 @@ class User(AbstractBaseUser, PermissionsMixin):
 
 
 # ---------------------------
-# COMMON PROFILE TABLE
+# PROFILE
 # ---------------------------
 class Profile(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="profile")
 
     full_name = models.CharField(max_length=200, blank=True, null=True)
-    dob = models.DateField(blank=True, null=True)
+    mobile = models.CharField(max_length=20)
+    gender = models.CharField(max_length=20)
     marital_status = models.CharField(max_length=50, blank=True, null=True)
-    gender = models.CharField(max_length=20, blank=True, null=True)
+    address = models.TextField()
+    pincode = models.CharField(max_length=10)
+    city = models.CharField(max_length=100)
+    state = models.CharField(max_length=100)
+    pan_number = models.CharField(max_length=20, blank=True, null=True)
+    aadhar = models.CharField(max_length=20, blank=True, null=True)
+    dob = models.DateField(blank=True, null=True)
 
-    pan_number = models.CharField(max_length=20)  # Mandatory
-    aadhaar = models.CharField(max_length=20, blank=True, null=True)
-    mobile = models.CharField(max_length=20, blank=True, null=True)
-    address = models.TextField(blank=True, null=True)
-    pincode = models.CharField(max_length=10, blank=True, null=True)
-    city = models.CharField(max_length=100, blank=True, null=True)
-    state = models.CharField(max_length=100, blank=True, null=True)
-
-    created_at = models.DateTimeField(default=now)
+    created_at = models.DateTimeField(default=timezone.now)
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
@@ -114,15 +108,26 @@ class ApplicantDetails(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="applicant_details")
 
-    loan_purpose = models.TextField(blank=True, null=True)
-    employment_type = models.CharField(max_length=100, blank=True, null=True)
-    job_type = models.CharField(max_length=100, blank=True, null=True)
-    monthly_income = models.DecimalField(max_digits=12, decimal_places=2, blank=True, null=True)
-    other_income = models.DecimalField(max_digits=12, decimal_places=2, blank=True, null=True)
+    job_type = models.TextField(blank=True, null=True)
     cibil_score = models.IntegerField(blank=True, null=True)
+    employment_type = models.TextField(blank=True, null=True)
+    company_name = models.TextField(blank=True, null=True)
+    company_type = models.TextField(blank=True, null=True)
+    designation = models.TextField(blank=True, null=True)
     itr = models.TextField(blank=True, null=True)
+    current_salary = models.DecimalField(max_digits=12, decimal_places=2, blank=True, null=True)
+    other_income = models.DecimalField(max_digits=12, decimal_places=2, blank=True, null=True)
+    total_emi = models.DecimalField(max_digits=12, decimal_places=2, blank=True, null=True)
 
-    created_at = models.DateTimeField(default=now)
+    business_name = models.TextField(blank=True, null=True)
+    business_type = models.TextField(blank=True, null=True)
+    business_sector = models.TextField(blank=True, null=True)
+    total_turnover = models.DecimalField(max_digits=15, decimal_places=2, blank=True, null=True)
+    last_year_turnover = models.DecimalField(max_digits=15, decimal_places=2, blank=True, null=True)
+    business_total_emi = models.DecimalField(max_digits=12, decimal_places=2, blank=True, null=True)
+    business_itr_status = models.TextField(blank=True, null=True)
+
+    created_at = models.DateTimeField(default=timezone.now)
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
@@ -136,72 +141,86 @@ class LenderDetails(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="lender_details")
 
-    business_type = models.CharField(max_length=100, blank=True, null=True)
-    gst_number = models.CharField(max_length=50, blank=True, null=True)
-    turnover = models.DecimalField(max_digits=15, decimal_places=2, blank=True, null=True)
-    dsa_code = models.CharField(max_length=50, blank=True, null=True)
+    lender_type = models.TextField(blank=True, null=True)
+    dsa_code = models.TextField(blank=True, null=True)
+    bank_firm_name = models.TextField(blank=True, null=True)
+    gst_number = models.TextField(blank=True, null=True)
+    branch_name = models.TextField(blank=True, null=True)
     designation = models.CharField(max_length=100, blank=True, null=True)
 
-    created_at = models.DateTimeField(default=now)
+    created_at = models.DateTimeField(default=timezone.now)
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return f"Lender Details for {self.user.user_id}"
 
 
-
 # -------------------------------
-# LOAN REQUESTS
+# LOAN REQUEST
 # -------------------------------
 class LoanRequest(models.Model):
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    loan_id = models.CharField(max_length=20, unique=True)
-    applicant = models.ForeignKey(User, on_delete=models.CASCADE, related_name="loan_requests")
-
-    loan_type = models.CharField(max_length=100)
+    loan_id = models.CharField(max_length=100, unique=True)
+    applicant = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="loan_requests"
+    )
+    loan_type = models.CharField(max_length=100, blank=True, null=True)
     amount_requested = models.DecimalField(max_digits=12, decimal_places=2)
     duration_months = models.IntegerField()
-
-    # Textbox me applicant 1% - 100% tak daale
-    interest_rate = models.DecimalField(
-        max_digits=5,
-        decimal_places=2,
-        help_text="Enter interest rate between 1% and 100%"
+    interest_rate = models.DecimalField(max_digits=5, decimal_places=2)
+    reason_for_loan = models.TextField(blank=True, null=True)
+    status = models.CharField(
+        max_length=20,
+        choices=[("Pending", "Pending"), ("Approved", "Approved"), ("Rejected", "Rejected")],
+        default="Pending"
     )
-
-    reason_for_loan = models.CharField(max_length=200, null=True, blank=True)
-    remarks = models.TextField(blank=True, null=True)
-
-    status = models.CharField(max_length=20, default="pending")
-    created_at = models.DateTimeField(default=now)
-
-    def clean(self):
-        if self.applicant.role != "applicant":
-            raise ValidationError("Only Applicant users can create Loan Requests.")
-
-        if self.interest_rate < 1 or self.interest_rate > 100:
-            raise ValidationError("Interest rate must be between 1% and 100%.")
+    created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"{self.loan_id} - {self.applicant.email}"
-
+        return self.loan_id
 
 
 # -------------------------------
-# PAYMENTS
+# LENDER STATUS - Each Lender's decision
+# -------------------------------
+class LoanLenderStatus(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)  # ✅ FIX
+
+    loan = models.ForeignKey(
+        LoanRequest, on_delete=models.CASCADE, related_name="lender_statuses"
+    )
+    lender = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="lender_decisions"
+    )
+    lender_type = models.CharField(max_length=50)  # PSU / NBFC / DSA / Pvt. Firm / Limited Firm
+    firm_name = models.CharField(max_length=100, blank=True, null=True)
+    branch_name = models.CharField(max_length=100, blank=True, null=True)
+    mobile_number = models.CharField(max_length=15)
+
+    status = models.CharField(
+        max_length=50,
+        choices=[("Pending", "Pending"), ("Approved", "Approved"), ("Rejected", "Rejected")],
+        default="Pending",
+    )
+    remarks = models.TextField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ("loan", "lender")
+
+    def __str__(self):
+        return f"{self.lender} - {self.loan.loan_id} ({self.status})"
+# -------------------------------
+# PAYMENT
 # -------------------------------
 class Payment(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    lender = models.ForeignKey(User, on_delete=models.CASCADE, related_name="payments")
     loan_request = models.ForeignKey(LoanRequest, on_delete=models.CASCADE, related_name="payments")
-    payment_method = models.CharField(max_length=50)
+    lender = models.ForeignKey(User, on_delete=models.CASCADE, related_name="lender_payments")
     amount = models.DecimalField(max_digits=12, decimal_places=2)
-    status = models.CharField(max_length=20, default="pending")
-    created_at = models.DateTimeField(default=now)
-
-    def clean(self):
-        if self.lender.role != "lender":
-            raise ValidationError("Only Lender users can make Payments.")
+    status = models.CharField(max_length=20, default="Pending")
+    payment_method = models.CharField(max_length=50)
+    created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"Payment {self.id} - {self.amount} ({self.status})"
+        return f"{self.loan_request.loan_id} - {self.amount} ({self.status})"

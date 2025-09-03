@@ -6,37 +6,393 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Loan Saathi Hub</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link rel="stylesheet" href="{% static 'style.css' %}">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
+  <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Poppins', sans-serif;
+      background-color: #0d1117;
+      color: #f5f5f5;
+    }
+    .navbar {
+      background: linear-gradient(90deg, #0061ff, #00c6ff); /* Blue gradient */
+    }
+    .btn-gradient {
+      background: linear-gradient(90deg, #1e3c72, #2a5298); /* Indigo-Blue */
+      border: none;
+      color: #fff;
+      transition: 0.3s;
+    }
+    .btn-gradient:hover {
+      opacity: 0.95;
+      transform: scale(1.05);
+    }
+    .hero {
+      background: linear-gradient(135deg, rgba(0,0,0,0.85), rgba(0,0,0,0.85)), 
+                  url("{% static 'images/loan-bg.jpg' %}") no-repeat center/cover;
+      color: #fff;
+      padding: 120px 20px;
+    }
+    .hero h1 { animation: fadeInDown 1s ease; }
+    .hero p { animation: fadeInUp 1.2s ease; }
+    @keyframes fadeInDown {
+      from {opacity: 0; transform: translateY(-20px);}
+      to {opacity: 1; transform: translateY(0);}
+    }
+    @keyframes fadeInUp {
+      from {opacity: 0; transform: translateY(20px);}
+      to {opacity: 1; transform: translateY(0);}
+    }
+    .glass-card {
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: 15px;
+      padding: 25px;
+      backdrop-filter: blur(8px);
+      transition: 0.3s;
+    }
+    .glass-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0px 6px 25px rgba(0,0,0,0.4);
+    }
+    .offers .card {
+      background: rgba(255,255,255,0.1);
+      border: none;
+      border-radius: 12px;
+      color: #fff;
+      transition: 0.3s;
+    }
+    .offers .card:hover {
+      transform: scale(1.05);
+    }
+    footer {
+      background: #0a0e14;
+      border-top: 1px solid rgba(255,255,255,0.1);
+    }
+  </style>
 </head>
-<body class="bg-light">
+<body>
 
   <!-- ✅ Navbar -->
-  <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+  <nav class="navbar navbar-expand-lg navbar-dark shadow-sm">
     <div class="container">
-      <a class="navbar-brand fw-bold" href="/">Loan Saathi Hub</a>
+      <a class="navbar-brand fw-bold" href="/">💰 Loan Saathi Hub</a>
       <div class="ms-auto">
         <a href="{% url 'login' %}" class="btn btn-outline-light">Login</a>
       </div>
     </div>
   </nav>
 
-  <!-- ✅ Hero Section -->
-  <section class="text-center py-5">
+  <!-- ✅ Hero -->
+  <section class="hero text-center">
     <div class="container">
-      <h1 class="fw-bold">Welcome to Loan Saathi Hub</h1>
-      <p class="text-muted">One place for all your loan needs. Apply securely and track your application.</p>
-      <div class="mt-4">
-        <a href="{% url 'register' %}?role=applicant" class="btn btn-primary me-2">Register as Applicant</a>
-        <a href="{% url 'register' %}?role=lender" class="btn btn-primary">Register as Lender</a>
+      <h1 class="fw-bold display-4">Smart Loans, Smarter Choices</h1>
+      <p class="lead">Your all-in-one platform to compare, calculate and apply for loans.</p>
+      <div class="mt-4" data-aos="zoom-in">
+        <a href="{% url 'register' %}?role=applicant" class="btn btn-gradient btn-lg me-2">
+          <i class="bi bi-person-fill"></i> Register as Applicant
+        </a>
+        <a href="{% url 'register' %}?role=lender" class="btn btn-gradient btn-lg">
+          <i class="bi bi-bank"></i> Register as Lender
+        </a>
       </div>
     </div>
   </section>
 
+  <!-- ✅ Features -->
+  <section class="py-5">
+    <div class="container text-center">
+      <div class="row g-4">
+        <div class="col-md-4" data-aos="fade-up" data-aos-delay="100">
+          <div class="glass-card">
+            <i class="bi bi-speedometer2 fs-1 text-info"></i>
+            <h5 class="mt-3">Fast Approvals</h5>
+            <p>Get instant approvals from trusted banks & NBFCs.</p>
+          </div>
+        </div>
+        <div class="col-md-4" data-aos="fade-up" data-aos-delay="200">
+          <div class="glass-card">
+            <i class="bi bi-shield-lock fs-1 text-success"></i>
+            <h5 class="mt-3">Secure Process</h5>
+            <p>Your data is safe with bank-grade security & encryption.</p>
+          </div>
+        </div>
+        <div class="col-md-4" data-aos="fade-up" data-aos-delay="300">
+          <div class="glass-card">
+            <i class="bi bi-bar-chart-line fs-1 text-warning"></i>
+            <h5 class="mt-3">Compare Offers</h5>
+            <p>Choose the best loan offer with real-time comparison.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ✅ Calculators -->
+  <section class="py-5 bg-dark">
+    <div class="container">
+      <div class="row g-4">
+        <div class="col-md-6" data-aos="fade-right">
+          <div class="glass-card">
+            <h5><i class="bi bi-calculator"></i> EMI Calculator</h5>
+            <input type="number" id="loanAmount" class="form-control my-2" placeholder="Loan Amount">
+            <input type="number" id="interestRate" class="form-control my-2" placeholder="Interest Rate (%)">
+            <input type="number" id="loanTenure" class="form-control my-2" placeholder="Tenure (months)">
+            <button onclick="calculateEMI()" class="btn btn-gradient w-100">Calculate</button>
+            <p class="mt-3"><strong>EMI: </strong><span id="emiResult">--</span></p>
+          </div>
+        </div>
+        <div class="col-md-6" data-aos="fade-left">
+          <div class="glass-card">
+            <h5><i class="bi bi-graph-up"></i> Loan Eligibility</h5>
+            <input type="number" id="income" class="form-control my-2" placeholder="Monthly Income">
+            <input type="number" id="existingEmi" class="form-control my-2" placeholder="Existing EMI">
+            <button onclick="checkEligibility()" class="btn btn-gradient w-100">Check</button>
+            <p class="mt-3"><strong>Eligible Loan: </strong><span id="eligibilityResult">--</span></p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ✅ Loan Categories Section -->
+<section class="py-5 bg-dark">
+    <div class="container">
+      <h3 class="fw-bold text-center mb-4 text-primary">Loan Categories</h3>
+    <div class="row g-4 text-center">
+      <div class="col-md-3">
+        <div class="card h-100 shadow-sm border-0">
+          <div class="card-body">
+            <i class="fas fa-home fa-2x text-primary mb-3"></i>
+            <h6 class="fw-bold">Home Loan</h6>
+            <p class="small text-muted">Buy your dream home with affordable EMIs.</p>
+            <a href="#" class="btn btn-sm btn-outline-primary">Explore</a>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="card h-100 shadow-sm border-0">
+          <div class="card-body">
+            <i class="fas fa-user fa-2x text-success mb-3"></i>
+            <h6 class="fw-bold">Personal Loan</h6>
+            <p class="small text-muted">Quick cash for your personal needs.</p>
+            <a href="#" class="btn btn-sm btn-outline-success">Explore</a>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="card h-100 shadow-sm border-0">
+          <div class="card-body">
+            <i class="fas fa-briefcase fa-2x text-warning mb-3"></i>
+            <h6 class="fw-bold">Business Loan</h6>
+            <p class="small text-muted">Grow your business with flexible plans.</p>
+            <a href="#" class="btn btn-sm btn-outline-warning">Explore</a>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="card h-100 shadow-sm border-0">
+          <div class="card-body">
+            <i class="fas fa-car fa-2x text-danger mb-3"></i>
+            <h6 class="fw-bold">Car Loan</h6>
+            <p class="small text-muted">Drive your dream car with easy financing.</p>
+            <a href="#" class="btn btn-sm btn-outline-danger">Explore</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+
+  <!-- ✅ Bank Offers -->
+  <section class="py-5 offers">
+    <div class="container">
+      <h3 class="text-center mb-4" data-aos="fade-up">🔥 Trending Loan Offers</h3>
+      <div class="row g-4">
+        <div class="col-md-4" data-aos="zoom-in" data-aos-delay="100">
+          <div class="card p-3 text-center">
+            <h5>HDFC Bank</h5>
+            <p>Personal Loans @ 10.5% onwards</p>
+            <a href="#" class="btn btn-gradient btn-sm">Apply Now</a>
+          </div>
+        </div>
+        <div class="col-md-4" data-aos="zoom-in" data-aos-delay="200">
+          <div class="card p-3 text-center">
+            <h5>SBI</h5>
+            <p>Home Loans @ 8.5% onwards</p>
+            <a href="#" class="btn btn-gradient btn-sm">Apply Now</a>
+          </div>
+        </div>
+        <div class="col-md-4" data-aos="zoom-in" data-aos-delay="300">
+          <div class="card p-3 text-center">
+            <h5>ICICI Bank</h5>
+            <p>Business Loans @ 11% onwards</p>
+            <a href="#" class="btn btn-gradient btn-sm">Apply Now</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ✅ Promo -->
+  <section class="py-4 text-center" data-aos="flip-up">
+    <div class="container">
+      <div class="alert alert-info bg-gradient text-dark fw-bold">
+        🎉 Special Offer: Zero processing fee on loans before <b>30th Sept 2025</b>!
+      </div>
+    </div>
+  </section>
+
+    <!-- ✅ Testimonials Section -->
+  <section class="py-5 bg-dark">
+    <div class="container">
+      <h3 class="text-center mb-5 text-info fw-bold" data-aos="fade-up">
+        What Our Customers Say
+      </h3>
+      <div class="row g-4">
+        
+        <div class="col-md-4" data-aos="fade-right">
+          <div class="glass-card h-100 text-center">
+            <i class="bi bi-person-circle fs-1 text-warning"></i>
+            <p class="mt-3">"Loan Saathi Hub made my home loan approval super easy. Very professional and quick process!"</p>
+            <div class="text-warning">
+              ⭐⭐⭐⭐⭐
+            </div>
+            <h6 class="mt-2">- Rahul Sharma</h6>
+          </div>
+        </div>
+
+        <div class="col-md-4" data-aos="fade-up">
+          <div class="glass-card h-100 text-center">
+            <i class="bi bi-person-circle fs-1 text-success"></i>
+            <p class="mt-3">"I compared offers and found the lowest interest rate within minutes. Highly recommended!"</p>
+            <div class="text-warning">
+              ⭐⭐⭐⭐☆
+            </div>
+            <h6 class="mt-2">- Priya Verma</h6>
+          </div>
+        </div>
+
+        <div class="col-md-4" data-aos="fade-left">
+          <div class="glass-card h-100 text-center">
+            <i class="bi bi-person-circle fs-1 text-primary"></i>
+            <p class="mt-3">"Great platform for business loans. Transparent process and no hidden charges."</p>
+            <div class="text-warning">
+              ⭐⭐⭐⭐⭐
+            </div>
+            <h6 class="mt-2">- Ankit Mehta</h6>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+      <!-- ✅ FAQ Section -->
+  <section class="py-5 bg-light">
+    <div class="container">
+      <h3 class="text-center mb-5 text-primary fw-bold" data-aos="fade-up">
+        Frequently Asked Questions
+      </h3>
+
+      <div class="accordion" id="faqAccordion">
+
+        <!-- Q1 -->
+        <div class="accordion-item">
+          <h2 class="accordion-header" id="faq1">
+            <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapse1">
+              How do I apply for a loan?
+            </button>
+          </h2>
+          <div id="collapse1" class="accordion-collapse collapse show" data-bs-parent="#faqAccordion">
+            <div class="accordion-body">
+              You can register as an applicant, fill in your details, and submit a loan request. Our lenders will review and respond.
+            </div>
+          </div>
+        </div>
+
+        <!-- Q2 -->
+        <div class="accordion-item">
+          <h2 class="accordion-header" id="faq2">
+            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse2">
+              Is my data safe on Loan Saathi Hub?
+            </button>
+          </h2>
+          <div id="collapse2" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+            <div class="accordion-body">
+              Yes ✅, we use encrypted storage and secure login to keep your personal and financial information safe.
+            </div>
+          </div>
+        </div>
+
+        <!-- Q3 -->
+        <div class="accordion-item">
+          <h2 class="accordion-header" id="faq3">
+            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse3">
+              What types of loans are available?
+            </button>
+          </h2>
+          <div id="collapse3" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+            <div class="accordion-body">
+              We support multiple loan categories including Home, Personal, Business, Education, and Vehicle loans.
+            </div>
+          </div>
+        </div>
+
+        <!-- Q4 -->
+        <div class="accordion-item">
+          <h2 class="accordion-header" id="faq4">
+            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse4">
+              How long does loan approval take?
+            </button>
+          </h2>
+          <div id="collapse4" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+            <div class="accordion-body">
+              Approval time depends on the lender, but most approvals happen within 24-48 hours after document verification.
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+
+
   <!-- ✅ Footer -->
-  <footer class="text-center py-3 bg-dark text-white">
-    <p class="mb-0">&copy; 2025 Loan Saathi Hub. All rights reserved.</p>
+  <footer class="text-center py-4">
+    <p class="mb-0">© 2025 Loan Saathi Hub | Made with ❤️ for smarter finance</p>
   </footer>
 
+  <script>
+    function calculateEMI() {
+      let P = document.getElementById("loanAmount").value;
+      let R = document.getElementById("interestRate").value/12/100;
+      let N = document.getElementById("loanTenure").value;
+      if(P && R && N){
+        let emi = (P*R*Math.pow(1+R,N))/(Math.pow(1+R,N)-1);
+        document.getElementById("emiResult").innerText = "₹" + emi.toFixed(2);
+      } else {
+        document.getElementById("emiResult").innerText = "--";
+      }
+    }
+    function checkEligibility() {
+      let income = document.getElementById("income").value;
+      let emi = document.getElementById("existingEmi").value;
+      if(income){
+        let eligible = (income - (emi || 0)) * 60;
+        document.getElementById("eligibilityResult").innerText = "₹" + eligible.toFixed(0);
+      } else {
+        document.getElementById("eligibilityResult").innerText = "--";
+      }
+    }
+  </script>
+
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+  <script>
+    AOS.init({ duration: 1000, once: true });
+  </script>
 </body>
 </html>

@@ -1,0 +1,174 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-4">
+  <h2>Edit Profile</h2>
+  <form method="POST">
+    {% csrf_token %}
+
+    <!-- Common Profile -->
+    <h4>Basic Information</h4>
+    <div class="row">
+      <div class="col-md-6 mb-3">
+        <label>Full Name</label>
+        <input type="text" name="fullName" class="form-control" value="{{ profile.full_name }}">
+      </div>
+      <div class="col-md-6 mb-3">
+        <label>Mobile</label>
+        <input type="text" name="mobile" class="form-control" value="{{ profile.mobile }}">
+      </div>
+      <div class="col-md-6 mb-3">
+        <label>Gender</label>
+        <input type="text" name="gender" class="form-control" value="{{ profile.gender }}">
+      </div>
+      <div class="col-md-6 mb-3">
+        <label>Marital Status</label>
+        <input type="text" name="maritalStatus" class="form-control" value="{{ profile.marital_status }}">
+      </div>
+      <div class="col-md-6 mb-3">
+        <label>Address</label>
+        <textarea name="address" class="form-control">{{ profile.address }}</textarea>
+      </div>
+      <div class="col-md-3 mb-3">
+        <label>Pincode</label>
+        <input type="text" name="pincode" class="form-control" value="{{ profile.pincode }}">
+      </div>
+      <div class="col-md-3 mb-3">
+        <label>City</label>
+        <input type="text" name="city" class="form-control" value="{{ profile.city }}">
+      </div>
+      <div class="col-md-3 mb-3">
+        <label>State</label>
+        <input type="text" name="state" class="form-control" value="{{ profile.state }}">
+      </div>
+      <div class="col-md-3 mb-3">
+        <label>PAN Number</label>
+        <input type="text" name="panNumber" class="form-control" value="{{ profile.pan_number }}">
+      </div>
+      <div class="col-md-3 mb-3">
+        <label>Aadhar</label>
+        <input type="text" name="aadharNumber" class="form-control" value="{{ profile.aadhar }}">
+      </div>
+      <div class="col-md-3 mb-3">
+        <label>Date of Birth</label>
+        <input type="date" name="dob" class="form-control" value="{{ profile.dob|date:'Y-m-d' }}">
+      </div>
+    </div>
+
+    {% if user.role == "applicant" %}
+      <hr>
+      <h4>Applicant Details</h4>
+      <div class="row">
+        <div class="col-md-4 mb-3">
+          <label>Job Type</label>
+          <input type="text" name="jobType" class="form-control" value="{{ applicant_details.job_type }}">
+        </div>
+        <div class="col-md-4 mb-3">
+          <label>Employment Type</label>
+          <input type="text" name="employmentType" class="form-control" value="{{ applicant_details.employment_type }}">
+        </div>
+        <div class="col-md-4 mb-3">
+          <label>CIBIL Score</label>
+          <input type="number" name="cibilScore" class="form-control" value="{{ applicant_details.cibil_score }}">
+        </div>
+      </div>
+
+      <h5>Job Information</h5>
+      <div class="row">
+        <div class="col-md-4 mb-3">
+          <label>Company Name</label>
+          <input type="text" name="companyName" class="form-control" value="{{ applicant_details.company_name }}">
+        </div>
+        <div class="col-md-4 mb-3">
+          <label>Company Type</label>
+          <input type="text" name="companyType" class="form-control" value="{{ applicant_details.company_type }}">
+        </div>
+        <div class="col-md-4 mb-3">
+          <label>Designation</label>
+          <input type="text" name="designation" class="form-control" value="{{ applicant_details.designation }}">
+        </div>
+        <div class="col-md-4 mb-3">
+          <label>ITR</label>
+          <input type="text" name="itrJob" class="form-control" value="{{ applicant_details.itr }}">
+        </div>
+        <div class="col-md-4 mb-3">
+          <label>Current Salary</label>
+          <input type="number" step="0.01" name="currentSalary" class="form-control" value="{{ applicant_details.current_salary }}">
+        </div>
+        <div class="col-md-4 mb-3">
+          <label>Other Income</label>
+          <input type="number" step="0.01" name="otherIncome" class="form-control" value="{{ applicant_details.other_income }}">
+        </div>
+        <div class="col-md-4 mb-3">
+          <label>Total EMI (Job)</label>
+          <input type="number" step="0.01" name="totalEmiJob" class="form-control" value="{{ applicant_details.total_emi }}">
+        </div>
+      </div>
+
+      <h5>Business Information</h5>
+      <div class="row">
+        <div class="col-md-4 mb-3">
+          <label>Business Name</label>
+          <input type="text" name="businessName" class="form-control" value="{{ applicant_details.business_name }}">
+        </div>
+        <div class="col-md-4 mb-3">
+          <label>Business Type</label>
+          <input type="text" name="businessType" class="form-control" value="{{ applicant_details.business_type }}">
+        </div>
+        <div class="col-md-4 mb-3">
+          <label>Business Sector</label>
+          <input type="text" name="businessSector" class="form-control" value="{{ applicant_details.business_sector }}">
+        </div>
+        <div class="col-md-4 mb-3">
+          <label>Total Turnover (3Y)</label>
+          <input type="number" step="0.01" name="turnover3y" class="form-control" value="{{ applicant_details.total_turnover }}">
+        </div>
+        <div class="col-md-4 mb-3">
+          <label>Last Year Turnover</label>
+          <input type="number" step="0.01" name="turnover1y" class="form-control" value="{{ applicant_details.last_year_turnover }}">
+        </div>
+        <div class="col-md-4 mb-3">
+          <label>Total EMI (Business)</label>
+          <input type="number" step="0.01" name="totalEmiBusiness" class="form-control" value="{{ applicant_details.business_total_emi }}">
+        </div>
+        <div class="col-md-4 mb-3">
+          <label>Business ITR Status</label>
+          <input type="text" name="itrBusiness" class="form-control" value="{{ applicant_details.business_itr_status }}">
+        </div>
+      </div>
+
+    {% elif user.role == "lender" %}
+      <hr>
+      <h4>Lender Details</h4>
+      <div class="row">
+        <div class="col-md-4 mb-3">
+          <label>Lender Type</label>
+          <input type="text" name="lenderType" class="form-control" value="{{ lender_details.lender_type }}">
+        </div>
+        <div class="col-md-4 mb-3">
+          <label>DSA Code</label>
+          <input type="text" name="dsaCode" class="form-control" value="{{ lender_details.dsa_code }}">
+        </div>
+        <div class="col-md-4 mb-3">
+          <label>Bank/Firm Name</label>
+          <input type="text" name="firmName" class="form-control" value="{{ lender_details.bank_firm_name }}">
+        </div>
+        <div class="col-md-4 mb-3">
+          <label>GST Number</label>
+          <input type="text" name="gstNumber" class="form-control" value="{{ lender_details.gst_number }}">
+        </div>
+        <div class="col-md-4 mb-3">
+          <label>Branch Name</label>
+          <input type="text" name="branchName" class="form-control" value="{{ lender_details.branch_name }}">
+        </div>
+        <div class="col-md-4 mb-3">
+          <label>Designation</label>
+          <input type="text" name="designation" class="form-control" value="{{ lender_details.designation }}">
+        </div>
+      </div>
+    {% endif %}
+
+    <button type="submit" class="btn btn-success mt-3">Save Changes</button>
+    <a href="{% url 'view_profile' user.id %}" class="btn btn-secondary mt-3">Cancel</a>
+  </form>
+</div>
+{% endblock %}

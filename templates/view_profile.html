@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-4">
+  <h2>Profile Details</h2>
+  <hr>
+
+  <!-- Common Profile -->
+  <h4>Basic Information</h4>
+  <p><strong>Full Name:</strong> {{ profile.full_name }}</p>
+  <p><strong>Email:</strong> {{ user.email }}</p>
+  <p><strong>Mobile:</strong> {{ profile.mobile }}</p>
+  <p><strong>Gender:</strong> {{ profile.gender }}</p>
+  <p><strong>Marital Status:</strong> {{ profile.marital_status }}</p>
+  <p><strong>Address:</strong> {{ profile.address }}, {{ profile.city }}, {{ profile.state }} - {{ profile.pincode }}</p>
+  <p><strong>PAN:</strong> {{ profile.pan_number }}</p>
+  <p><strong>Aadhar:</strong> {{ profile.aadhar }}</p>
+  <p><strong>Date of Birth:</strong> {{ profile.dob }}</p>
+
+  {% if user.role == "applicant" %}
+    <hr>
+    <h4>Applicant Details</h4>
+    <p><strong>Job Type:</strong> {{ applicant_details.job_type }}</p>
+    <p><strong>Employment Type:</strong> {{ applicant_details.employment_type }}</p>
+    <p><strong>CIBIL Score:</strong> {{ applicant_details.cibil_score }}</p>
+
+    <h5>Job Information</h5>
+    <p><strong>Company Name:</strong> {{ applicant_details.company_name }}</p>
+    <p><strong>Company Type:</strong> {{ applicant_details.company_type }}</p>
+    <p><strong>Designation:</strong> {{ applicant_details.designation }}</p>
+    <p><strong>ITR:</strong> {{ applicant_details.itr }}</p>
+    <p><strong>Current Salary:</strong> {{ applicant_details.current_salary }}</p>
+    <p><strong>Other Income:</strong> {{ applicant_details.other_income }}</p>
+    <p><strong>Total EMI:</strong> {{ applicant_details.total_emi }}</p>
+
+    <h5>Business Information</h5>
+    <p><strong>Business Name:</strong> {{ applicant_details.business_name }}</p>
+    <p><strong>Business Type:</strong> {{ applicant_details.business_type }}</p>
+    <p><strong>Business Sector:</strong> {{ applicant_details.business_sector }}</p>
+    <p><strong>Total Turnover:</strong> {{ applicant_details.total_turnover }}</p>
+    <p><strong>Last Year Turnover:</strong> {{ applicant_details.last_year_turnover }}</p>
+    <p><strong>Business Total EMI:</strong> {{ applicant_details.business_total_emi }}</p>
+    <p><strong>Business ITR Status:</strong> {{ applicant_details.business_itr_status }}</p>
+  {% elif user.role == "lender" %}
+    <hr>
+    <h4>Lender Details</h4>
+    <p><strong>Lender Type:</strong> {{ lender_details.lender_type }}</p>
+    <p><strong>DSA Code:</strong> {{ lender_details.dsa_code }}</p>
+    <p><strong>Bank/Firm Name:</strong> {{ lender_details.bank_firm_name }}</p>
+    <p><strong>GST Number:</strong> {{ lender_details.gst_number }}</p>
+    <p><strong>Branch Name:</strong> {{ lender_details.branch_name }}</p>
+    <p><strong>Designation:</strong> {{ lender_details.designation }}</p>
+  {% endif %}
+
+  <!-- Loan Details -->
+  <h4>Loan Details</h4>
+  <table class="table table-bordered">
+    <tbody>
+      <tr>
+        <th>Loan ID</th>
+        <td>{{ loan.id|default:"N/A" }}</td>
+      </tr>
+      <tr>
+        <th>Amount</th>
+        <td>{{ loan.amount|default:"N/A" }}</td>
+      </tr>
+      <tr>
+        <th>Purpose</th>
+        <td>{{ loan.purpose|default:"N/A" }}</td>
+      </tr>
+      <tr>
+        <th>Duration</th>
+        <td>{{ loan.duration|default:"N/A" }}</td>
+      </tr>
+      <tr>
+        <th>Status</th>
+        <td>{{ loan.status|default:"N/A" }}</td>
+      </tr>
+      <tr>
+        <th>Created At</th>
+        <td>{{ loan.created_at|default:"N/A" }}</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+{% endblock %}

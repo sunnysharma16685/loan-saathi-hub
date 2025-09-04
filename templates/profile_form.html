@@ -54,11 +54,11 @@
         <div class="row g-3 mb-3">
           <div class="col-md-6">
             <label class="form-label">Full Name</label>
-            <input type="text" class="form-control" name="full_name" required>
+            <input type="text" class="form-control" name="full_name" value="{{ profile.full_name|default:'' }}" required>
           </div>
           <div class="col-md-6">
             <label class="form-label">Date of Birth</label>
-            <input type="date" class="form-control" name="dob" placeholder="dd-mm-yyyy" required>
+            <input type="date" class="form-control" name="dob" value="{{ profile.dob|default:'' }}" required>
           </div>
         </div>
 
@@ -68,27 +68,16 @@
             <label class="form-label">Mobile Number</label>
             <div class="input-group">
               <span class="input-group-text">+91</span>
-              <input
-                type="text"
-                class="form-control"
-                name="mobile"
-                id="mobile"
-                maxlength="10"
-                inputmode="numeric"
-                pattern="\d{10}"
-                placeholder="10-digit mobile"
-                required
-              >
+              <input type="text" class="form-control" name="mobile" id="mobile" maxlength="10" value="{{ profile.mobile|default:'' }}" required>
               <button type="button" class="btn btn-outline-primary" id="sendOtpBtn" onclick="sendOTP()">Send OTP</button>
             </div>
             <small id="otpSentMsg" class="text-success d-none">OTP sent successfully!</small>
           </div>
-
           <div class="col-md-6" id="otpSection" style="display:none;">
             <div class="row g-2">
               <div class="col-sm-6">
                 <label class="form-label">Enter OTP</label>
-                <input type="text" class="form-control" id="otpInput" maxlength="6" inputmode="numeric" placeholder="Enter OTP">
+                <input type="text" class="form-control" id="otpInput" maxlength="6" placeholder="Enter OTP">
               </div>
               <div class="col-sm-6 d-flex align-items-end gap-2">
                 <button type="button" class="btn btn-success" id="verifyBtn" onclick="verifyOTP()">Verify OTP</button>
@@ -105,59 +94,37 @@
             <label class="form-label">Gender</label>
             <select class="form-select" name="gender" required>
               <option value="">-- Select Gender --</option>
-              <option value="Male">Male</option>
-              <option value="Female">Female</option>
-              <option value="Other">Other</option>
+              <option {% if profile.gender=="Male" %}selected{% endif %}>Male</option>
+              <option {% if profile.gender=="Female" %}selected{% endif %}>Female</option>
+              <option {% if profile.gender=="Other" %}selected{% endif %}>Other</option>
             </select>
           </div>
-
           <div class="col-md-6">
             <label class="form-label">Marital Status</label>
             <select class="form-select" name="marital_status" required>
               <option value="">-- Select Status --</option>
-              <option value="Single">Single</option>
-              <option value="Married">Married</option>
-              <option value="Other">Other</option>
+              <option {% if profile.marital_status=="Single" %}selected{% endif %}>Single</option>
+              <option {% if profile.marital_status=="Married" %}selected{% endif %}>Married</option>
+              <option {% if profile.marital_status=="Other" %}selected{% endif %}>Other</option>
             </select>
           </div>
         </div>
 
-        <!-- Address -->
+        <!-- Address + KYC -->
         <div class="mb-3">
           <label class="form-label">Full Address</label>
-          <textarea class="form-control" name="address" rows="2" placeholder="Enter your full address"></textarea>
+          <textarea class="form-control" name="address" rows="2">{{ profile.address|default:'' }}</textarea>
         </div>
-        <!-- KYC -->
+
         <h4 class="mb-3">KYC</h4>
         <div class="row g-3 mb-3">
           <div class="col-md-6">
-            <label class="form-label">PAN</label>
-            <input
-              type="text"
-              class="form-control"
-              name="pan_number"
-              id="pan"
-              maxlength="10"
-              pattern="[A-Z]{5}[0-9]{4}[A-Z]"
-              placeholder="e.g., AEFED4785K"
-              oninput="this.value = this.value.toUpperCase();"
-              required
-            >
-            <small class="text-muted">Format: 5 letters, 4 digits, 1 letter</small>
+            <label class="form-label">PAN Card Number</label>
+            <input type="text" class="form-control" name="pancard_number" maxlength="10" value="{{ profile.pancard_number|default:'' }}" required>
           </div>
-
           <div class="col-md-6">
-            <label class="form-label">Aadhar</label>
-            <input
-              type="text"
-              class="form-control"
-              name="aadhaar"
-              maxlength="12"
-              inputmode="numeric"
-              pattern="\d{12}"
-              placeholder="12-digit Aadhaar"
-              required
-            >
+            <label class="form-label">Aadhaar Number</label>
+            <input type="text" class="form-control" name="aadhaar_number" maxlength="12" value="{{ profile.aadhaar_number|default:'' }}" required>
           </div>
         </div>
 
@@ -166,189 +133,56 @@
         <div class="row g-3 mb-3">
           <div class="col-md-4">
             <label class="form-label">Pin Code</label>
-            <input
-              type="text"
-              class="form-control"
-              name="pincode"
-              id="pincode"
-              maxlength="6"
-              pattern="\d{6}"
-              placeholder="6-digit PIN"
-              oninput="fetchCityState(this.value)"
-            >
+            <input type="text" class="form-control" name="pincode" maxlength="6" value="{{ profile.pincode|default:'' }}">
           </div>
           <div class="col-md-4">
             <label class="form-label">City</label>
-            <input type="text" class="form-control" name="city" required>
+            <input type="text" class="form-control" name="city" value="{{ profile.city|default:'' }}">
           </div>
           <div class="col-md-4">
             <label class="form-label">State</label>
-            <select class="form-select" name="state" required>
-              <option value="">-- Select State --</option>
-              <option>Andhra Pradesh</option><option>Arunachal Pradesh</option><option>Assam</option>
-              <option>Bihar</option><option>Chhattisgarh</option><option>Goa</option><option>Gujarat</option>
-              <option>Haryana</option><option>Himachal Pradesh</option><option>Jharkhand</option>
-              <option>Karnataka</option><option>Kerala</option><option>Madhya Pradesh</option><option>Maharashtra</option>
-              <option>Manipur</option><option>Meghalaya</option><option>Mizoram</option><option>Nagaland</option>
-              <option>Odisha</option><option>Punjab</option><option>Rajasthan</option><option>Sikkim</option>
-              <option>Tamil Nadu</option><option>Telangana</option><option>Tripura</option><option>Uttar Pradesh</option>
-              <option>Uttarakhand</option><option>West Bengal</option>
-              <option>Andaman and Nicobar Islands</option><option>Chandigarh</option><option>Dadra and Nagar Haveli and Daman and Diu</option>
-              <option>Delhi</option><option>Jammu and Kashmir</option><option>Ladakh</option><option>Lakshadweep</option><option>Puducherry</option>
-            </select>
+            <input type="text" class="form-control" name="state" value="{{ profile.state|default:'' }}">
           </div>
         </div>
 
-        <!-- Applicant Only -->
+        <!-- Applicant Section -->
         <div id="applicantFields" {% if role != "Applicant" %}style="display:none;"{% endif %}>
-          <h4 class="mb-3">Employment</h4>
-
-          <!-- Toggle -->
+          <h4 class="mb-3">Employment Details</h4>
           <div class="mb-3">
-            <label class="form-label d-block">Select Type</label>
-            <div class="btn-group" role="group">
-              <input type="radio" class="btn-check" name="employment_type" id="typeJob" value="Job" checked onchange="toggleApplicantType()">
-              <label class="btn btn-outline-primary" for="typeJob">Job</label>
-
-              <input type="radio" class="btn-check" name="employment_type" id="typeBusiness" value="Business" onchange="toggleApplicantType()">
-              <label class="btn btn-outline-success" for="typeBusiness">Business</label>
-            </div>
-          </div>
-
-          <div class="mb-3">
-            <label class="form-label">CIBIL Score (300-900)</label>
-            <input type="number" class="form-control" name="cibil_score" min="300" max="900">
+            <label class="form-label">Employment Type</label>
+            <select class="form-select" name="employment_type" onchange="toggleApplicantType()">
+              <option value="">-- Select --</option>
+              <option value="Job" {% if applicant_details.employment_type=="Job" %}selected{% endif %}>Job</option>
+              <option value="Business" {% if applicant_details.employment_type=="Business" %}selected{% endif %}>Business</option>
+            </select>
           </div>
 
           <!-- Job Fields -->
           <div id="jobFields" class="mb-3">
-            <div class="mb-3">
-              <label class="form-label">Company Name</label>
-              <input type="text" class="form-control" name="company_name">
-            </div>
-            <div class="mb-3">
-              <label class="form-label">Company Type</label>
-              <select class="form-select" name="company_type">
-                <option value="">-- Select --</option>
-                <option>Limited</option>
-                <option>Pvt. Limited</option>
-                <option>LLP</option>
-                <option>Govt.</option>
-                <option>Proprietor</option>
-              </select>
-            </div>
-            <div class="mb-3">
-              <label class="form-label">Designation</label>
-              <select class="form-select" name="designation">
-                <option value="">-- Select --</option>
-                <option>Junior</option>
-                <option>Senior</option>
-                <option>Manager</option>
-                <option>Executive</option>
-                <option>Director</option>
-                <option>Partner</option>
-              </select>
-            </div>
-            <div class="mb-3">
-              <label class="form-label">ITR</label>
-              <select class="form-select" name="itr">
-                <option value="">-- Select --</option>
-                <option>Last 3 Years</option>
-                <option>Last 2 Years</option>
-                <option>Last 1 Year</option>
-                <option>No ITR</option>
-              </select>
-            </div>
-            <div class="mb-3">
-              <label class="form-label">Current Salary (Monthly)</label>
-              <input type="number" class="form-control" name="current_salary" min="0" step="1">
-            </div>
-            <div class="mb-3">
-              <label class="form-label">Other Income</label>
-              <input type="text" class="form-control" name="other_income">
-            </div>
-            <div class="mb-3">
-              <label class="form-label">Total EMI (Job) - Monthly</label>
-              <input type="number" class="form-control" name="total_emi" min="0" step="1">
-            </div>
+            <label class="form-label">Company Name</label>
+            <input type="text" class="form-control" name="company_name" value="{{ applicant_details.company_name|default:'' }}">
+            <label class="form-label mt-2">Designation</label>
+            <input type="text" class="form-control" name="designation" value="{{ applicant_details.designation|default:'' }}">
           </div>
 
           <!-- Business Fields -->
           <div id="businessFields" class="mb-3" style="display:none;">
-            <div class="mb-3">
-              <label class="form-label">Business Name</label>
-              <input type="text" class="form-control" name="business_name">
-            </div>
-            <div class="mb-3">
-              <label class="form-label">Business Type</label>
-              <select class="form-select" name="business_type">
-                <option value="">-- Select --</option>
-                <option>Limited</option>
-                <option>Pvt. Limited</option>
-                <option>LLP</option>
-                <option>Govt.</option>
-                <option>Proprietor</option>
-              </select>
-            </div>
-            <div class="mb-3">
-              <label class="form-label">Business Sector</label>
-              <input type="text" class="form-control" name="business_sector">
-            </div>
-            <div class="mb-3">
-              <label class="form-label">Total Turnover (Last 3 Years)</label>
-              <input type="number" class="form-control" name="total_turnover" min="0" step="1">
-            </div>
-            <div class="mb-3">
-              <label class="form-label">Last Year Turnover</label>
-              <input type="number" class="form-control" name="last_year_turnover" min="0" step="1">
-            </div>
-            <div class="mb-3">
-              <label class="form-label">Total EMI (Business) - Monthly</label>
-              <input type="number" class="form-control" name="business_total_emi" min="0" step="1">
-            </div>
-            <div class="mb-3">
-              <label class="form-label">Business ITR Status</label>
-              <select class="form-select" name="business_itr_status">
-                <option value="">-- Select --</option>
-                <option>Last 3 Years</option>
-                <option>Last 2 Years</option>
-                <option>Last 1 Year</option>
-                <option>No ITR</option>
-              </select>
-            </div>
+            <label class="form-label">Business Name</label>
+            <input type="text" class="form-control" name="business_name" value="{{ applicant_details.business_name|default:'' }}">
+            <label class="form-label mt-2">Business Type</label>
+            <input type="text" class="form-control" name="business_type" value="{{ applicant_details.business_type|default:'' }}">
           </div>
         </div>
-        <!-- Lender Only -->
+
+        <!-- Lender Section -->
         <div id="lenderFields" {% if role != "Lender" %}style="display:none;"{% endif %}>
           <h4 class="mb-3">Lender Details</h4>
-
-          <div class="row g-3 mb-3">
-            <div class="col-md-6">
-              <label class="form-label">Lender Type</label>
-              <select class="form-select" name="lender_type" required>
-                <option value="">-- Select Lender Type --</option>
-                <option>DSA</option>
-                <option>NBFC</option>
-                <option>PSU Bank</option>
-                <option>Private Bank</option>
-                <option>Pvt. Firm</option>
-                <option>Limited Firm</option>
-              </select>
-            </div>
-
-            <div class="col-md-6">
-              <label class="form-label">Bank / Firm Name</label>
-              <input type="text" class="form-control" name="firm_name" required>
-            </div>
-
-            <div class="col-md-6">
-              <label class="form-label">Branch Name</label>
-              <input type="text" class="form-control" name="branch_name" required>
-            </div>
-          </div>
+          <label class="form-label">Lender Type</label>
+          <input type="text" class="form-control" name="lender_type" value="{{ lender_details.lender_type|default:'' }}">
+          <label class="form-label mt-2">Bank / Firm Name</label>
+          <input type="text" class="form-control" name="bank_firm_name" value="{{ lender_details.bank_firm_name|default:'' }}">
         </div>
 
-        <!-- Submit -->
         <div class="d-flex justify-content-end">
           <button type="submit" class="btn btn-success mt-3" id="submitBtn">Save Profile</button>
         </div>
@@ -361,89 +195,26 @@
     © 2025 LoanSaathiHub. All rights reserved.
   </footer>
 
-  <!-- Scripts -->
   <script>
-    // role from context
-    const ROLE_FROM_INDEX = "{{ role|default:'' }}";
-
-    // OTP state
-    let generatedOTP = null;
-    let resendTimer = null;
-    let resendRemaining = 30;
-
-    function sendOTP() {
-      const mobile = document.getElementById("mobile").value.trim();
-      if (!/^\d{10}$/.test(mobile)) {
-        alert("Please enter a valid 10-digit mobile number.");
-        return;
-      }
-      // dummy 4-digit OTP
-      generatedOTP = Math.floor(1000 + Math.random() * 9000).toString();
-      document.getElementById("otpSection").style.display = "block";
-      document.getElementById("otpSentMsg").classList.remove("d-none");
-      document.getElementById("submitBtn").disabled = true;
-      alert("Your OTP is: " + generatedOTP);
-      startResendCountdown();
-    }
-
-    function startResendCountdown() {
-      const resendBtn = document.getElementById("resendBtn");
-      resendRemaining = 30;
-      resendBtn.disabled = true;
-      resendBtn.textContent = "Resend OTP (30s)";
-      clearInterval(resendTimer);
-      resendTimer = setInterval(() => {
-        resendRemaining -= 1;
-        resendBtn.textContent = `Resend OTP (${resendRemaining}s)`;
-        if (resendRemaining <= 0) {
-          clearInterval(resendTimer);
-          resendBtn.disabled = false;
-          resendBtn.textContent = "Resend OTP";
-        }
-      }, 1000);
-    }
-
-    function verifyOTP() {
-      const userOTP = document.getElementById("otpInput").value.trim();
-      const msg = document.getElementById("otpVerifyMsg");
-      const submitBtn = document.getElementById("submitBtn");
-
-      if (generatedOTP && userOTP === generatedOTP) {
-        msg.innerHTML = "<span class='text-success'>✅ OTP Verified!</span>";
-        submitBtn.disabled = false;
-      } else {
-        msg.innerHTML = "<span class='text-danger'>❌ Invalid OTP</span>";
-        submitBtn.disabled = true;
-      }
-    }
-
+    const ROLE = "{{ role|default:'' }}";
     function toggleApplicantType() {
-      const type = document.querySelector("input[name='employment_type']:checked")?.value;
-      document.getElementById("jobFields").style.display = (type === "Job") ? "block" : "none";
-      document.getElementById("businessFields").style.display = (type === "Business") ? "block" : "none";
+      const type = document.querySelector("select[name='employment_type']")?.value;
+      document.getElementById("jobFields").style.display = (type==="Job") ? "block" : "none";
+      document.getElementById("businessFields").style.display = (type==="Business") ? "block" : "none";
     }
-
     function applyRoleVisibility() {
-      const isApplicant = ROLE_FROM_INDEX === "Applicant";
-      const isLender   = ROLE_FROM_INDEX === "Lender";
-
+      const isApplicant = ROLE==="Applicant";
+      const isLender = ROLE==="Lender";
       const applicant = document.getElementById("applicantFields");
-      const lender    = document.getElementById("lenderFields");
-
-      if (applicant) applicant.style.display = isApplicant ? "block" : "none";
-      if (lender)    lender.style.display    = isLender ? "block" : "none";
+      const lender = document.getElementById("lenderFields");
+      if(applicant) applicant.style.display = isApplicant ? "block" : "none";
+      if(lender) lender.style.display = isLender ? "block" : "none";
     }
-
-    window.onload = function () {
-      // Disable submit until OTP is verified
-      const submitBtn = document.getElementById("submitBtn");
-      if (submitBtn) submitBtn.disabled = true;
-
+    window.onload = function() {
       applyRoleVisibility();
-      toggleApplicantType(); // default Job fields visible
+      toggleApplicantType();
     };
   </script>
-
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

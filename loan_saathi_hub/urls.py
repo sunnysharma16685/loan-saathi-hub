@@ -18,28 +18,31 @@ urlpatterns = [
     # ---------------- Profile ----------------
     path("profile/<uuid:user_id>/", views.profile_form, name="profile_form"),
     path("profile/<uuid:user_id>/edit/", views.edit_profile, name="edit_profile"),
-    
-    
+    path("profile/<uuid:user_id>/<uuid:loan_id>/", views.view_profile, name="view_profile"),
+    path("dashboard/lender/partial-profile/<uuid:loan_id>/", views.partial_profile, name="partial_profile"),
+
 
     # ---------------- Dashboards ----------------
     path("dashboard/admin/", views.dashboard_admin, name="dashboard_admin"),
     path("dashboard/applicant/", views.dashboard_applicant, name="dashboard_applicant"),
     path("dashboard/lender/", views.dashboard_lender, name="dashboard_lender"),
-    path("dashboard/", views.dashboard_router, name="dashboard_router"),  
-    
+    path("dashboard/", views.dashboard_router, name="dashboard_router"),   # auto redirect based on role
+    path('dashboard/lender/reject-loan/<int:loan_id>/', views.reject_loan, name='reject_loan'),
+    path("dashboard/lender/partial-profile/<uuid:user_id>/", views.partial_profile, name="partial_profile"),
 
+    
 
     # ---------------- Loan + Payment ----------------
     path("loan/request/", views.loan_request, name="loan_request"),
+    path("payment/<uuid:loan_id>/", views.payment_page, name="payment_page"),
     path("loan/<uuid:loan_id>/reject/", views.reject_loan, name="reject_loan"),
-    path("loan/<uuid:loan_id>/payment/", views.payment_page, name="payment_page"),
-
-    # Lender-specific actions
-    path("dashboard/lender/partial-profile/<uuid:loan_id>/", views.partial_profile, name="partial_profile"),
     path("dashboard/lender/dummy-payment/<uuid:loan_id>/", views.make_dummy_payment, name="make_dummy_payment"),
-    path("profile/<uuid:user_id>/<uuid:loan_id>/", views.view_profile, name="view_profile"),
+    path("lender/reject-loan/<uuid:loan_id>/", views.reject_loan, name="reject_loan"),
+    path("dashboard/lender/payment/<uuid:loan_id>/", views.payment_page, name="payment_page"),
+
 
 
     # ---------------- Django Admin ----------------
-    path("admin/", admin.site.urls),
+    path("admin/", admin.site.urls), 
+    path("dashboard/admin/", views.dashboard_admin, name="dashboard_admin"),
 ]

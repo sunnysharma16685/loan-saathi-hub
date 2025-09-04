@@ -25,7 +25,7 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    "main",   # तुम्‍हारा app
+    "main",   # Tumhara app
 ]
 
 MIDDLEWARE = [
@@ -120,8 +120,8 @@ DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 # SUPABASE CONFIG
 # ---------------------------
 SUPABASE_URL = os.getenv("SUPABASE_URL")
-SUPABASE_ANON_KEY = os.getenv("SUPABASE_ANON_KEY")
-SUPABASE_SERVICE_ROLE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
+SUPABASE_ANON_KEY = os.getenv("SUPABASE_ANON_KEY")  # frontend use
+SUPABASE_SERVICE_ROLE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY")  # backend use
 SUPABASE_JWT_SECRET = os.getenv("SUPABASE_JWT_SECRET")
 
 # ---------------------------

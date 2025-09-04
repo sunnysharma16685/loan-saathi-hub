@@ -17,8 +17,8 @@ class ApplicantRegistrationForm(forms.ModelForm):
     pincode = forms.CharField(max_length=10, required=True)
     city = forms.CharField(max_length=100, required=True)
     state = forms.CharField(max_length=100, required=True)
-    pan_number = forms.CharField(max_length=20, required=False)
-    aadhar = forms.CharField(max_length=20, required=False)
+    pancard_number = forms.CharField(max_length=20, required=False)
+    aadhaar_number = forms.CharField(max_length=20, required=False)
     dob = forms.DateField(required=False)
 
     # ApplicantDetails fields
@@ -62,8 +62,8 @@ class ApplicantRegistrationForm(forms.ModelForm):
                 pincode=self.cleaned_data.get("pincode"),
                 city=self.cleaned_data.get("city"),
                 state=self.cleaned_data.get("state"),
-                pan_number=self.cleaned_data.get("pan_number"),
-                aadhar=self.cleaned_data.get("aadhar"),
+                pancard_number=self.cleaned_data.get("pancard_number"),
+                aadhaar_number=self.cleaned_data.get("aadhaar_number"),
                 dob=self.cleaned_data.get("dob"),
             )
 
@@ -102,8 +102,8 @@ class LenderRegistrationForm(forms.ModelForm):
     pincode = forms.CharField(max_length=10, required=True)
     city = forms.CharField(max_length=100, required=True)
     state = forms.CharField(max_length=100, required=True)
-    pan_number = forms.CharField(max_length=20, required=False)
-    aadhar = forms.CharField(max_length=20, required=False)
+    pancard_number = forms.CharField(max_length=20, required=False)
+    aadhaar_number = forms.CharField(max_length=20, required=False)
 
     # LenderDetails fields
     lender_type = forms.CharField(max_length=100, required=False)
@@ -134,8 +134,8 @@ class LenderRegistrationForm(forms.ModelForm):
                 pincode=self.cleaned_data.get("pincode"),
                 city=self.cleaned_data.get("city"),
                 state=self.cleaned_data.get("state"),
-                pan_number=self.cleaned_data.get("pan_number"),
-                aadhar=self.cleaned_data.get("aadhar"),
+                pancard_number=self.cleaned_data.get("pancard_number"),
+                aadhaar_number=self.cleaned_data.get("aadhaar_number"),
             )
 
             # LenderDetails create

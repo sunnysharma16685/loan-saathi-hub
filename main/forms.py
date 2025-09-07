@@ -1,6 +1,6 @@
 from django import forms
 from django.contrib.auth.forms import AuthenticationForm
-from .models import User, Profile, ApplicantDetails, LenderDetails
+from .models import User, Profile, applicantdetails, lenderdetails
 
 
 # -----------------------------
@@ -68,7 +68,7 @@ class ApplicantRegistrationForm(forms.ModelForm):
             )
 
             # ApplicantDetails create
-            ApplicantDetails.objects.create(
+            applicantdetails.objects.create(
                 user=user,
                 job_type=self.cleaned_data.get("job_type"),
                 cibil_score=self.cleaned_data.get("cibil_score"),
@@ -139,7 +139,7 @@ class LenderRegistrationForm(forms.ModelForm):
             )
 
             # LenderDetails create
-            LenderDetails.objects.create(
+            lenderdetails.objects.create(
                 user=user,
                 lender_type=self.cleaned_data.get("lender_type"),
                 dsa_code=self.cleaned_data.get("dsa_code"),

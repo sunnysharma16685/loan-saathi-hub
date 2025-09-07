@@ -1,70 +1,70 @@
 {% extends "base.html" %}
 {% block content %}
-<div class="card mb-3">
-  <div class="card-body">
-    <h5 class="card-title">{{ profile.full_name }}</h5>
-    <p class="card-text"><strong>Email:</strong> {{ user.email }}</p>
-    <p class="card-text"><strong>Mobile:</strong> {{ profile.mobile }}</p>
-    <p class="card-text"><strong>City:</strong> {{ profile.city }}, {{ profile.state }}</p>
-    <p class="card-text"><strong>Role:</strong> {{ user.role|title }}</p>
+<style>
+  body { font-family: 'Poppins', sans-serif; background: #f5f8fa; }
+  .container { max-width: 900px; margin-top:30px; }
+  h2, h4, h5 { color:#333; margin-top:20px; }
+  .card { background:#fff; padding:20px; border-radius:12px; box-shadow:0 8px 16px rgba(0,0,0,0.1); margin-bottom:20px; }
+  .card p { margin-bottom:8px; color:#555; }
+  table { width:100%; margin-top:15px; border-collapse:collapse; }
+  table th, table td { border:1px solid #ddd; padding:8px; text-align:left; }
+  table th { background:#0d6efd; color:#fff; }
+</style>
 
-    {% if user.role == "applicant" %}
-      <hr>
-      <h6>Applicant Details</h6>
-      <p><strong>Job Type:</strong> {{ applicant_details.job_type }}</p>
-      <p><strong>CIBIL Score:</strong> {{ applicant_details.cibil_score }}</p>
-      <p><strong>Employment Type:</strong> {{ applicant_details.employment_type }}</p>
-      <p><strong>Company:</strong> {{ applicant_details.company_name }} ({{ applicant_details.company_type }})</p>
-      <p><strong>Salary:</strong> {{ applicant_details.current_salary }}</p>
-      <p><strong>Other Income:</strong> {{ applicant_details.other_income }}</p>
-      <p><strong>Total EMI:</strong> {{ applicant_details.total_emi }}</p>
-      <p><strong>Business:</strong> {{ applicant_details.business_name }} ({{ applicant_details.business_type }})</p>
-      <p><strong>Turnover (Last Yr):</strong> {{ applicant_details.last_year_turnover }}</p>
+<div class="container">
+  <h2>Partial Profile (Limited Access)</h2>
 
-    {% elif user.role == "lender" %}
-      <hr>
-      <h6>Lender Details</h6>
-      <p><strong>Lender Type:</strong> {{ lender_details.lender_type }}</p>
-      <p><strong>Bank/Firm:</strong> {{ lender_details.bank_firm_name }}</p>
-      <p><strong>Branch:</strong> {{ lender_details.branch_name }}</p>
-      <p><strong>Designation:</strong> {{ lender_details.designation }}</p>
-      <p><strong>DSA Code:</strong> {{ lender_details.dsa_code }}</p>
-    {% endif %}
-
-    <a href="{% url 'edit_profile' user.id %}" class="btn btn-primary mt-2">Edit Profile</a>
+  <div class="card">
+    <h4>Basic Information</h4>
+    <p><strong>Full Name:</strong> {{ profile.full_name }}</p>
+    <p><strong>Email:</strong> **********</p>
+    <p><strong>Mobile:</strong> **********</p>
+    <p><strong>Gender:</strong> {{ profile.gender }}</p>
+    <p><strong>Marital Status:</strong> {{ profile.marital_status }}</p>
+    <p><strong>Address:</strong> **********, {{ profile.city }}, {{ profile.state }} - {{ profile.pincode }}</p>
+    <p><strong>PANCARD Number:</strong> {{ profile.pancard_number }}</p>
+    <p><strong>Aadhaar Number:</strong> **********</p>
+    <p><strong>Date of Birth:</strong> {{ profile.dob }}</p>
   </div>
-</div>
 
+  <div class="card">
+    <h4>Applicant Details</h4>
+    <p><strong>Job Type:</strong> {{ applicant_details.job_type }}</p>
+    <p><strong>Employment Type:</strong> {{ applicant_details.employment_type }}</p>
+    <p><strong>CIBIL Score:</strong> {{ applicant_details.cibil_score }}</p>
 
-  <!-- Loan Details -->
-  <h4>Loan Details</h4>
-  <table class="table table-bordered">
-    <tbody>
-      <tr>
-        <th>Loan ID</th>
-        <td>{{ loan.id|default:"N/A" }}</td>
-      </tr>
-      <tr>
-        <th>Amount</th>
-        <td>{{ loan.amount|default:"N/A" }}</td>
-      </tr>
-      <tr>
-        <th>Purpose</th>
-        <td>{{ loan.purpose|default:"N/A" }}</td>
-      </tr>
-      <tr>
-        <th>Duration</th>
-        <td>{{ loan.duration|default:"N/A" }}</td>
-      </tr>
-      <tr>
-        <th>Status</th>
-        <td>{{ loan.status|default:"N/A" }}</td>
-      </tr>
-      <tr>
-        <th>Created At</th>
-        <td>{{ loan.created_at|default:"N/A" }}</td>
-      </tr>
-    </tbody>
-  </table>
+    <h5>Job Information</h5>
+    <p><strong>Company Name:</strong> **********</p>
+    <p><strong>Company Type:</strong> {{ applicant_details.company_type }}</p>
+    <p><strong>Designation:</strong> {{ applicant_details.designation }}</p>
+    <p><strong>ITR:</strong> {{ applicant_details.itr }}</p>
+    <p><strong>Current Salary:</strong> {{ applicant_details.current_salary }}</p>
+    <p><strong>Other Income:</strong> {{ applicant_details.other_income }}</p>
+    <p><strong>Total EMI:</strong> {{ applicant_details.total_emi }}</p>
+
+    <h5>Business Information</h5>
+    <p><strong>Business Name:</strong> **********</p>
+    <p><strong>Business Type:</strong> {{ applicant_details.business_type }}</p>
+    <p><strong>Business Sector:</strong> {{ applicant_details.business_sector }}</p>
+    <p><strong>Total Turnover:</strong> {{ applicant_details.total_turnover }}</p>
+    <p><strong>Last Year Turnover:</strong> {{ applicant_details.last_year_turnover }}</p>
+    <p><strong>Business Total EMI:</strong> {{ applicant_details.business_total_emi }}</p>
+    <p><strong>Business ITR Status:</strong> {{ applicant_details.business_itr_status }}</p>
+  </div>
+
+  <div class="card">
+    <h4>Loan Details</h4>
+    <table>
+      <tbody>
+        <tr><th>Loan ID</th><td>{{ loan.loan_id|default:"N/A" }}</td></tr>
+        <tr><th>Amount requested</th><td>₹{{ loan.amount_requested|default:"N/A" }}</td></tr>
+        <tr><th>Reason for Loan</th><td>{{ loan.reason_for_loan|default:"N/A" }}</td></tr>
+        <tr><th>Duration Months</th><td>{{ loan.duration_months|default:"N/A" }} months</td></tr>
+        <tr><th>Interest Rate</th><td>{{ loan.interest_rate|default:"N/A" }}%</td></tr>
+        <tr><th>Status</th><td>{{ loan.status|default:"N/A" }}</td></tr>
+        <tr><th>Created At</th><td>{{ loan.created_at|date:"d-m-Y H:i" }}</td></tr>
+      </tbody>
+    </table>
+  </div>
 </div>
 {% endblock %}

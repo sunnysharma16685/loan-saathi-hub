@@ -3,7 +3,7 @@ async function loginUser(event) {
 
   const email = document.getElementById("email").value.trim();
   const password = document.getElementById("password").value;
-  const userType = document.querySelector("input[name='user_type']:checked")?.value || "user";
+  const userType = document.querySelector("input[name='user_type']:checked")?.value || "applicant";
 
   if (!email || !password) {
     showMessage("कृपया सभी फ़ील्ड भरें।", "error");
@@ -20,10 +20,12 @@ async function loginUser(event) {
     if (response.success) {
       showMessage("लॉगिन सफल हुआ!", "success");
       setTimeout(() => {
-        if (response.role === "user") {
-          window.location.href = "/dashboard_user";
+        if (response.role === "applicant") {
+          window.location.href = "/dashboard_applicant";
+        } else if (response.role === "lender") {
+          window.location.href = "/dashboard_lender";
         } else {
-          window.location.href = "/dashboard_agent";
+          window.location.href = "/"; // fallback
         }
       }, 1000);
     } else {
@@ -43,7 +45,7 @@ async function fakeLogin(email, password, userType) {
   return new Promise((resolve) => {
     setTimeout(() => {
       if (email === "test@example.com" && password === "123456") {
-        resolve({ success: true, role: userType });
+        resolve({ success: true, role: userType.toLowerCase() });
       } else {
         resolve({ success: false });
       }

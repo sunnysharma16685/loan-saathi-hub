@@ -12,6 +12,8 @@ from django.contrib.auth.forms import SetPasswordForm
 from django.conf import settings
 from datetime import date
 import uuid
+from django.utils import timezone
+
 
 from .models import (
     User,
@@ -20,8 +22,9 @@ from .models import (
     LenderDetails,
     LoanRequest,
     LoanLenderStatus,
-    Payment,
+    Payment
 )
+
 from main.supabase_client import (
     sync_loan_request_to_supabase,
     sync_payment_to_supabase,
@@ -29,9 +32,10 @@ from main.supabase_client import (
 
 User = get_user_model()
 
+
 # -------------------- Home --------------------
-def home(request):
-    return render(request, "index.html")
+def index(request):
+    return render(request, 'index.html')
 
 # -------------------- Helper: Profile Check --------------------
 def is_profile_complete(user):
@@ -195,7 +199,7 @@ def profile_form(request, user_id):
             applicant_details = details
 
         elif role == "lender":
-            l, _ = LenderDetails.objects.get_or_create(user=user)
+            l, _ = lenderdetails.objects.get_or_create(user=user)
             l.lender_type = G("lender_type")
             l.bank_firm_name = G("bank_firm_name", "bankfirmName")
             l.branch_name = G("branch_name", "branchName")
@@ -210,6 +214,39 @@ def profile_form(request, user_id):
 
     return render(request, "profile_form.html", locals())
 
+# ----------- Profile View (Applicant/Lender details ----------
+
+def is_profile_complete(user):
+    # --- Profile must exist and have required fields ---
+    profile = Profile.objects.filter(user=user).first()
+    if not profile:
+        return False
+    if not profile.full_name or not profile.pancard_number or not profile.mobile:
+        return False
+
+    # --- Applicant check ---
+    if user.role == "applicant":
+        details = ApplicantDetails.objects.filter(user=user).first()
+        if not details:
+            return False
+        # at least these must be filled
+        if not details.employment_type or not details.cibil_score:
+            return False
+        return True
+
+    # --- Lender check ---
+    if user.role == "lender":
+        details = LenderDetails.objects.filter(user=user).first()
+        if not details:
+            return False
+        if not details.lender_type or not details.bank_firm_name:
+            return False
+        return True
+
+    # --- Admin or others ---
+    return True
+
+
 # -------------------- Admin Dashboard --------------------
 @login_required
 def dashboard_admin(request):
@@ -218,8 +255,8 @@ def dashboard_admin(request):
         return redirect("home")
 
     context = {
-        "applicants": applicantdetails.objects.all(),
-        "lenders": lenderdetails.objects.all(),
+        "applicants": ApplicantDetails.objects.all(),
+        "lenders": LenderDetails.objects.all(),
         "payments": Payment.objects.all(),
         "loans": LoanRequest.objects.all(),
     }
@@ -235,36 +272,64 @@ def dashboard_router(request):
 @login_required
 def dashboard_applicant(request):
     loans = LoanRequest.objects.filter(applicant=request.user).prefetch_related("lender_statuses").order_by("-created_at")
+
+    # Loan status calculation
     for loan in loans:
         statuses = loan.lender_statuses.all()
         if not statuses or all(ls.status == "Pending" for ls in statuses):
             loan.global_status = "Pending"
-            loan.global_remark = "Lender Reviewing Your Loan"
+            loan.global_remarks = "Lender Reviewing Your Loan"
         elif any(ls.status == "Approved" for ls in statuses):
             loan.global_status = "Approved"
-            loan.global_remark = "Lender Reviewing Your Loan"
+            loan.global_remarks = "Lender Reviewing Your Loan"
         elif all(ls.status == "Rejected" for ls in statuses):
             loan.global_status = "Rejected"
-            loan.global_remark = "Lender Reviewing Your Loan"
+            loan.global_remarks = "Lender Reviewing Your Loan"
         else:
             loan.global_status = "Pending"
-            loan.global_remark = "Lender Reviewing Your Loan"
-    return render(request, "dashboard_applicant.html", {"loans": loans})
+            loan.global_remarks = "Lender Reviewing Your Loan"
+
+    # ---------------- Stats Section ----------------
+    from datetime import date
+    today = date.today()
+
+    # Aaj ke loans (sab mila kar)
+    total_today = LoanRequest.objects.filter(applicant=request.user, created_at__date=today).count()
+
+    # Total by status (all-time)
+    total_approved = LoanRequest.objects.filter(applicant=request.user, status="Approved").count()
+    total_rejected = LoanRequest.objects.filter(applicant=request.user, status="Rejected").count()
+    total_pending = LoanRequest.objects.filter(applicant=request.user, status="Pending").count()
+
+    return render(request, "dashboard_applicant.html", {
+        "loans": loans,
+        "total_today": total_today,
+        "total_approved": total_approved,
+        "total_rejected": total_rejected,
+        "total_pending": total_pending,
+    })
+
 
 # -------------------- Dashboard Lender --------------------
 @login_required
 def dashboard_lender(request):
-    all_loans = LoanRequest.objects.order_by('-created_at')
-    pending_loans = LoanRequest.objects.filter(status="Pending").order_by('-created_at')
-    today = date.today()
-    total_today = LoanRequest.objects.filter(created_at__date=today).count()
-    total_approved = LoanRequest.objects.filter(status='Approved').count()
-    total_rejected = LoanRequest.objects.filter(status='Rejected').count()
-    total_pending = LoanRequest.objects.filter(status='Pending').count()
-    unlocked_loans = set(Payment.objects.filter(lender=request.user, status="Completed").values_list("loan_request_id", flat=True))
-    for loan in all_loans:
-        loan.is_paid = loan.id in unlocked_loans
-    context = locals()
+    # Lender ke liye LoanLenderStatus fetch karo
+    lender_feedbacks = LoanLenderStatus.objects.filter(lender=request.user).select_related('loan', 'loan__applicant')
+
+    # Counts calculate karo
+    today = timezone.now().date()
+    total_today = lender_feedbacks.filter(loan__created_at__date=today).count()
+    total_approved = lender_feedbacks.filter(status="Approved").count()
+    total_rejected = lender_feedbacks.filter(status="Rejected").count()
+    total_pending = lender_feedbacks.filter(status="Pending").count()
+
+    context = {
+        "lender_feedbacks": lender_feedbacks,
+        "total_today": total_today,
+        "total_approved": total_approved,
+        "total_rejected": total_rejected,
+        "total_pending": total_pending,
+    }
     return render(request, "dashboard_lender.html", context)
 
 # -------------------- Loan Request --------------------
@@ -302,13 +367,20 @@ def loan_request(request):
 @login_required
 def reject_loan(request, loan_id):
     if request.method == "POST":
-        reason = request.POST.get("reason", "No reason provided")
-        ls = get_object_or_404(LoanLenderStatus, loan_id=loan_id, lender=request.user)
-        ls.status = "Rejected"
-        ls.remarks = reason
-        ls.save()
-        messages.error(request, f"Loan {ls.loan.loan_id} rejected with reason: {reason}")
-    return redirect("dashboard_lender")
+        reason = request.POST.get("reason")
+        loan = get_object_or_404(LoanRequest, id=loan_id)
+
+        # Current lender ka decision update karo
+        lender_status = get_object_or_404(LoanLenderStatus, loan=loan, lender=request.user)
+        lender_status.status = "Rejected"
+        lender_status.remarks = reason
+        lender_status.save()
+
+        # Optional: Agar aap chahen to loan ka overall status check/update kar sakte ho
+        # Jaise: Agar sab lenders reject karte hain to loan overall rejected
+
+        messages.warning(request, f"Loan {loan.loan_id} rejected with reason: {reason}")
+        return redirect("dashboard_lender")
 
 @login_required
 def approve_loan(request, loan_id):
@@ -333,9 +405,10 @@ def edit_profile(request, user_id):
     lender_details = None
 
     if user.role == "applicant":
-        applicant_details, _ = applicantdetails.objects.get_or_create(user=user)
+        applicant_details, _ = ApplicantDetails.objects.get_or_create(user=user)
     elif user.role == "lender":
-        lender_details, _ = lenderdetails.objects.get_or_create(user=user)
+        lender_details, _ = LenderDetails.objects.get_or_create(user=user)
+
 
     if request.method == "POST":
         # ----- Common Profile -----
@@ -347,8 +420,8 @@ def edit_profile(request, user_id):
         profile.pincode = request.POST.get("pincode")
         profile.city = request.POST.get("city")
         profile.state = request.POST.get("state")
-        profile.pan_number = request.POST.get("panNumber")
-        profile.aadhar = request.POST.get("aadharNumber")
+        profile.pancard_number = request.POST.get("pancardNumber")
+        profile.aadhaar_number = request.POST.get("aadhaarNumber")
         profile.dob = request.POST.get("dob") or None
         profile.save()
 
@@ -448,18 +521,70 @@ def make_dummy_payment(request, loan_id):
 
 # -------------------- View Profile --------------------
 @login_required
-def view_profile(request, user_id, loan_id):
-    user = get_object_or_404(User, id=user_id)
-    loan = get_object_or_404(LoanRequest, id=loan_id, applicant=user)
-    if not Payment.objects.filter(loan_request=loan, lender=request.user, status="Completed").exists():
-        messages.error(request, "You can only view applicant full profile after payment is done.")
+def view_profile(request, loan_id):
+    """
+    Full profile: all fields visible after payment.
+    """
+    loan = get_object_or_404(LoanRequest, id=loan_id)
+    applicant = loan.applicant
+
+    # Check payment
+    payment_done = Payment.objects.filter(
+        loan_request=loan, lender=request.user, status="Completed"
+    ).exists()
+
+    if not payment_done:
+        messages.error(request, "⚠️ You can only view applicant's full profile after payment is done.")
         return redirect("dashboard_lender")
-    return render(request, "view_profile.html", {"applicant": user, "loan": loan})
+
+    # Get related profile + applicant details
+    profile = getattr(applicant, "profile", None)
+    applicant_details = ApplicantDetails.objects.filter(user=applicant).first()  # ✅ lowercase relation
+
+    return render(request, "view_profile.html", {  # ✅ correct path
+        "applicant": applicant,
+        "profile": profile,
+        "applicant_details": applicant_details,  # ✅ fixed
+        "loan": loan,
+        "hide_sensitive": False,
+    })
+
+
+# -------------------- Partial Profile --------------------
+from django.shortcuts import render, get_object_or_404
+from django.contrib.auth.decorators import login_required
+from .models import LoanRequest, Profile, ApplicantDetails
 
 @login_required
 def partial_profile(request, loan_id):
+    """
+    Partial profile: sensitive fields hidden.
+    """
+    # Loan fetch
     loan = get_object_or_404(LoanRequest, id=loan_id)
-    return render(request, "partial_profile.html", {"loan": loan, "applicant": loan.applicant})
+
+    # Applicant (user)
+    applicant = loan.applicant
+
+    # Get related profile + applicant details
+    profile = getattr(applicant, "profile", None)
+    applicant_details = ApplicantDetails.objects.filter(user=applicant).first()  # ✅ lowercase relation
+
+    # Fields jo partial profile me hide karne hain
+    hidden_fields = [
+        "mobile", "email", "address",
+        "gst_number", "company_name",
+        "business_name", "aadhaar_number"
+    ]
+
+    return render(request, "partial_profile.html", {  # ✅ correct path
+        "applicant": applicant,
+        "profile": profile,
+        "applicant_details": applicant_details,  # ✅ fixed
+        "loan": loan,
+        "hide_sensitive": False,
+    })
+
 
 # -------------------- Forgot / Reset Password --------------------
 def forgot_password_view(request):

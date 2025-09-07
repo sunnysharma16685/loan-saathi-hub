@@ -8,20 +8,50 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
 
     <style>
-        body { font-family: 'Poppins', sans-serif; background: #f5f8fa; margin: 0; padding: 0; }
-        header, footer { background: #0d6efd; color: #fff; padding: 15px 30px; }
-        header { display: flex; justify-content: space-between; align-items: center; }
+        /* ---------- Body & Header ---------- */
+        body { font-family: 'Poppins', sans-serif; background: #f0f2f5; margin: 0; padding: 0; }
+        header, footer { background: #0d6efd; color: #fff; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; }
         header a { color: #fff; text-decoration: none; margin-left: 15px; font-weight: 600; }
-        h1 { margin: 20px; font-size: 24px; color: #333; }
-        .btn { padding: 6px 12px; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; text-decoration: none; }
+        header span { font-weight: 500; }
+        h1 { margin: 20px; font-size: 28px; color: #212529; text-align: center; }
+
+        /* ---------- Buttons ---------- */
+        .btn-request, .btn-track, .btn-view, .btn-warning, .btn-info { border-radius: 8px; padding: 10px 16px; font-weight: 600; transition: all 0.3s ease; }
         .btn-request { background: #0d6efd; color: #fff; }
+        .btn-request:hover { background: #0b5ed7; }
         .btn-track { background: #28a745; color: #fff; }
+        .btn-track:hover { background: #218838; }
         .btn-view { background: #17a2b8; color: #fff; }
-        table { width: 95%; margin: 20px auto; border-collapse: collapse; background: #fff; box-shadow: 0px 0px 8px rgba(0,0,0,0.1); }
-        table th, table td { border: 1px solid #ddd; padding: 10px; text-align: center; vertical-align: middle; }
-        table th { background: #0d6efd; color: #fff; }
+        .btn-view:hover { background: #138496; }
+        .btn-warning { background: #ffc107; color: #212529; }
+        .btn-warning:hover { background: #e0a800; }
+        .btn-info { background: #0dcaf0; color: #212529; }
+        .btn-info:hover { background: #31d2f2; }
+
+        /* ---------- Cards ---------- */
+        .card { border-radius: 12px; box-shadow: 0 8px 20px rgba(0,0,0,0.08); transition: transform 0.3s ease; cursor: pointer; }
+        .card:hover { transform: translateY(-4px); }
+        .card-body h5 { font-weight: 600; margin-bottom: 8px; }
+        .card-body h3 { font-weight: 700; margin: 0; }
+
+        /* ---------- Table ---------- */
+        table { width: 95%; margin: 20px auto; border-collapse: collapse; background: #fff; border-radius: 8px; overflow: hidden; box-shadow: 0 8px 16px rgba(0,0,0,0.08); }
+        table th, table td { padding: 12px 10px; text-align: center; vertical-align: middle; }
+        table th { background: #0d6efd; color: #fff; font-weight: 600; }
+        table tbody tr:hover { background: #f1f3f5; transition: 0.3s; }
+        .badge { font-size: 0.9em; font-weight: 600; }
+
+        /* ---------- Lender Feedback Collapse ---------- */
+        .collapse table { margin: 10px 0; box-shadow: none; }
+        .collapse table th { background: #e9ecef; color: #212529; }
+        .collapse table td { background: #f8f9fa; }
+
+        /* ---------- Footer ---------- */
         footer { text-align: center; font-size: 14px; }
         footer a { color: #fff; margin: 0 5px; text-decoration: none; }
+
+        /* ---------- Filter Cursor ---------- */
+        .filter-box { cursor: pointer; }
     </style>
 </head>
 <body>
@@ -30,7 +60,7 @@
     <div>Loan Saathi Hub</div>
     <div>
         <span>Welcome, {{ request.user.profile.full_name|default:request.user.email|title }}</span>
-        <a href="{% url 'home' %}">Home</a>
+        <a href="{% url 'index' %}">Home</a>
         <a href="{% url 'logout' %}">Logout</a>
         <a href="{% url 'edit_profile' user.id %}" class="btn btn-warning">Edit Profile</a>
     </div>
@@ -38,12 +68,12 @@
 
 <h1>Applicant Dashboard</h1>
 
-<div style="margin: 20px;">
+<div class="text-center my-3">
     <a href="{% url 'loan_request' %}" class="btn btn-request">+ New Loan Request</a>
 </div>
 
-<div class="row mb-3">
-  <div class="col-md-3">
+<div class="row mb-3 px-3">
+  <div class="col-md-3 mb-3">
     <div class="card text-center bg-primary text-white filter-box" data-filter="today">
       <div class="card-body">
         <h5>Total Loan - Today</h5>
@@ -51,7 +81,7 @@
       </div>
     </div>
   </div>
-  <div class="col-md-3">
+  <div class="col-md-3 mb-3">
     <div class="card text-center bg-success text-white filter-box" data-filter="approved">
       <div class="card-body">
         <h5>Total Approved</h5>
@@ -59,7 +89,7 @@
       </div>
     </div>
   </div>
-  <div class="col-md-3">
+  <div class="col-md-3 mb-3">
     <div class="card text-center bg-danger text-white filter-box" data-filter="rejected">
       <div class="card-body">
         <h5>Total Rejected</h5>
@@ -67,7 +97,7 @@
       </div>
     </div>
   </div>
-  <div class="col-md-3">
+  <div class="col-md-3 mb-3">
     <div class="card text-center bg-warning text-dark filter-box" data-filter="pending">
       <div class="card-body">
         <h5>Total Pending</h5>
@@ -77,7 +107,7 @@
   </div>
 </div>
 
-<table class="table table-striped">
+<table class="table table-striped rounded">
     <thead>
         <tr>
             <th>Sl No.</th>
@@ -94,7 +124,7 @@
     </thead>
     <tbody>
       {% for loan in loans %}
-      <tr>
+      <tr data-status="{{ loan.status|lower }}" data-created="{{ loan.created_at|date:'Y-m-d' }}">
          <td>{{ forloop.counter }}</td>
          <td>{{ loan.created_at|date:"d-m-Y" }}</td>
          <td>{{ loan.loan_id }}</td>
@@ -103,12 +133,12 @@
          <td>{{ loan.duration_months }} months</td>
          <td>{{ loan.interest_rate }}%</td>
          <td>
-            {% if loan.global_status == "Approved" %}
-              <span class="badge bg-success">Approved</span>
-            {% elif loan.global_status == "Rejected" %}
-              <span class="badge bg-danger">Rejected</span>
+            {% if loan.status == "Approved" %}
+               <span class="badge bg-success">Approved</span>
+            {% elif loan.status == "Rejected" %}
+               <span class="badge bg-danger">Rejected</span>
             {% else %}
-              <span class="badge bg-warning text-dark">Pending</span>
+               <span class="badge bg-warning text-dark">Pending</span>
             {% endif %}
          </td>
          <td>{{ loan.reason_for_loan }}</td>
@@ -119,18 +149,17 @@
          </td>
       </tr>
 
-      <!-- Lender Feedback Sub-Table -->
       <tr class="collapse" id="lenderFeedback{{loan.id}}">
-        <td colspan="10" style="background:#f9f9f9;">
+        <td colspan="10">
           <table class="table table-sm table-bordered mb-0">
-            <thead class="table-light">
+            <thead>
               <tr>
                 <th>Sl. No.</th>
                 <th>Date</th>
                 <th>Loan ID</th>
                 <th>Lender Type</th>
                 <th>Status</th>
-                <th>Remarks</th>
+                <th>Action</th>
               </tr>
             </thead>
             <tbody>
@@ -140,7 +169,7 @@
                   <td>{{ forloop.counter }}</td>
                   <td>{{ fb.updated_at|date:"d-m-Y H:i" }}</td>
                   <td>{{ loan.loan_id }}</td>
-                  <td>{{ fb.lender.lender_type|default:"N/A" }}</td>
+                  <td>{{ fb.lender.lender_details.lender_type|default:"N/A" }}</td>
                   <td>
                     {% if fb.status == "Rejected" %}
                       <span class="badge bg-danger">Rejected</span>
@@ -152,12 +181,31 @@
                     {% if fb.status == "Rejected" %}
                       {{ fb.remarks|default:"Reason not provided" }}
                     {% elif fb.status == "Approved" %}
-                      {{ fb.lender.full_name|default:"N/A" }} |
-                      {{ fb.lender.mobile|default:"N/A" }} |
-                      {{ fb.lender.branch_name|default:"N/A" }}
+                      <button class="btn btn-info btn-sm" data-bs-toggle="modal" data-bs-target="#lenderContacts{{fb.id}}">
+                        Lender Contacts
+                      </button>
                     {% endif %}
                   </td>
                 </tr>
+
+                {% if fb.status == "Approved" %}
+                <div class="modal fade" id="lenderContacts{{fb.id}}" tabindex="-1" aria-hidden="true">
+                  <div class="modal-dialog modal-md">
+                    <div class="modal-content">
+                      <div class="modal-header bg-info text-white">
+                        <h5 class="modal-title">Lender Contacts</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                      </div>
+                      <div class="modal-body text-start">
+                        <p><strong>Full Name:</strong> {{ fb.lender.profile.full_name|default:"N/A" }}</p>
+                        <p><strong>Mobile:</strong> {{ fb.lender.profile.mobile|default:"N/A" }}</p>
+                        <p><strong>Bank / Firm Name:</strong> {{ fb.lender.lender_details.bank_firm_name|default:"N/A" }}</p>
+                        <p><strong>Branch Name:</strong> {{ fb.lender.lender_details.branch_name|default:"N/A" }}</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                {% endif %}
                 {% endif %}
               {% empty %}
                 <tr><td colspan="6">No lender feedback yet.</td></tr>
@@ -166,33 +214,6 @@
           </table>
         </td>
       </tr>
-       <!-- ✅ Lender Profile Modal -->
-<div class="modal fade" id="lenderProfileModal{{ loan.id }}" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog modal-lg">
-    <div class="modal-content">
-      <div class="modal-header bg-info text-white">
-        <h5 class="modal-title">Lender Profile</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-      </div>
-      <div class="modal-body text-start">
-
-        {% with lender_status=loan.lender_statuses.all.0 %}
-          {% if lender_status %}
-            <p><strong>Full Name:</strong> {{ lender_status.lender.get_full_name|default:"N/A" }}</p>
-            <p><strong>Mobile:</strong> {{ lender_status.lender.profile.mobile|default:"N/A" }}</p>
-            <p><strong>Lender Type:</strong> {{ lender_status.lender.profile.lender_type|default:"N/A" }}</p>
-            <p><strong>Bank / Firm Name:</strong> {{ lender_status.lender.profile.bank_firm_name|default:"N/A" }}</p>
-            <p><strong>Branch Name:</strong> {{ lender_status.lender.profile.branch_name|default:"N/A" }}</p>
-          {% else %}
-            <p>No lender found.</p>
-          {% endif %}
-        {% endwith %}
-
-      </div>
-    </div>
-  </div>
-</div>
-
       {% empty %}
       <tr><td colspan="10">No loan requests found.</td></tr>
       {% endfor %}
@@ -207,6 +228,47 @@
     <a href="#">FAQ</a> |
     <a href="#">Support</a>
 </footer>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  const filterBoxes = document.querySelectorAll(".filter-box");
+  const mainRows = document.querySelectorAll("table tbody tr[data-status]");
+
+  function hideSubRow(row) {
+    const sib = row.nextElementSibling;
+    if (sib && sib.classList.contains("collapse")) {
+      sib.classList.remove("show");
+      sib.style.display = "none";
+    }
+  }
+
+  function showSubRow(row) {
+    const sib = row.nextElementSibling;
+    if (sib && sib.classList.contains("collapse")) {
+      sib.style.display = "";
+    }
+  }
+
+  function applyFilter(kind) {
+    const todayISO = new Date().toISOString().split("T")[0];
+
+    mainRows.forEach(row => {
+      const status = (row.dataset.status || "").toLowerCase();
+      const created = row.dataset.created;
+      let show = true;
+      if (kind === "today") show = (created === todayISO);
+      else if (["approved","rejected","pending"].includes(kind)) show = (status === kind);
+
+      if (show) { row.style.display = ""; showSubRow(row); }
+      else { row.style.display = "none"; hideSubRow(row); }
+    });
+  }
+
+  filterBoxes.forEach(box => {
+    box.addEventListener("click", () => applyFilter(box.dataset.filter));
+  });
+});
+</script>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>

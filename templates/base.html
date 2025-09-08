@@ -27,7 +27,7 @@
       </button>
 
       <div class="collapse navbar-collapse" id="navbarNav">
-        <ul class="navbar-nav ms-auto">
+        <ul class="navbar-nav ms-auto flex-column flex-lg-row">
 
           {% if user.is_authenticated %}
 
@@ -85,7 +85,7 @@
   </nav>
 
   <!-- Main Content -->
-  <main class="container mt-4">
+  <main class="container-fluid mt-4 px-2 px-md-4">
     {% if messages %}
       {% for message in messages %}
         <div class="alert alert-{{ message.tags }}">{{ message }}</div>

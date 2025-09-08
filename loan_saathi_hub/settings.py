@@ -15,7 +15,10 @@ SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "dev-secret-key")
 DEBUG = os.getenv("DEBUG", "False") == "True"
 
 # Render custom domain support
-ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "127.0.0.1,localhost,www.loansaathihub.in,loansaathihub.in").split(",")
+ALLOWED_HOSTS = os.getenv(
+    "ALLOWED_HOSTS",
+    "127.0.0.1,localhost,www.loansaathihub.in,loansaathihub.in"
+).split(",")
 
 # Force HTTPS in production
 SECURE_SSL_REDIRECT = not DEBUG
@@ -38,9 +41,12 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    "main",   # Your app
+    "main",  # Your app
 ]
 
+# ---------------------------
+# MIDDLEWARE
+# ---------------------------
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
@@ -53,6 +59,9 @@ MIDDLEWARE = [
 
 ROOT_URLCONF = "loan_saathi_hub.urls"
 
+# ---------------------------
+# TEMPLATES
+# ---------------------------
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
@@ -64,13 +73,15 @@ TEMPLATES = [
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
-                "main.context_processors.user_profile",  # existing
-                
+                "main.context_processors.user_profile",
             ],
         },
     },
 ]
 
+# ---------------------------
+# WSGI
+# ---------------------------
 WSGI_APPLICATION = "loan_saathi_hub.wsgi.application"
 
 # ---------------------------
@@ -93,7 +104,7 @@ DATABASES = {
 AUTH_USER_MODEL = "main.User"
 
 # ---------------------------
-# PASSWORDS
+# PASSWORD VALIDATORS
 # ---------------------------
 AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
@@ -143,3 +154,22 @@ SUPABASE_JWT_SECRET = os.getenv("SUPABASE_JWT_SECRET")
 # DEFAULT PRIMARY KEY
 # ---------------------------
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+# ---------------------------
+# DEBUGGING / LOGGING
+# ---------------------------
+if DEBUG:
+    # Allow better error visibility in logs
+    LOGGING = {
+        "version": 1,
+        "disable_existing_loggers": False,
+        "handlers": {
+            "console": {
+                "class": "logging.StreamHandler",
+            },
+        },
+        "root": {
+            "handlers": ["console"],
+            "level": "DEBUG",
+        },
+    }

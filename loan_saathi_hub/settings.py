@@ -2,8 +2,6 @@ import os
 from pathlib import Path
 from dotenv import load_dotenv
 
-IS_TESTING = True
-
 # ---------------------------
 # BASE DIR & ENV
 # ---------------------------
@@ -67,7 +65,7 @@ TEMPLATES = [
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
                 "main.context_processors.user_profile",  # existing
-                "main.context_processors.testing_mode",  # <-- add this
+                
             ],
         },
     },

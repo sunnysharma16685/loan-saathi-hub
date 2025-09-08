@@ -62,6 +62,7 @@ def is_profile_complete(user):
 
 # -------------------- Register --------------------
 def register_view(request):
+    # Get role from GET parameter (applicant/lender)
     role = (request.GET.get("role") or "").lower()
 
     if request.method == "POST":
@@ -70,27 +71,33 @@ def register_view(request):
         confirm_password = request.POST.get("confirm_password") or ""
         form_role = (request.POST.get("role") or role).lower()
 
+        # Validate role
         if form_role not in ("applicant", "lender"):
             messages.error(request, "Please select applicant or lender.")
             return redirect(f"/register/?role={role or ''}")
 
+        # Validate required fields
         if not email or not password:
             messages.error(request, "Email and password are required.")
             return redirect(f"/register/?role={form_role}")
 
+        # Check password confirmation
         if password != confirm_password:
             messages.error(request, "Passwords do not match.")
             return redirect(f"/register/?role={form_role}")
 
+        # Check if email already exists
         if User.objects.filter(email=email).exists():
             messages.error(request, "Email already registered.")
             return redirect(f"/register/?role={form_role}")
 
         try:
+            # Create new user
             user = User(email=email, role=form_role)
             user.set_password(password)
             user.save()
 
+            # Log in user
             login(request, user, backend="django.contrib.auth.backends.ModelBackend")
             return redirect("profile_form", user_id=str(user.id))
 
@@ -98,24 +105,39 @@ def register_view(request):
             messages.error(request, f"Registration error: {e}")
             return redirect(f"/register/?role={form_role}")
 
+    # GET request: show registration page
     return render(request, "register.html", {"role": role})
 
 # -------------------- Login --------------------
+
 def login_view(request):
-    role = request.GET.get("role")
+    role = (request.GET.get("role") or "").lower()
+
     if request.method == "POST":
         email = (request.POST.get("email") or "").strip().lower()
         password = request.POST.get("password") or ""
-        user = authenticate(request, username=email, password=password)
+        form_role = (request.POST.get("role") or role).lower()
+
+        # Authenticate user (requires custom backend for email login)
+        user = authenticate(request, email=email, password=password)
+
         if user:
-            login(request, user)
+            # Check role match
+            if form_role and user.role != form_role:
+                messages.error(request, "Role mismatch")
+                return redirect(f"/login/?role={form_role}")
+
+            # Log in user with backend
+            login(request, user, backend="django.contrib.auth.backends.ModelBackend")
+
+            # Redirect to profile or dashboard
             if not is_profile_complete(user):
                 return redirect("profile_form", user_id=user.id)
             return redirect("dashboard_router")
         else:
             messages.error(request, "❌ Invalid email or password")
-    return render(request, "login.html", {"role": role})
 
+    return render(request, "login.html", {"role": role})
 # -------------------- Logout --------------------
 def logout_view(request):
     logout(request)

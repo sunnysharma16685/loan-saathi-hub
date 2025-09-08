@@ -2,182 +2,87 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>Loan Saathi Hub - Login</title>
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
-<style>
-  body {
-    font-family: 'Poppins', sans-serif;
-    background: linear-gradient(135deg, #f5f8fa, #e9ecef);
-    margin: 0; padding: 0;
-  }
-  header, footer {
-    background: #212529; color: #fff; padding: 15px 30px;
-  }
-  header { display: flex; justify-content: space-between; align-items: center; }
-  header a { color: #fff; text-decoration: none; margin-left: 15px; font-weight: 600; }
-  h1 {
-    margin: 30px 0 15px; font-size: 26px; color: #212529; text-align: center;
-  }
-  form {
-    max-width: 450px; margin: 20px auto; background: #fff;
-    padding: 30px; border-radius: 12px;
-    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
-    animation: fadeIn 0.5s ease-in-out;
-  }
-  @keyframes fadeIn { from {opacity: 0; transform: translateY(20px);} to {opacity: 1; transform: translateY(0);} }
-  label { display: block; margin: 14px 0 6px; font-weight: 600; color: #333; }
-
-  /* Role Selection Buttons */
-  .role-buttons {
-    display: flex; justify-content: space-between; margin-bottom: 20px;
-  }
-  .role-buttons button {
-    flex: 1; margin-right: 10px; padding: 12px 0;
-    border: 2px solid #212529; border-radius: 8px;
-    background: #fff; color: #212529; font-weight: 600; cursor: pointer;
-    transition: all 0.3s;
-  }
-  .role-buttons button:last-child { margin-right: 0; }
-  .role-buttons button.active,
-  .role-buttons button:hover {
-    background: #212529; color: #fff; border-color: #212529;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-  }
-
-  input, select {
-    width: 100%; padding: 12px; border: 1px solid #ccc;
-    border-radius: 6px; margin-bottom: 15px; transition: 0.3s;
-  }
-  input:focus, select:focus { border-color: #212529; outline: none; box-shadow: 0 0 6px rgba(0,0,0,0.1); }
-  .password-wrapper { position: relative; }
-  .password-wrapper span {
-    position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
-    cursor: pointer; user-select: none; font-size: 18px;
-  }
-
-  /* Login Button */
-  button#loginBtn {
-    width: 100%; padding: 14px; font-size: 16px; font-weight: 700;
-    border-radius: 8px; border: none;
-    background: linear-gradient(135deg, #212529, #000);
-    color: #fff; cursor: pointer; transition: 0.3s;
-  }
-  button#loginBtn:hover {
-    background: linear-gradient(135deg, #000, #212529);
-    box-shadow: 0 6px 20px rgba(0,0,0,0.25);
-  }
-
-  .links { text-align: center; margin-top: 15px; }
-  .links a { color: #212529; text-decoration: none; margin: 0 6px; font-size: 14px; }
-  .messages {
-    margin-top: 15px; text-align: center; padding: 10px;
-    border-radius: 6px; font-size: 14px; font-weight: 500;
-  }
-  .messages li { list-style: none; margin: 6px 0; }
-  .messages .error { color: #d9534f; }
-  .messages .success { color: #28a745; }
-  .checkbox-group { margin-top: 15px; display: flex; align-items: center; font-size: 14px; }
-  .checkbox-group input { width: auto; margin-right: 8px; }
-  footer { text-align: center; font-size: 14px; margin-top: 40px; }
-  footer a { color: #fff; margin: 0 5px; text-decoration: none; }
-</style>
+    <meta charset="UTF-8">
+    <title>Loan Saathi Hub - Login</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Poppins', sans-serif; background: #f5f8fa; margin: 0; padding: 0; }
+        header, footer { background: #212529; color: #fff; padding: 15px 30px; }
+        header { display: flex; justify-content: space-between; align-items: center; }
+        header a { color: #fff; text-decoration: none; margin-left: 15px; font-weight: 600; }
+        h1 { margin: 20px; font-size: 24px; color: #333; text-align: center; }
+        form { max-width: 400px; margin: 20px auto; background: #fff; padding: 25px; border-radius: 6px; box-shadow: 0 0 8px rgba(0,0,0,0.1); }
+        label { display: block; margin: 12px 0 6px; font-weight: 600; color: #333; }
+        input, select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; }
+        button { background: #212529; color: #fff; border: none; padding: 10px 15px; border-radius: 4px; cursor: pointer; margin-top: 15px; width: 100%; }
+        button:hover { background: #000; }
+        .links { text-align: center; margin-top: 10px; }
+        .links a { color: #212529; text-decoration: none; margin: 0 5px; font-size: 14px; }
+        .messages { margin-top: 15px; text-align: center; padding: 10px; border-radius: 4px; }
+        .messages li { list-style: none; margin: 5px 0; }
+        .messages .error { color: red; }
+        .messages .success { color: green; }
+        footer { text-align: center; font-size: 14px; margin-top: 40px; }
+        footer a { color: #fff; margin: 0 5px; text-decoration: none; }
+    </style>
 </head>
 <body>
 
 <header>
-  <div>Loan Saathi Hub</div>
-  <div>
-    <a href="{% url 'index' %}">Home</a>
-    <a href="{% url 'register' %}">Register</a>
-  </div>
+    <div>Loan Saathi Hub</div>
+    <div>
+        <a href="{% url 'home' %}">Home</a>
+        <a href="{% url 'register' %}">Register</a>
+    </div>
 </header>
 
 <h1>Login to Your Account</h1>
 
-<form method="POST" onsubmit="return validateTerms()">
-  {% csrf_token %}
+<form method="POST">
+    {% csrf_token %}
 
-  <!-- Role Selection -->
-  <div class="role-buttons">
-    <button type="button" id="applicantBtn" data-role="applicant">Applicant</button>
-    <button type="button" id="lenderBtn" data-role="lender">Lender</button>
-  </div>
-  <input type="hidden" name="role" id="role" required>
+    <!-- Role -->
+    <label for="role">Login as</label>
+    <select name="role" id="role" required>
+        <option value="">-- Select Role --</option>
+        <option value="applicant" {% if role == "applicant" %}selected{% endif %}>Applicant</option>
+        <option value="lender" {% if role == "lender" %}selected{% endif %}>Lender</option>
+    </select>
 
-  <!-- Email -->
-  <label for="email">Email</label>
-  <input type="email" name="email" id="email" placeholder="Enter your email" required>
+    <!-- Email -->
+    <label for="email">Email</label>
+    <input type="email" name="email" id="email" required>
 
-  <!-- Password -->
-  <label for="password">Password</label>
-  <div class="password-wrapper">
-    <input type="password" name="password" id="password" placeholder="Enter your password" required>
-    <span id="togglePassword">👁️</span>
-  </div>
+    <!-- Password -->
+    <label for="password">Password</label>
+    <input type="password" name="password" id="password" required>
 
-  <!-- Submit -->
-  <button type="submit" id="loginBtn">Login</button>
+    <!-- Submit -->
+    <button type="submit">Login</button>
 
-  <!-- Messages -->
-  {% if messages %}
-    <ul class="messages">
-      {% for message in messages %}
-        <li class="{{ message.tags }}">{{ message }}</li>
-      {% endfor %}
-    </ul>
-  {% endif %}
+    <!-- Messages -->
+    {% if messages %}
+        <ul class="messages">
+            {% for message in messages %}
+                <li class="{{ message.tags }}">{{ message }}</li>
+            {% endfor %}
+        </ul>
+    {% endif %}
 
-  <div class="links">
-    <a href="{% url 'forgot_password' %}">Forgot Password?</a> |
-    <a href="{% url 'register' %}">New User? Register</a>
-  </div>
+    <div class="links">
+        <a href="{% url 'forgot_password' %}">Forgot Password?</a> |
+        <a href="{% url 'register' %}">New User? Register</a>
+    </div>
 </form>
 
 <footer>
-  © 2025 LoanSaathiHub. All rights reserved. |
-  <a href="#">About us</a> |
-  <a href="#">Terms & Conditions</a> |
-  <a href="#">Privacy Policy</a> |
-  <a href="#">FAQ</a> |
-  <a href="#">Support</a>
+    © 2025 LoanSaathiHub. All rights reserved. |
+    <a href="#">About us</a> |
+    <a href="#">Terms & Conditions</a> |
+    <a href="#">Privacy Policy</a> |
+    <a href="#">FAQ</a> |
+    <a href="#">Support</a>
 </footer>
-
-<script>
-  // Toggle password visibility
-  const togglePassword = document.querySelector("#togglePassword");
-  const passwordField = document.querySelector("#password");
-  togglePassword.addEventListener("click", function () {
-    const type = passwordField.getAttribute("type") === "password" ? "text" : "password";
-    passwordField.setAttribute("type", type);
-    this.textContent = type === "password" ? "👁️" : "🙈";
-  });
-
-  // Terms & Conditions validation
-  function validateTerms() {
-    if (!document.getElementById("terms").checked) {
-      alert("You must agree to the Terms & Conditions before login.");
-      return false;
-    }
-    return true;
-  }
-
-  // Role selection buttons
-  const applicantBtn = document.getElementById("applicantBtn");
-  const lenderBtn = document.getElementById("lenderBtn");
-  const roleInput = document.getElementById("role");
-
-  applicantBtn.addEventListener("click", () => {
-    roleInput.value = "applicant";
-    applicantBtn.classList.add("active");
-    lenderBtn.classList.remove("active");
-  });
-  lenderBtn.addEventListener("click", () => {
-    roleInput.value = "lender";
-    lenderBtn.classList.add("active");
-    applicantBtn.classList.remove("active");
-  });
-</script>
 
 </body>
 </html>

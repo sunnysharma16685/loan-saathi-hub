@@ -2,6 +2,8 @@ import os
 from pathlib import Path
 from dotenv import load_dotenv
 
+IS_TESTING = True
+
 # ---------------------------
 # BASE DIR & ENV
 # ---------------------------

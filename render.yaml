@@ -1,0 +1,37 @@
+services:
+  - type: web
+    name: loan-saathi-hub
+    env: python
+    plan: free
+    buildCommand: "./build.sh"
+    startCommand: "gunicorn loan_saathi_hub.wsgi:application --bind 0.0.0.0:$PORT"
+    envVars:
+      - key: DJANGO_SECRET_KEY
+        generateValue: true
+      - key: DEBUG
+        value: "False"
+      - key: ALLOWED_HOSTS
+        value: "www.loansaathihub.in,.onrender.com"
+      - key: DB_NAME
+        fromDatabase:
+          name: loan-saathi-db
+          property: database
+      - key: DB_USER
+        fromDatabase:
+          name: loan-saathi-db
+          property: user
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: loan-saathi-db
+          property: password
+      - key: DB_HOST
+        fromDatabase:
+          name: loan-saathi-db
+          property: host
+      - key: DB_PORT
+        fromDatabase:
+          name: loan-saathi-db
+          property: port
+databases:
+  - name: loan-saathi-db
+    plan: free

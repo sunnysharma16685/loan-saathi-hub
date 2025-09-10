@@ -31,8 +31,14 @@ DEBUG = _bool(os.getenv("DEBUG", "False"), default=False)
 # If behind a proxy/load balancer (e.g., Render)
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
-# ALLOWED_HOSTS: comma separated in .env (example: 127.0.0.1,localhost,loansaathihub.in,www.loansaathihub.in)
-ALLOWED_HOSTS = _list(os.getenv("ALLOWED_HOSTS", "127.0.0.1,localhost"))
+# ALLOWED_HOSTS
+# Example .env → ALLOWED_HOSTS=127.0.0.1,localhost,loansaathi-hub.onrender.com,www.loansaathihub.in
+ALLOWED_HOSTS = _list(
+    os.getenv(
+        "ALLOWED_HOSTS",
+        "127.0.0.1,localhost,0.0.0.0,loansaathi-hub.onrender.com,www.loansaathihub.in"
+    )
+)
 
 # ---------------------------
 # APPLICATIONS
@@ -125,7 +131,6 @@ else:
         }
     }
 
-
 # ---------------------------
 # CUSTOM USER MODEL
 # ---------------------------
@@ -206,12 +211,13 @@ else:
 
 X_FRAME_OPTIONS = os.getenv("X_FRAME_OPTIONS", "DENY")
 
-if not DEBUG and ALLOWED_HOSTS:
+if ALLOWED_HOSTS:
     csf_trusted = []
     for host in ALLOWED_HOSTS:
         host = host.strip()
         if not host:
             continue
+        # Hostname cleanup
         if not host.startswith("http"):
             csf_trusted.append(f"https://{host}")
         else:

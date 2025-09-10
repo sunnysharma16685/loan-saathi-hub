@@ -88,14 +88,19 @@ WSGI_APPLICATION = "loan_saathi_hub.wsgi.application"
 # DATABASE (robust)
 # ---------------------------
 DATABASE_URL = os.getenv("DATABASE_URL")
+
 if DATABASE_URL:
     try:
         import dj_database_url
         db_config = dj_database_url.parse(DATABASE_URL, conn_max_age=600)
-        if "sslmode" not in DATABASE_URL:
-            db_config.setdefault("OPTIONS", {})["sslmode"] = "require"
+
+        # Always enforce sslmode=require for Supabase/remote DB
+        db_config.setdefault("OPTIONS", {})
+        db_config["OPTIONS"]["sslmode"] = "require"
+
         DATABASES = {"default": db_config}
     except Exception:
+        # fallback manual config (rarely needed)
         DATABASES = {
             "default": {
                 "ENGINE": "django.db.backends.postgresql",
@@ -104,10 +109,11 @@ if DATABASE_URL:
                 "PASSWORD": os.getenv("DB_PASSWORD", ""),
                 "HOST": os.getenv("DB_HOST", "localhost"),
                 "PORT": os.getenv("DB_PORT", "5432"),
-                "OPTIONS": {"sslmode": "require"} if os.getenv("DB_HOST", "").endswith("supabase.co") else {},
+                "OPTIONS": {"sslmode": "require"},
             }
         }
 else:
+    # local fallback (no DATABASE_URL provided)
     DATABASES = {
         "default": {
             "ENGINE": "django.db.backends.postgresql",
@@ -118,6 +124,7 @@ else:
             "PORT": os.getenv("DB_PORT", "5432"),
         }
     }
+
 
 # ---------------------------
 # CUSTOM USER MODEL

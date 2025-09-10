@@ -1,57 +1,46 @@
-# ------------------------
-# Python / Django
-# ------------------------
+# Python
 __pycache__/
-*.pyc
+*.py[cod]
 *.pyo
 *.pyd
-*.sqlite3
-db.sqlite3
-*.log
+*.so
+*.egg-info/
+dist/
+build/
 
-# Django migrations pycache
-**/migrations/__pycache__/
-
-# ------------------------
-# Virtual environment
-# ------------------------
-.env/
-.venv/
+# Virtualenv
+.venv
 venv/
 ENV/
+env/
 env.bak/
-venv.bak/
+*.env.bak
 
-# ------------------------
-# IDE / Editors
-# ------------------------
+# Django
+*.log
+db.sqlite3
+media/
+staticfiles/
+tmp/
+*.pot
+
+# VSCode / IDE
 .vscode/
 .idea/
 *.swp
 *.swo
 
-# ------------------------
-# Environment files
-# ------------------------
+# Node / Frontend builds (if any)
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# Secrets
 .env
-.env.local
-.env.production
-.env.*    # Ignore all env files
-!.env.example   # लेकिन example को push करना allow रहेगा
+.env.*
+!.env.example
+!.env.local
+!.env.production
 
-# ------------------------
-# OS files
-# ------------------------
-.DS_Store
-Thumbs.db
-
-# ------------------------
-# Static / Media (collectstatic generated files)
-# ------------------------
-staticfiles/
-media/
-
-# ------------------------
-# Render specific
-# ------------------------
+# Render / Deployment
 render.yaml

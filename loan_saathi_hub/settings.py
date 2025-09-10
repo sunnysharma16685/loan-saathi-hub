@@ -9,39 +9,43 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 load_dotenv(BASE_DIR / ".env")
 
 # ---------------------------
+# HELPERS
+# ---------------------------
+def _bool(env_value, default=False):
+    if env_value is None:
+        return default
+    return str(env_value).strip().lower() in ("1", "true", "yes", "on")
+
+def _list(env_value, default=None, sep=","):
+    raw = env_value if env_value is not None else ("" if default is None else default)
+    return [p.strip() for p in str(raw).split(sep) if p.strip()]
+
+# ---------------------------
 # SECURITY
 # ---------------------------
 SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "dev-secret-key")
-DEBUG = os.getenv("DEBUG", "False") == "True"
 
-# Render custom domain support
-ALLOWED_HOSTS = os.getenv(
-    "ALLOWED_HOSTS",
-    "127.0.0.1,localhost,www.loansaathihub.in,loansaathihub.in"
-).split(",")
+# Use environment variable DEBUG for production. Defaults False (safe for Render)
+DEBUG = _bool(os.getenv("DEBUG", "False"), default=False)
 
-# Force HTTPS in production
-SECURE_SSL_REDIRECT = not DEBUG
-SESSION_COOKIE_SECURE = not DEBUG
-CSRF_COOKIE_SECURE = not DEBUG
+# If behind a proxy/load balancer (e.g., Render)
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
-# HSTS (Strict Transport Security) - only when DEBUG=False
-if not DEBUG:
-    SECURE_HSTS_SECONDS = 31536000  # 1 year
-    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
-    SECURE_HSTS_PRELOAD = True
+# ALLOWED_HOSTS: comma separated in .env (example: 127.0.0.1,localhost,loansaathihub.in,www.loansaathihub.in)
+ALLOWED_HOSTS = _list(os.getenv("ALLOWED_HOSTS", "127.0.0.1,localhost"))
 
 # ---------------------------
 # APPLICATIONS
 # ---------------------------
 INSTALLED_APPS = [
+    "whitenoise.runserver_nostatic",  # helper for dev if whitenoise installed
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    "main",  # Your app
+    "main",   # your app
 ]
 
 # ---------------------------
@@ -49,6 +53,7 @@ INSTALLED_APPS = [
 # ---------------------------
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",  # must be after SecurityMiddleware
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -59,9 +64,6 @@ MIDDLEWARE = [
 
 ROOT_URLCONF = "loan_saathi_hub.urls"
 
-# ---------------------------
-# TEMPLATES
-# ---------------------------
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
@@ -74,29 +76,48 @@ TEMPLATES = [
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
                 "main.context_processors.user_profile",
+                "main.context_processors.testing_mode",
             ],
         },
     },
 ]
 
-# ---------------------------
-# WSGI
-# ---------------------------
 WSGI_APPLICATION = "loan_saathi_hub.wsgi.application"
 
 # ---------------------------
-# DATABASE
+# DATABASE (robust)
 # ---------------------------
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.postgresql",
-        "NAME": os.getenv("DB_NAME", "postgres"),
-        "USER": os.getenv("DB_USER", "postgres"),
-        "PASSWORD": os.getenv("DB_PASSWORD", ""),
-        "HOST": os.getenv("DB_HOST", "localhost"),
-        "PORT": os.getenv("DB_PORT", "5432"),
+DATABASE_URL = os.getenv("DATABASE_URL")
+if DATABASE_URL:
+    try:
+        import dj_database_url
+        db_config = dj_database_url.parse(DATABASE_URL, conn_max_age=600)
+        if "sslmode" not in DATABASE_URL:
+            db_config.setdefault("OPTIONS", {})["sslmode"] = "require"
+        DATABASES = {"default": db_config}
+    except Exception:
+        DATABASES = {
+            "default": {
+                "ENGINE": "django.db.backends.postgresql",
+                "NAME": os.getenv("DB_NAME", "postgres"),
+                "USER": os.getenv("DB_USER", "postgres"),
+                "PASSWORD": os.getenv("DB_PASSWORD", ""),
+                "HOST": os.getenv("DB_HOST", "localhost"),
+                "PORT": os.getenv("DB_PORT", "5432"),
+                "OPTIONS": {"sslmode": "require"} if os.getenv("DB_HOST", "").endswith("supabase.co") else {},
+            }
+        }
+else:
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.postgresql",
+            "NAME": os.getenv("DB_NAME", "postgres"),
+            "USER": os.getenv("DB_USER", "postgres"),
+            "PASSWORD": os.getenv("DB_PASSWORD", ""),
+            "HOST": os.getenv("DB_HOST", "localhost"),
+            "PORT": os.getenv("DB_PORT", "5432"),
+        }
     }
-}
 
 # ---------------------------
 # CUSTOM USER MODEL
@@ -104,7 +125,7 @@ DATABASES = {
 AUTH_USER_MODEL = "main.User"
 
 # ---------------------------
-# PASSWORD VALIDATORS
+# PASSWORDS
 # ---------------------------
 AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
@@ -128,19 +149,27 @@ STATIC_URL = "/static/"
 STATICFILES_DIRS = [BASE_DIR / "static"]
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
+if not DEBUG:
+    STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
+else:
+    STATICFILES_STORAGE = "django.contrib.staticfiles.storage.StaticFilesStorage"
+
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
 
 # ---------------------------
 # EMAIL CONFIG
 # ---------------------------
-EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
-EMAIL_HOST = "smtp.gmail.com"
-EMAIL_PORT = 587
-EMAIL_USE_TLS = True
-EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER")
-EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD")
-DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+if DEBUG:
+    EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+else:
+    EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+    EMAIL_HOST = os.getenv("EMAIL_HOST", "smtp.gmail.com")
+    EMAIL_PORT = int(os.getenv("EMAIL_PORT", 587))
+    EMAIL_USE_TLS = _bool(os.getenv("EMAIL_USE_TLS", True))
+    EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER")
+    EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD")
+    DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL", EMAIL_HOST_USER)
 
 # ---------------------------
 # SUPABASE CONFIG
@@ -151,25 +180,55 @@ SUPABASE_SERVICE_ROLE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
 SUPABASE_JWT_SECRET = os.getenv("SUPABASE_JWT_SECRET")
 
 # ---------------------------
+# SECURITY & COOKIES
+# ---------------------------
+if DEBUG:
+    SECURE_SSL_REDIRECT = False
+    SESSION_COOKIE_SECURE = False
+    CSRF_COOKIE_SECURE = False
+    SECURE_HSTS_SECONDS = 0
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = False
+    SECURE_HSTS_PRELOAD = False
+else:
+    SECURE_SSL_REDIRECT = _bool(os.getenv("SECURE_SSL_REDIRECT", "True"))
+    SESSION_COOKIE_SECURE = _bool(os.getenv("SESSION_COOKIE_SECURE", "True"))
+    CSRF_COOKIE_SECURE = _bool(os.getenv("CSRF_COOKIE_SECURE", "True"))
+    SECURE_HSTS_SECONDS = int(os.getenv("SECURE_HSTS_SECONDS", 31536000))
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = _bool(os.getenv("SECURE_HSTS_INCLUDE_SUBDOMAINS", "True"))
+    SECURE_HSTS_PRELOAD = _bool(os.getenv("SECURE_HSTS_PRELOAD", "True"))
+
+X_FRAME_OPTIONS = os.getenv("X_FRAME_OPTIONS", "DENY")
+
+if not DEBUG and ALLOWED_HOSTS:
+    csf_trusted = []
+    for host in ALLOWED_HOSTS:
+        host = host.strip()
+        if not host:
+            continue
+        if not host.startswith("http"):
+            csf_trusted.append(f"https://{host}")
+        else:
+            csf_trusted.append(host)
+    CSRF_TRUSTED_ORIGINS = csf_trusted
+
+# ---------------------------
 # DEFAULT PRIMARY KEY
 # ---------------------------
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # ---------------------------
-# DEBUGGING / LOGGING
+# LOGGING
 # ---------------------------
-if DEBUG:
-    # Allow better error visibility in logs
-    LOGGING = {
-        "version": 1,
-        "disable_existing_loggers": False,
-        "handlers": {
-            "console": {
-                "class": "logging.StreamHandler",
-            },
-        },
-        "root": {
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "handlers": {"console": {"class": "logging.StreamHandler"}},
+    "root": {"handlers": ["console"], "level": "INFO" if not DEBUG else "DEBUG"},
+    "loggers": {
+        "django.db.backends": {
             "handlers": ["console"],
-            "level": "DEBUG",
-        },
-    }
+            "level": "INFO" if not DEBUG else "DEBUG",
+            "propagate": False,
+        }
+    },
+}

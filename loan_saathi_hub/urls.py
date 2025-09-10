@@ -1,6 +1,9 @@
 from django.contrib import admin
 from django.urls import path
 from main import views
+from django.views.generic import TemplateView
+from django.conf import settings
+from django.conf.urls.static import static
 
 urlpatterns = [
     # ---------------- Home ----------------
@@ -12,8 +15,8 @@ urlpatterns = [
     path("logout/", views.logout_view, name="logout"),
 
     # ---------------- Forgot / Reset Password ----------------
-    path("forgot-password/", views.forgot_password_view, name="forgot_password"),
-    path("reset-password/<uidb64>/<token>/", views.reset_password_view, name="reset_password"),
+    path("forgot_password/", views.forgot_password_view, name="forgot_password"),
+    path("reset_password/<uidb64>/<token>/", views.reset_password_view, name="reset_password"),
 
     # ---------------- Profile ----------------
     path("profile/<uuid:user_id>/", views.profile_form, name="profile_form"),
@@ -37,4 +40,17 @@ urlpatterns = [
 
     # ---------------- Django Admin ----------------
     path("admin/", admin.site.urls),
+
+    #---------------- Footer static pages---------------------------------------
+    path("about/", TemplateView.as_view(template_name="about.html"), name="about"),
+    path("terms/", TemplateView.as_view(template_name="terms.html"), name="terms"),
+    path("privacy/", TemplateView.as_view(template_name="privacy.html"), name="privacy"),
+    path("faq/", TemplateView.as_view(template_name="faq.html"), name="faq"),
+    path("support/", TemplateView.as_view(template_name="support.html"), name="support"),
 ]
+
+# Serve media files and static files in development (DEBUG=True)
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+    # Optional: serve static as well if needed (usually not required when using runserver)
+    urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

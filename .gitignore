@@ -1,29 +1,57 @@
-# Python
+# ------------------------
+# Python / Django
+# ------------------------
 __pycache__/
-*.py[cod]
-*.sqlite3
+*.pyc
 *.pyo
 *.pyd
-*.pdb
-*.env
-
-# Virtualenv
-.venv/
-env/
-venv/
-
-# Django
-*.log
-media/
-staticfiles/
+*.sqlite3
 db.sqlite3
+*.log
 
-# Environment
-.env
-*.env
+# Django migrations pycache
+**/migrations/__pycache__/
 
-# IDE / OS
+# ------------------------
+# Virtual environment
+# ------------------------
+.env/
+.venv/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# ------------------------
+# IDE / Editors
+# ------------------------
 .vscode/
 .idea/
+*.swp
+*.swo
+
+# ------------------------
+# Environment files
+# ------------------------
+.env
+.env.local
+.env.production
+.env.*    # Ignore all env files
+!.env.example   # लेकिन example को push करना allow रहेगा
+
+# ------------------------
+# OS files
+# ------------------------
 .DS_Store
 Thumbs.db
+
+# ------------------------
+# Static / Media (collectstatic generated files)
+# ------------------------
+staticfiles/
+media/
+
+# ------------------------
+# Render specific
+# ------------------------
+render.yaml

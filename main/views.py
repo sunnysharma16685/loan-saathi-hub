@@ -10,10 +10,10 @@ from django.utils.encoding import force_bytes
 from django.contrib.auth.tokens import default_token_generator
 from django.contrib.auth.forms import SetPasswordForm
 from django.conf import settings
+from django.urls import reverse
 from datetime import date
 import uuid
 from django.utils import timezone
-
 
 from .models import (
     User,
@@ -37,28 +37,39 @@ User = get_user_model()
 def index(request):
     return render(request, 'index.html')
 
+
 # -------------------- Helper: Profile Check --------------------
 def is_profile_complete(user):
-    try:
-        profile = Profile.objects.get(user=user)
-    except Profile.DoesNotExist:
+    # try to get profile, support related_name or fallback
+    profile = getattr(user, "profile", None)
+    if profile is None:
+        profile = Profile.objects.filter(user=user).first()
+    if not profile:
         return False
 
-    if user.role == "applicant":
-        try:
-            details = ApplicantDetails.objects.get(user=user)
-        except ApplicantDetails.DoesNotExist:
-            return False
-        return bool(details.employment_type)
+    # basic checks
+    if not profile.full_name or not profile.pancard_number or not getattr(profile, "mobile", None):
+        return False
 
-    elif user.role == "lender":
-        try:
-            details = LenderDetails.objects.get(user=user)
-        except LenderDetails.DoesNotExist:
+    if getattr(user, "role", None) == "applicant":
+        details = getattr(user, "applicantdetails", None)
+        if details is None:
+            details = ApplicantDetails.objects.filter(user=user).first()
+        if not details:
             return False
-        return bool(details.lender_type)
+        # require at least employment_type or business_name or similar
+        return bool(details.employment_type or details.company_name or details.business_name)
 
-    return False
+    if getattr(user, "role", None) == "lender":
+        details = getattr(user, "lenderdetails", None)
+        if details is None:
+            details = LenderDetails.objects.filter(user=user).first()
+        if not details:
+            return False
+        return bool(details.lender_type or details.bank_firm_name)
+
+    return True
+
 
 # -------------------- Register --------------------
 def register_view(request):
@@ -108,8 +119,8 @@ def register_view(request):
     # GET request: show registration page
     return render(request, "register.html", {"role": role})
 
-# -------------------- Login --------------------
 
+# -------------------- Login --------------------
 def login_view(request):
     role = (request.GET.get("role") or "").lower()
 
@@ -120,10 +131,13 @@ def login_view(request):
 
         # Authenticate user (requires custom backend for email login)
         user = authenticate(request, email=email, password=password)
+        if user is None:
+            # fallback to username-based auth (in case username==email)
+            user = authenticate(request, username=email, password=password)
 
         if user:
             # Check role match
-            if form_role and user.role != form_role:
+            if form_role and getattr(user, "role", None) != form_role:
                 messages.error(request, "Role mismatch")
                 return redirect(f"/login/?role={form_role}")
 
@@ -132,29 +146,44 @@ def login_view(request):
 
             # Redirect to profile or dashboard
             if not is_profile_complete(user):
-                return redirect("profile_form", user_id=user.id)
+                return redirect("profile_form", user_id=str(user.id))
             return redirect("dashboard_router")
         else:
             messages.error(request, "❌ Invalid email or password")
 
     return render(request, "login.html", {"role": role})
+
+
 # -------------------- Logout --------------------
 def logout_view(request):
     logout(request)
     messages.success(request, "✅ Logged out successfully")
     return redirect("/")
 
+
 # -------------------- Profile Form --------------------
 @login_required
 def profile_form(request, user_id):
     user = get_object_or_404(User, id=user_id)
-    if str(user_id) != str(user.id):
-        return redirect("home")
 
-    role = user.role.lower()
-    profile = Profile.objects.filter(user=user).first()
-    applicant_details = ApplicantDetails.objects.filter(user=user).first() if role == "applicant" else None
-    lender_details = LenderDetails.objects.filter(user=user).first() if role == "lender" else None
+    # authorization: only the user themself or superuser can edit
+    if request.user.id != user.id and not request.user.is_superuser:
+        messages.error(request, "You are not allowed to edit this profile.")
+        return redirect("index")
+
+    role = (user.role or "").lower()
+    # Try related access first, fallback to query
+    profile = getattr(user, "profile", None)
+    if profile is None:
+        profile = Profile.objects.filter(user=user).first()
+
+    applicant_details = getattr(user, "applicantdetails", None) if role == "applicant" else None
+    if role == "applicant" and applicant_details is None:
+        applicant_details = ApplicantDetails.objects.filter(user=user).first()
+
+    lender_details = getattr(user, "lenderdetails", None) if role == "lender" else None
+    if role == "lender" and lender_details is None:
+        lender_details = LenderDetails.objects.filter(user=user).first()
 
     def G(*keys):
         for k in keys:
@@ -168,7 +197,11 @@ def profile_form(request, user_id):
             profile = Profile(user=user)
         profile.full_name = G("full_name", "fullName") or ""
         profile.mobile = G("mobile") or ""
-        profile.dob = parse_date(G("dob")) if G("dob") else None
+        dob_val = G("dob")
+        try:
+            profile.dob = parse_date(dob_val) if dob_val else None
+        except Exception:
+            profile.dob = None
         profile.gender = G("gender")
         profile.marital_status = G("marital_status", "maritalStatus")
         profile.address = G("address")
@@ -178,7 +211,7 @@ def profile_form(request, user_id):
         pancard_number = G("pancard_number", "panCardNumber")
         if not pancard_number:
             messages.error(request, "PAN Card Number is required.")
-            return render(request, "profile_form.html", locals())
+            return render(request, "profile_form.html", {"user": user, "profile": profile, "role": role})
         profile.pancard_number = pancard_number
         profile.aadhaar_number = G("aadhaar_number", "aadhaarNumber")
         profile.save()
@@ -195,6 +228,7 @@ def profile_form(request, user_id):
                 details.last_year_turnover = G("last_year_turnover", "lastYearTurnover")
                 details.business_total_emi = G("business_total_emi", "businessTotalEmi")
                 details.business_itr_status = G("business_itr_status", "businessItrStatus")
+                # clear job fields
                 details.company_name = None
                 details.company_type = None
                 details.designation = None
@@ -203,6 +237,7 @@ def profile_form(request, user_id):
                 details.total_emi = None
                 details.itr = None
             else:
+                # job fields
                 details.company_name = G("company_name", "companyName")
                 details.company_type = G("company_type", "companyType")
                 details.designation = G("designation")
@@ -210,6 +245,7 @@ def profile_form(request, user_id):
                 details.other_income = G("other_income", "otherIncome")
                 details.total_emi = G("total_emi", "totalEmi")
                 details.itr = G("itr")
+                # clear business fields
                 details.business_name = None
                 details.business_type = None
                 details.business_sector = None
@@ -221,7 +257,7 @@ def profile_form(request, user_id):
             applicant_details = details
 
         elif role == "lender":
-            l, _ = lenderdetails.objects.get_or_create(user=user)
+            l, _ = LenderDetails.objects.get_or_create(user=user)
             l.lender_type = G("lender_type")
             l.bank_firm_name = G("bank_firm_name", "bankfirmName")
             l.branch_name = G("branch_name", "branchName")
@@ -234,39 +270,15 @@ def profile_form(request, user_id):
         messages.success(request, "✅ Profile saved successfully.")
         return redirect("dashboard_router")
 
-    return render(request, "profile_form.html", locals())
-
-# ----------- Profile View (Applicant/Lender details ----------
-
-def is_profile_complete(user):
-    # --- Profile must exist and have required fields ---
-    profile = Profile.objects.filter(user=user).first()
-    if not profile:
-        return False
-    if not profile.full_name or not profile.pancard_number or not profile.mobile:
-        return False
-
-    # --- Applicant check ---
-    if user.role == "applicant":
-        details = ApplicantDetails.objects.filter(user=user).first()
-        if not details:
-            return False
-        # at least these must be filled
-        if not details.employment_type or not details.cibil_score:
-            return False
-        return True
-
-    # --- Lender check ---
-    if user.role == "lender":
-        details = LenderDetails.objects.filter(user=user).first()
-        if not details:
-            return False
-        if not details.lender_type or not details.bank_firm_name:
-            return False
-        return True
-
-    # --- Admin or others ---
-    return True
+    # Pass both "user" and "user_obj" to be compatible with different templates
+    return render(request, "profile_form.html", {
+        "user": user,
+        "user_obj": user,
+        "profile": profile,
+        "role": role.capitalize() if role else "",
+        "applicant_details": applicant_details,
+        "lender_details": lender_details,
+    })
 
 
 # -------------------- Admin Dashboard --------------------
@@ -274,7 +286,7 @@ def is_profile_complete(user):
 def dashboard_admin(request):
     if not request.user.is_superuser:
         messages.error(request, "Access denied. Admins only.")
-        return redirect("home")
+        return redirect("index")
 
     context = {
         "applicants": ApplicantDetails.objects.all(),
@@ -288,7 +300,8 @@ def dashboard_admin(request):
 # -------------------- Dashboard Router --------------------
 @login_required
 def dashboard_router(request):
-    return redirect("dashboard_lender") if request.user.role == "lender" else redirect("dashboard_applicant")
+    return redirect("dashboard_lender") if getattr(request.user, "role", None) == "lender" else redirect("dashboard_applicant")
+
 
 # -------------------- Dashboard Applicant --------------------
 @login_required
@@ -297,7 +310,7 @@ def dashboard_applicant(request):
 
     # Loan status calculation
     for loan in loans:
-        statuses = loan.lender_statuses.all()
+        statuses = loan.lender_statuses.all() if hasattr(loan, "lender_statuses") else LoanLenderStatus.objects.filter(loan=loan)
         if not statuses or all(ls.status == "Pending" for ls in statuses):
             loan.global_status = "Pending"
             loan.global_remarks = "Lender Reviewing Your Loan"
@@ -312,7 +325,6 @@ def dashboard_applicant(request):
             loan.global_remarks = "Lender Reviewing Your Loan"
 
     # ---------------- Stats Section ----------------
-    from datetime import date
     today = date.today()
 
     # Aaj ke loans (sab mila kar)
@@ -354,10 +366,11 @@ def dashboard_lender(request):
     }
     return render(request, "dashboard_lender.html", context)
 
+
 # -------------------- Loan Request --------------------
 @login_required
 def loan_request(request):
-    if request.method == "POST" and request.user.role == "applicant":
+    if request.method == "POST" and getattr(request.user, "role", None) == "applicant":
         loan_id = "LSH" + get_random_string(6, allowed_chars="0123456789")
         loan = LoanRequest.objects.create(
             id=uuid.uuid4(),
@@ -385,6 +398,7 @@ def loan_request(request):
         return redirect("dashboard_router")
     return render(request, "loan_request.html")
 
+
 # -------------------- Approve / Reject --------------------
 @login_required
 def reject_loan(request, loan_id):
@@ -398,20 +412,20 @@ def reject_loan(request, loan_id):
         lender_status.remarks = reason
         lender_status.save()
 
-        # Optional: Agar aap chahen to loan ka overall status check/update kar sakte ho
-        # Jaise: Agar sab lenders reject karte hain to loan overall rejected
-
         messages.warning(request, f"Loan {loan.loan_id} rejected with reason: {reason}")
         return redirect("dashboard_lender")
 
+
 @login_required
 def approve_loan(request, loan_id):
-    ls = get_object_or_404(LoanLenderStatus, loan_id=loan_id, lender=request.user)
+    # Find the LoanLenderStatus for this lender & loan (loan_id is loan's id)
+    ls = get_object_or_404(LoanLenderStatus, loan__id=loan_id, lender=request.user)
     ls.status = "Approved"
     ls.remarks = "Payment done, Loan Approved"
     ls.save()
     messages.success(request, f"Loan {ls.loan.loan_id} approved successfully!")
     return redirect("dashboard_lender")
+
 
 # -------------------- Edit Profile --------------------
 @login_required
@@ -420,7 +434,7 @@ def edit_profile(request, user_id):
 
     if request.user.id != user.id and not request.user.is_superuser:
         messages.error(request, "You are not allowed to edit this profile.")
-        return redirect("home")
+        return redirect("index")
 
     profile, _ = Profile.objects.get_or_create(user=user)
     applicant_details = None
@@ -430,7 +444,6 @@ def edit_profile(request, user_id):
         applicant_details, _ = ApplicantDetails.objects.get_or_create(user=user)
     elif user.role == "lender":
         lender_details, _ = LenderDetails.objects.get_or_create(user=user)
-
 
     if request.method == "POST":
         # ----- Common Profile -----
@@ -442,7 +455,14 @@ def edit_profile(request, user_id):
         profile.pincode = request.POST.get("pincode")
         profile.city = request.POST.get("city")
         profile.state = request.POST.get("state")
-        profile.pancard_number = request.POST.get("pancardNumber")
+
+        # --- Preserve pancard_number (readonly field) ---
+        pancard_number = request.POST.get("pancardNumber")
+        if pancard_number:  # agar accidentally POST me aaye to update
+            profile.pancard_number = pancard_number
+        else:  # warna purana value rakho
+            profile.pancard_number = Profile.objects.get(pk=profile.pk).pancard_number
+
         profile.aadhaar_number = request.POST.get("aadhaarNumber")
         profile.dob = request.POST.get("dob") or None
         profile.save()
@@ -500,6 +520,7 @@ def edit_profile(request, user_id):
     )
 
 
+
 # -------------------- Payment --------------------
 @login_required
 def payment_page(request, loan_id):
@@ -524,6 +545,7 @@ def payment_page(request, loan_id):
         return redirect("dashboard_lender")
     return render(request, "payment.html", {"loan": loan})
 
+
 @login_required
 def make_dummy_payment(request, loan_id):
     loan = get_object_or_404(LoanRequest, id=loan_id)
@@ -540,6 +562,7 @@ def make_dummy_payment(request, loan_id):
     ls.save()
     messages.success(request, f"✅ Dummy Payment done. Loan {loan.loan_id} marked as Approved.")
     return redirect("dashboard_lender")
+
 
 # -------------------- View Profile --------------------
 @login_required
@@ -560,23 +583,19 @@ def view_profile(request, loan_id):
         return redirect("dashboard_lender")
 
     # Get related profile + applicant details
-    profile = getattr(applicant, "profile", None)
-    applicant_details = ApplicantDetails.objects.filter(user=applicant).first()  # ✅ lowercase relation
+    profile = getattr(applicant, "profile", None) or Profile.objects.filter(user=applicant).first()
+    applicant_details = getattr(applicant, "applicantdetails", None) or ApplicantDetails.objects.filter(user=applicant).first()
 
-    return render(request, "view_profile.html", {  # ✅ correct path
+    return render(request, "view_profile.html", {
         "applicant": applicant,
         "profile": profile,
-        "applicant_details": applicant_details,  # ✅ fixed
+        "applicant_details": applicant_details,
         "loan": loan,
         "hide_sensitive": False,
     })
 
 
 # -------------------- Partial Profile --------------------
-from django.shortcuts import render, get_object_or_404
-from django.contrib.auth.decorators import login_required
-from .models import LoanRequest, Profile, ApplicantDetails
-
 @login_required
 def partial_profile(request, loan_id):
     """
@@ -589,8 +608,8 @@ def partial_profile(request, loan_id):
     applicant = loan.applicant
 
     # Get related profile + applicant details
-    profile = getattr(applicant, "profile", None)
-    applicant_details = ApplicantDetails.objects.filter(user=applicant).first()  # ✅ lowercase relation
+    profile = getattr(applicant, "profile", None) or Profile.objects.filter(user=applicant).first()
+    applicant_details = getattr(applicant, "applicantdetails", None) or ApplicantDetails.objects.filter(user=applicant).first()
 
     # Fields jo partial profile me hide karne hain
     hidden_fields = [
@@ -599,12 +618,13 @@ def partial_profile(request, loan_id):
         "business_name", "aadhaar_number"
     ]
 
-    return render(request, "partial_profile.html", {  # ✅ correct path
+    return render(request, "partial_profile.html", {
         "applicant": applicant,
         "profile": profile,
-        "applicant_details": applicant_details,  # ✅ fixed
+        "applicant_details": applicant_details,
         "loan": loan,
-        "hide_sensitive": False,
+        "hide_sensitive": True,
+        "hidden_fields": hidden_fields,
     })
 
 
@@ -616,7 +636,7 @@ def forgot_password_view(request):
             user = User.objects.get(email=email)
             uid = urlsafe_base64_encode(force_bytes(user.pk))
             token = default_token_generator.make_token(user)
-            reset_link = f"http://127.0.0.1:8000/reset-password/{uid}/{token}/"
+            reset_link = request.build_absolute_uri(reverse('reset_password', args=[uid, token]))
             subject = "🔑 Reset your Loan Saathi Hub password"
             message = f"Hi {email},\n\nClick the link to reset your password:\n👉 {reset_link}"
             send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [email], fail_silently=False)
@@ -624,6 +644,7 @@ def forgot_password_view(request):
         except User.DoesNotExist:
             messages.error(request, "❌ Email not found.")
     return render(request, "forgot_password.html")
+
 
 def reset_password_view(request, uidb64, token):
     try:

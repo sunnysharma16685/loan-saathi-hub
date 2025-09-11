@@ -1,4 +1,6 @@
+# ------------------------
 # Python
+# ------------------------
 __pycache__/
 *.py[cod]
 *.pyo
@@ -8,15 +10,20 @@ __pycache__/
 dist/
 build/
 
+# ------------------------
 # Virtualenv
+# ------------------------
 .venv
+.venv*/
 venv/
 ENV/
 env/
 env.bak/
 *.env.bak
 
+# ------------------------
 # Django
+# ------------------------
 *.log
 db.sqlite3
 media/
@@ -24,23 +31,34 @@ staticfiles/
 tmp/
 *.pot
 
+# ------------------------
 # VSCode / IDE
+# ------------------------
 .vscode/
 .idea/
 *.swp
 *.swo
 
+# ------------------------
 # Node / Frontend builds (if any)
+# ------------------------
 node_modules/
 npm-debug.log
 yarn-error.log
 
-# Secrets
+# ------------------------
+# Secrets (never commit real .env)
+# ------------------------
 .env
-.env.*
-!.env.example
-!.env.local
-!.env.production
+.env.local
+.env.render
+.env.production
+.env.development
 
+# Allow example/reference env files
+!.env.example
+
+# ------------------------
 # Render / Deployment
+# ------------------------
 render.yaml

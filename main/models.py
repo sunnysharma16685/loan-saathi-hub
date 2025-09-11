@@ -38,8 +38,8 @@ class User(AbstractBaseUser, PermissionsMixin):
     email = models.EmailField(unique=True)
     role = models.CharField(max_length=20, choices=ROLE_CHOICES)
 
-    # Supabase UID
-    supabase_uid = models.CharField(max_length=255, blank=True, null=True)
+    # ⛔ Supabase removed
+    # supabase_uid = models.CharField(max_length=255, blank=True, null=True)
 
     created_at = models.DateTimeField(default=timezone.now)
     is_active = models.BooleanField(default=True)
@@ -158,7 +158,6 @@ class LenderDetails(models.Model):
         return f"Lender Details for {self.user.user_id}"
 
 
-
 # -------------------------------
 # LOAN REQUEST
 # -------------------------------
@@ -216,6 +215,8 @@ class LoanLenderStatus(models.Model):
 
     def __str__(self):
         return f"{self.lender} - {self.loan.loan_id} ({self.status})"
+
+
 # -------------------------------
 # PAYMENT
 # -------------------------------

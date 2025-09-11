@@ -10,7 +10,7 @@ load_dotenv(BASE_DIR / ".env")
 # SECURITY
 # ---------------------------
 SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "dev-secret-key")
-DEBUG = os.getenv("DEBUG", "0").strip() in ("1", "true", "True", "yes", "Yes")
+DEBUG = os.getenv("DEBUG", "0").strip() in ("1", "true", "yes")
 ALLOWED_HOSTS = [h.strip() for h in os.getenv("ALLOWED_HOSTS", "127.0.0.1,localhost").split(",") if h.strip()]
 
 # ---------------------------
@@ -65,8 +65,7 @@ WSGI_APPLICATION = "loan_saathi_hub.wsgi.application"
 # ---------------------------
 DATABASE_URL = os.getenv("DATABASE_URL")
 
-# For local development (DEBUG True) we do NOT force SSL to avoid "server does not support SSL" errors.
-# For production (DEBUG False) we require SSL for remote DBs.
+# Local ke liye SSL नहीं चाहिए
 SSL_REQUIRE = not DEBUG
 
 if DATABASE_URL:
@@ -75,10 +74,8 @@ if DATABASE_URL:
             "default": dj_database_url.parse(DATABASE_URL, conn_max_age=600, ssl_require=SSL_REQUIRE)
         }
     except Exception:
-        # fallback: try parsing without forcing ssl (safe fallback)
         DATABASES = {"default": dj_database_url.parse(DATABASE_URL, conn_max_age=600)}
 else:
-    # local fallback (sqlite used only if DATABASE_URL absent)
     DATABASES = {
         "default": {
             "ENGINE": "django.db.backends.sqlite3",
@@ -106,23 +103,6 @@ STATICFILES_STORAGE = (
     if not DEBUG
     else "django.contrib.staticfiles.storage.StaticFilesStorage"
 )
-
-# ---------------------------
-# SUPABASE CONFIG (optional)
-# ---------------------------
-SUPABASE_URL = os.getenv("SUPABASE_URL")
-SUPABASE_ANON_KEY = os.getenv("SUPABASE_ANON_KEY")
-SUPABASE_SERVICE_ROLE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
-SUPABASE_JWT_SECRET = os.getenv("SUPABASE_JWT_SECRET")
-
-# Use this flag in your code to avoid creating a Supabase client when keys are missing/invalid
-SUPABASE_ENABLED = bool(SUPABASE_URL and SUPABASE_ANON_KEY)
-
-# Example usage in your app code:
-# if SUPABASE_ENABLED:
-#     supabase = create_client(SUPABASE_URL, SUPABASE_ANON_KEY)
-# else:
-#     supabase = None
 
 # ---------------------------
 # EMAIL (optional)

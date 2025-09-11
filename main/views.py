@@ -25,11 +25,6 @@ from .models import (
     Payment
 )
 
-from main.supabase_client import (
-    sync_loan_request_to_supabase,
-    sync_payment_to_supabase,
-)
-
 User = get_user_model()
 
 
@@ -40,40 +35,23 @@ def index(request):
 
 # -------------------- Helper: Profile Check --------------------
 def is_profile_complete(user):
-    # try to get profile, support related_name or fallback
-    profile = getattr(user, "profile", None)
-    if profile is None:
-        profile = Profile.objects.filter(user=user).first()
-    if not profile:
-        return False
-
-    # basic checks
-    if not profile.full_name or not profile.pancard_number or not getattr(profile, "mobile", None):
+    profile = getattr(user, "profile", None) or Profile.objects.filter(user=user).first()
+    if not profile or not profile.full_name or not profile.pancard_number or not getattr(profile, "mobile", None):
         return False
 
     if getattr(user, "role", None) == "applicant":
-        details = getattr(user, "applicantdetails", None)
-        if details is None:
-            details = ApplicantDetails.objects.filter(user=user).first()
-        if not details:
-            return False
-        # require at least employment_type or business_name or similar
-        return bool(details.employment_type or details.company_name or details.business_name)
+        details = getattr(user, "applicantdetails", None) or ApplicantDetails.objects.filter(user=user).first()
+        return bool(details and (details.employment_type or details.company_name or details.business_name))
 
     if getattr(user, "role", None) == "lender":
-        details = getattr(user, "lenderdetails", None)
-        if details is None:
-            details = LenderDetails.objects.filter(user=user).first()
-        if not details:
-            return False
-        return bool(details.lender_type or details.bank_firm_name)
+        details = getattr(user, "lenderdetails", None) or LenderDetails.objects.filter(user=user).first()
+        return bool(details and (details.lender_type or details.bank_firm_name))
 
     return True
 
 
 # -------------------- Register --------------------
 def register_view(request):
-    # Get role from GET parameter (applicant/lender)
     role = (request.GET.get("role") or "").lower()
 
     if request.method == "POST":
@@ -82,41 +60,32 @@ def register_view(request):
         confirm_password = request.POST.get("confirm_password") or ""
         form_role = (request.POST.get("role") or role).lower()
 
-        # Validate role
         if form_role not in ("applicant", "lender"):
             messages.error(request, "Please select applicant or lender.")
             return redirect(f"/register/?role={role or ''}")
 
-        # Validate required fields
         if not email or not password:
             messages.error(request, "Email and password are required.")
             return redirect(f"/register/?role={form_role}")
 
-        # Check password confirmation
         if password != confirm_password:
             messages.error(request, "Passwords do not match.")
             return redirect(f"/register/?role={form_role}")
 
-        # Check if email already exists
         if User.objects.filter(email=email).exists():
             messages.error(request, "Email already registered.")
             return redirect(f"/register/?role={form_role}")
 
         try:
-            # Create new user
             user = User(email=email, role=form_role)
             user.set_password(password)
             user.save()
-
-            # Log in user
             login(request, user, backend="django.contrib.auth.backends.ModelBackend")
             return redirect("profile_form", user_id=str(user.id))
-
         except Exception as e:
             messages.error(request, f"Registration error: {e}")
             return redirect(f"/register/?role={form_role}")
 
-    # GET request: show registration page
     return render(request, "register.html", {"role": role})
 
 
@@ -129,25 +98,16 @@ def login_view(request):
         password = request.POST.get("password") or ""
         form_role = (request.POST.get("role") or role).lower()
 
-        # Authenticate user (requires custom backend for email login)
-        user = authenticate(request, email=email, password=password)
-        if user is None:
-            # fallback to username-based auth (in case username==email)
-            user = authenticate(request, username=email, password=password)
+        user = authenticate(request, email=email, password=password) or \
+               authenticate(request, username=email, password=password)
 
         if user:
-            # Check role match
             if form_role and getattr(user, "role", None) != form_role:
                 messages.error(request, "Role mismatch")
                 return redirect(f"/login/?role={form_role}")
 
-            # Log in user with backend
             login(request, user, backend="django.contrib.auth.backends.ModelBackend")
-
-            # Redirect to profile or dashboard
-            if not is_profile_complete(user):
-                return redirect("profile_form", user_id=str(user.id))
-            return redirect("dashboard_router")
+            return redirect("profile_form", user_id=str(user.id)) if not is_profile_complete(user) else redirect("dashboard_router")
         else:
             messages.error(request, "❌ Invalid email or password")
 
@@ -165,30 +125,19 @@ def logout_view(request):
 @login_required
 def profile_form(request, user_id):
     user = get_object_or_404(User, id=user_id)
-
-    # authorization: only the user themself or superuser can edit
     if request.user.id != user.id and not request.user.is_superuser:
         messages.error(request, "You are not allowed to edit this profile.")
         return redirect("index")
 
     role = (user.role or "").lower()
-    # Try related access first, fallback to query
-    profile = getattr(user, "profile", None)
-    if profile is None:
-        profile = Profile.objects.filter(user=user).first()
-
-    applicant_details = getattr(user, "applicantdetails", None) if role == "applicant" else None
-    if role == "applicant" and applicant_details is None:
-        applicant_details = ApplicantDetails.objects.filter(user=user).first()
-
-    lender_details = getattr(user, "lenderdetails", None) if role == "lender" else None
-    if role == "lender" and lender_details is None:
-        lender_details = LenderDetails.objects.filter(user=user).first()
+    profile = getattr(user, "profile", None) or Profile.objects.filter(user=user).first()
+    applicant_details = ApplicantDetails.objects.filter(user=user).first() if role == "applicant" else None
+    lender_details = LenderDetails.objects.filter(user=user).first() if role == "lender" else None
 
     def G(*keys):
         for k in keys:
             v = request.POST.get(k)
-            if v is not None and str(v).strip() != "":
+            if v and str(v).strip():
                 return str(v).strip()
         return None
 
@@ -198,10 +147,7 @@ def profile_form(request, user_id):
         profile.full_name = G("full_name", "fullName") or ""
         profile.mobile = G("mobile") or ""
         dob_val = G("dob")
-        try:
-            profile.dob = parse_date(dob_val) if dob_val else None
-        except Exception:
-            profile.dob = None
+        profile.dob = parse_date(dob_val) if dob_val else None
         profile.gender = G("gender")
         profile.marital_status = G("marital_status", "maritalStatus")
         profile.address = G("address")
@@ -228,16 +174,9 @@ def profile_form(request, user_id):
                 details.last_year_turnover = G("last_year_turnover", "lastYearTurnover")
                 details.business_total_emi = G("business_total_emi", "businessTotalEmi")
                 details.business_itr_status = G("business_itr_status", "businessItrStatus")
-                # clear job fields
-                details.company_name = None
-                details.company_type = None
-                details.designation = None
-                details.current_salary = None
-                details.other_income = None
-                details.total_emi = None
-                details.itr = None
+                details.company_name = details.company_type = details.designation = None
+                details.current_salary = details.other_income = details.total_emi = details.itr = None
             else:
-                # job fields
                 details.company_name = G("company_name", "companyName")
                 details.company_type = G("company_type", "companyType")
                 details.designation = G("designation")
@@ -245,14 +184,8 @@ def profile_form(request, user_id):
                 details.other_income = G("other_income", "otherIncome")
                 details.total_emi = G("total_emi", "totalEmi")
                 details.itr = G("itr")
-                # clear business fields
-                details.business_name = None
-                details.business_type = None
-                details.business_sector = None
-                details.total_turnover = None
-                details.last_year_turnover = None
-                details.business_total_emi = None
-                details.business_itr_status = None
+                details.business_name = details.business_type = details.business_sector = None
+                details.total_turnover = details.last_year_turnover = details.business_total_emi = details.business_itr_status = None
             details.save()
             applicant_details = details
 
@@ -270,16 +203,13 @@ def profile_form(request, user_id):
         messages.success(request, "✅ Profile saved successfully.")
         return redirect("dashboard_router")
 
-    # Pass both "user" and "user_obj" to be compatible with different templates
     return render(request, "profile_form.html", {
         "user": user,
-        "user_obj": user,
         "profile": profile,
         "role": role.capitalize() if role else "",
         "applicant_details": applicant_details,
         "lender_details": lender_details,
     })
-
 
 # -------------------- Admin Dashboard --------------------
 @login_required
@@ -324,13 +254,8 @@ def dashboard_applicant(request):
             loan.global_status = "Pending"
             loan.global_remarks = "Lender Reviewing Your Loan"
 
-    # ---------------- Stats Section ----------------
     today = date.today()
-
-    # Aaj ke loans (sab mila kar)
     total_today = LoanRequest.objects.filter(applicant=request.user, created_at__date=today).count()
-
-    # Total by status (all-time)
     total_approved = LoanRequest.objects.filter(applicant=request.user, status="Approved").count()
     total_rejected = LoanRequest.objects.filter(applicant=request.user, status="Rejected").count()
     total_pending = LoanRequest.objects.filter(applicant=request.user, status="Pending").count()
@@ -347,10 +272,8 @@ def dashboard_applicant(request):
 # -------------------- Dashboard Lender --------------------
 @login_required
 def dashboard_lender(request):
-    # Lender ke liye LoanLenderStatus fetch karo
     lender_feedbacks = LoanLenderStatus.objects.filter(lender=request.user).select_related('loan', 'loan__applicant')
 
-    # Counts calculate karo
     today = timezone.now().date()
     total_today = lender_feedbacks.filter(loan__created_at__date=today).count()
     total_approved = lender_feedbacks.filter(status="Approved").count()
@@ -390,10 +313,6 @@ def loan_request(request):
                 status="Pending",
                 remarks=loan.reason_for_loan or "Lender Reviewing Your Loan",
             )
-        try:
-            sync_loan_request_to_supabase(loan)
-        except Exception as e:
-            print("❌ Supabase sync failed:", e)
         messages.success(request, f"✅ Loan request {loan.loan_id} submitted successfully.")
         return redirect("dashboard_router")
     return render(request, "loan_request.html")
@@ -406,7 +325,6 @@ def reject_loan(request, loan_id):
         reason = request.POST.get("reason")
         loan = get_object_or_404(LoanRequest, id=loan_id)
 
-        # Current lender ka decision update karo
         lender_status = get_object_or_404(LoanLenderStatus, loan=loan, lender=request.user)
         lender_status.status = "Rejected"
         lender_status.remarks = reason
@@ -418,14 +336,12 @@ def reject_loan(request, loan_id):
 
 @login_required
 def approve_loan(request, loan_id):
-    # Find the LoanLenderStatus for this lender & loan (loan_id is loan's id)
     ls = get_object_or_404(LoanLenderStatus, loan__id=loan_id, lender=request.user)
     ls.status = "Approved"
     ls.remarks = "Payment done, Loan Approved"
     ls.save()
     messages.success(request, f"Loan {ls.loan.loan_id} approved successfully!")
     return redirect("dashboard_lender")
-
 
 # -------------------- Edit Profile --------------------
 @login_required
@@ -446,7 +362,7 @@ def edit_profile(request, user_id):
         lender_details, _ = LenderDetails.objects.get_or_create(user=user)
 
     if request.method == "POST":
-        # ----- Common Profile -----
+        # Common Profile
         profile.full_name = request.POST.get("fullName")
         profile.mobile = request.POST.get("mobile")
         profile.gender = request.POST.get("gender")
@@ -456,18 +372,14 @@ def edit_profile(request, user_id):
         profile.city = request.POST.get("city")
         profile.state = request.POST.get("state")
 
-        # --- Preserve pancard_number (readonly field) ---
         pancard_number = request.POST.get("pancardNumber")
-        if pancard_number:  # agar accidentally POST me aaye to update
+        if pancard_number:
             profile.pancard_number = pancard_number
-        else:  # warna purana value rakho
-            profile.pancard_number = Profile.objects.get(pk=profile.pk).pancard_number
-
         profile.aadhaar_number = request.POST.get("aadhaarNumber")
         profile.dob = request.POST.get("dob") or None
         profile.save()
 
-        # ----- Applicant -----
+        # Applicant details
         if user.role == "applicant":
             applicant_details.job_type = request.POST.get("jobType")
             applicant_details.cibil_score = request.POST.get("cibilScore")
@@ -495,7 +407,7 @@ def edit_profile(request, user_id):
             messages.success(request, "✅ Applicant profile updated successfully")
             return redirect("dashboard_applicant")
 
-        # ----- Lender -----
+        # Lender details
         elif user.role == "lender":
             lender_details.lender_type = request.POST.get("lenderType")
             lender_details.dsa_code = request.POST.get("dsaCode")
@@ -520,23 +432,18 @@ def edit_profile(request, user_id):
     )
 
 
-
 # -------------------- Payment --------------------
 @login_required
 def payment_page(request, loan_id):
     loan = get_object_or_404(LoanRequest, id=loan_id)
     if request.method == "POST":
-        payment = Payment.objects.create(
+        Payment.objects.create(
             lender=request.user,
             loan_request=loan,
             payment_method=request.POST.get("payment_method"),
             amount=request.POST.get("amount"),
             status="Completed",
         )
-        try:
-            sync_payment_to_supabase(payment)
-        except Exception as e:
-            print("Supabase payment sync failed:", e)
         ls = get_object_or_404(LoanLenderStatus, loan=loan, lender=request.user)
         ls.status = "Approved"
         ls.remarks = "Payment done, Loan Approved"
@@ -567,13 +474,9 @@ def make_dummy_payment(request, loan_id):
 # -------------------- View Profile --------------------
 @login_required
 def view_profile(request, loan_id):
-    """
-    Full profile: all fields visible after payment.
-    """
     loan = get_object_or_404(LoanRequest, id=loan_id)
     applicant = loan.applicant
 
-    # Check payment
     payment_done = Payment.objects.filter(
         loan_request=loan, lender=request.user, status="Completed"
     ).exists()
@@ -582,7 +485,6 @@ def view_profile(request, loan_id):
         messages.error(request, "⚠️ You can only view applicant's full profile after payment is done.")
         return redirect("dashboard_lender")
 
-    # Get related profile + applicant details
     profile = getattr(applicant, "profile", None) or Profile.objects.filter(user=applicant).first()
     applicant_details = getattr(applicant, "applicantdetails", None) or ApplicantDetails.objects.filter(user=applicant).first()
 
@@ -598,20 +500,12 @@ def view_profile(request, loan_id):
 # -------------------- Partial Profile --------------------
 @login_required
 def partial_profile(request, loan_id):
-    """
-    Partial profile: sensitive fields hidden.
-    """
-    # Loan fetch
     loan = get_object_or_404(LoanRequest, id=loan_id)
-
-    # Applicant (user)
     applicant = loan.applicant
 
-    # Get related profile + applicant details
     profile = getattr(applicant, "profile", None) or Profile.objects.filter(user=applicant).first()
     applicant_details = getattr(applicant, "applicantdetails", None) or ApplicantDetails.objects.filter(user=applicant).first()
 
-    # Fields jo partial profile me hide karne hain
     hidden_fields = [
         "mobile", "email", "address",
         "gst_number", "company_name",

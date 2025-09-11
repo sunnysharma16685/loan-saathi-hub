@@ -34,14 +34,12 @@ urlpatterns = [
     path("loan/request/", views.loan_request, name="loan_request"),
     path("dashboard/lender/payment/<uuid:loan_id>/", views.payment_page, name="payment_page"),
     path("dashboard/lender/dummy-payment/<uuid:loan_id>/", views.make_dummy_payment, name="make_dummy_payment"),
-
-    # Reject loan (single consistent pattern for lender)
     path("dashboard/lender/reject/<uuid:loan_id>/", views.reject_loan, name="reject_loan"),
 
     # ---------------- Django Admin ----------------
     path("admin/", admin.site.urls),
 
-    #---------------- Footer static pages---------------------------------------
+    # ---------------- Footer static pages ----------------
     path("about/", TemplateView.as_view(template_name="about.html"), name="about"),
     path("terms/", TemplateView.as_view(template_name="terms.html"), name="terms"),
     path("privacy/", TemplateView.as_view(template_name="privacy.html"), name="privacy"),
@@ -49,8 +47,7 @@ urlpatterns = [
     path("support/", TemplateView.as_view(template_name="support.html"), name="support"),
 ]
 
-# Serve media files and static files in development (DEBUG=True)
+# ---------------- Static & Media (development only) ----------------
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
-    # Optional: serve static as well if needed (usually not required when using runserver)
     urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

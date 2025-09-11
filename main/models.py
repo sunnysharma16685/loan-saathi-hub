@@ -34,7 +34,8 @@ class User(AbstractBaseUser, PermissionsMixin):
     ]
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    user_id = models.CharField(max_length=20, unique=True, editable=False)  # LSHA0001 / LSHL0001 / LSHAD0001
+    user_id = models.CharField(max_length=20, unique=True, editable=False, null=True, blank=True)
+  # LSHA0001 / LSHL0001 / LSHAD0001
     email = models.EmailField(unique=True)
     role = models.CharField(max_length=20, choices=ROLE_CHOICES)
 

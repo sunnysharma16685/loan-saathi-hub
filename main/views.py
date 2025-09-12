@@ -272,10 +272,9 @@ def dashboard_applicant(request):
 # -------------------- Dashboard Lender --------------------
 @login_required
 def dashboard_lender(request):
-    from django.db.models import Q
-    from main.models import LoanRequest, LoanLenderStatus  # adjust import if needed
+    from main.models import LoanRequest, LoanLenderStatus
 
-    # Lender ke apne feedbacks
+    # ---- Lender ke apne feedbacks (jis par usne already action liya) ----
     lender_feedbacks = LoanLenderStatus.objects.filter(
         lender=request.user
     ).select_related('loan', 'loan__applicant')
@@ -286,10 +285,15 @@ def dashboard_lender(request):
     total_rejected = lender_feedbacks.filter(status="Rejected").count()
     total_pending = lender_feedbacks.filter(status="Pending").count()
 
-    # ---- NEW PART: Sare applicants ke pending loans ----
-    # LoanRequest ka model assume hai (status = Pending)
+    # ---- Sare applicants ke PENDING loans jo abhi tak kisi lender ne handle nahi kiye ----
+    # Step 1: loans jinke liye koi feedback hai unko exclude karo
+    handled_loans = LoanLenderStatus.objects.values_list("loan_id", flat=True)
+
+    # Step 2: unhandled loans filter karo
     pending_loans = LoanRequest.objects.filter(
         status="Pending"
+    ).exclude(
+        id__in=handled_loans
     ).select_related("applicant").order_by("-created_at")
 
     context = {
@@ -298,7 +302,7 @@ def dashboard_lender(request):
         "total_approved": total_approved,
         "total_rejected": total_rejected,
         "total_pending": total_pending,
-        "pending_loans": pending_loans,   # <- NEW
+        "pending_loans": pending_loans,  # 👈 NEW
     }
     return render(request, "dashboard_lender.html", context)
 

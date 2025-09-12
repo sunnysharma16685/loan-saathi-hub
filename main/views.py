@@ -272,7 +272,13 @@ def dashboard_applicant(request):
 # -------------------- Dashboard Lender --------------------
 @login_required
 def dashboard_lender(request):
-    lender_feedbacks = LoanLenderStatus.objects.filter(lender=request.user).select_related('loan', 'loan__applicant')
+    from django.db.models import Q
+    from main.models import LoanRequest, LoanLenderStatus  # adjust import if needed
+
+    # Lender ke apne feedbacks
+    lender_feedbacks = LoanLenderStatus.objects.filter(
+        lender=request.user
+    ).select_related('loan', 'loan__applicant')
 
     today = timezone.now().date()
     total_today = lender_feedbacks.filter(loan__created_at__date=today).count()
@@ -280,12 +286,19 @@ def dashboard_lender(request):
     total_rejected = lender_feedbacks.filter(status="Rejected").count()
     total_pending = lender_feedbacks.filter(status="Pending").count()
 
+    # ---- NEW PART: Sare applicants ke pending loans ----
+    # LoanRequest ka model assume hai (status = Pending)
+    pending_loans = LoanRequest.objects.filter(
+        status="Pending"
+    ).select_related("applicant").order_by("-created_at")
+
     context = {
         "lender_feedbacks": lender_feedbacks,
         "total_today": total_today,
         "total_approved": total_approved,
         "total_rejected": total_rejected,
         "total_pending": total_pending,
+        "pending_loans": pending_loans,   # <- NEW
     }
     return render(request, "dashboard_lender.html", context)
 

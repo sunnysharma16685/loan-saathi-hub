@@ -11,7 +11,12 @@ load_dotenv(BASE_DIR / ".env")
 # ---------------------------
 SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "dev-secret-key")
 DEBUG = os.getenv("DEBUG", "0").strip() in ("1", "true", "yes")
-ALLOWED_HOSTS = [h.strip() for h in os.getenv("ALLOWED_HOSTS", "127.0.0.1,localhost").split(",") if h.strip()]
+
+ALLOWED_HOSTS = [
+    h.strip()
+    for h in os.getenv("ALLOWED_HOSTS", "127.0.0.1,localhost").split(",")
+    if h.strip()
+]
 
 # ---------------------------
 # APPLICATIONS
@@ -65,16 +70,14 @@ WSGI_APPLICATION = "loan_saathi_hub.wsgi.application"
 # ---------------------------
 DATABASE_URL = os.getenv("DATABASE_URL")
 
-# Local ke liye SSL नहीं चाहिए
-SSL_REQUIRE = not DEBUG
-
 if DATABASE_URL:
-    try:
-        DATABASES = {
-            "default": dj_database_url.parse(DATABASE_URL, conn_max_age=600, ssl_require=SSL_REQUIRE)
-        }
-    except Exception:
-        DATABASES = {"default": dj_database_url.parse(DATABASE_URL, conn_max_age=600)}
+    DATABASES = {
+        "default": dj_database_url.parse(
+            DATABASE_URL,
+            conn_max_age=600,
+            ssl_require=not DEBUG,  # 👈 Local pe SSL off, Production pe on
+        )
+    }
 else:
     DATABASES = {
         "default": {
@@ -105,7 +108,7 @@ STATICFILES_STORAGE = (
 )
 
 # ---------------------------
-# EMAIL (optional)
+# EMAIL
 # ---------------------------
 EMAIL_BACKEND = (
     "django.core.mail.backends.console.EmailBackend"
@@ -120,14 +123,29 @@ EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD")
 DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL", EMAIL_HOST_USER)
 
 # ---------------------------
-# SECURITY
+# SECURITY HEADERS
 # ---------------------------
-SECURE_SSL_REDIRECT = os.getenv("SECURE_SSL_REDIRECT", "True").strip().lower() in ("1", "true", "yes")
-SESSION_COOKIE_SECURE = os.getenv("SESSION_COOKIE_SECURE", "True").strip().lower() in ("1", "true", "yes")
-CSRF_COOKIE_SECURE = os.getenv("CSRF_COOKIE_SECURE", "True").strip().lower() in ("1", "true", "yes")
-SECURE_HSTS_SECONDS = int(os.getenv("SECURE_HSTS_SECONDS", "31536000"))
-SECURE_HSTS_INCLUDE_SUBDOMAINS = os.getenv("SECURE_HSTS_INCLUDE_SUBDOMAINS", "True").strip().lower() in ("1", "true", "yes")
-SECURE_HSTS_PRELOAD = os.getenv("SECURE_HSTS_PRELOAD", "True").strip().lower() in ("1", "true", "yes")
+SECURE_SSL_REDIRECT = (
+    os.getenv("SECURE_SSL_REDIRECT", "True").strip().lower() in ("1", "true", "yes")
+    if not DEBUG else False
+)
+SESSION_COOKIE_SECURE = (
+    os.getenv("SESSION_COOKIE_SECURE", "True").strip().lower() in ("1", "true", "yes")
+    if not DEBUG else False
+)
+CSRF_COOKIE_SECURE = (
+    os.getenv("CSRF_COOKIE_SECURE", "True").strip().lower() in ("1", "true", "yes")
+    if not DEBUG else False
+)
+SECURE_HSTS_SECONDS = int(os.getenv("SECURE_HSTS_SECONDS", "31536000")) if not DEBUG else 0
+SECURE_HSTS_INCLUDE_SUBDOMAINS = (
+    os.getenv("SECURE_HSTS_INCLUDE_SUBDOMAINS", "True").strip().lower() in ("1", "true", "yes")
+    if not DEBUG else False
+)
+SECURE_HSTS_PRELOAD = (
+    os.getenv("SECURE_HSTS_PRELOAD", "True").strip().lower() in ("1", "true", "yes")
+    if not DEBUG else False
+)
 
 X_FRAME_OPTIONS = os.getenv("X_FRAME_OPTIONS", "DENY")
 

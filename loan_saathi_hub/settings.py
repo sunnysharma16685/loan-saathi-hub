@@ -17,6 +17,7 @@ if local_env_file.exists():
 # SECURITY
 # ---------------------------
 SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "dev-secret-key")
+
 DEBUG = os.getenv("DJANGO_DEBUG", "0").strip().lower() in ("1", "true", "yes")
 
 ALLOWED_HOSTS = [
@@ -24,6 +25,13 @@ ALLOWED_HOSTS = [
     for h in os.getenv("DJANGO_ALLOWED_HOSTS", "127.0.0.1,localhost").split(",")
     if h.strip()
 ]
+
+# Render / proxy HTTPS fix
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+
+# Debugging line (optional, remove in prod)
+print("🌍 ALLOWED_HOSTS loaded:", ALLOWED_HOSTS)
+
 
 # ---------------------------
 # APPLICATIONS

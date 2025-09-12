@@ -78,7 +78,7 @@ WSGI_APPLICATION = "loan_saathi_hub.wsgi.application"
 DATABASE_URL = os.getenv("DATABASE_URL")
 
 if DATABASE_URL:
-    # Render पर DATABASE_URL directly use होगा
+    # Render (production) → DATABASE_URL से
     DATABASES = {
         "default": dj_database_url.parse(
             DATABASE_URL,
@@ -87,7 +87,7 @@ if DATABASE_URL:
         )
     }
 elif os.getenv("DB_NAME"):
-    # Local Postgres via separate vars
+    # Local Postgres (DB_* vars से)
     DATABASES = {
         "default": {
             "ENGINE": os.getenv("DB_ENGINE", "django.db.backends.postgresql"),
@@ -99,7 +99,7 @@ elif os.getenv("DB_NAME"):
         }
     }
 else:
-    # Fallback SQLite
+    # Fallback SQLite (development emergency)
     DATABASES = {
         "default": {
             "ENGINE": "django.db.backends.sqlite3",

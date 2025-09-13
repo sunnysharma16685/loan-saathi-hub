@@ -297,13 +297,9 @@ def applicant_hold_loan(request, loan_id):
 # -------------------- Dashboard Lender --------------------
 @login_required
 def dashboard_lender(request):
-    from main.models import LoanRequest, LoanLenderStatus
+    profile = getattr(request.user, "profile", None)
 
-    # ---- Lender ke apne feedbacks (jis par usne already action liya) ----
-    lender_feedbacks = (
-        LoanLenderStatus.objects.filter(lender=request.user)
-        .select_related("loan", "loan__applicant")
-    )
+    lender_feedbacks = LoanLenderStatus.objects.filter(lender=request.user).select_related("loan", "loan__applicant")
 
     today = timezone.now().date()
     total_today = lender_feedbacks.filter(loan__created_at__date=today).count()
@@ -311,33 +307,19 @@ def dashboard_lender(request):
     total_rejected = lender_feedbacks.filter(status="Rejected").count()
     total_pending = lender_feedbacks.filter(status="Pending").count()
 
-    # ---- Sare applicants ke still PENDING loans jo kisi ne handle nahi kiye ----
     handled_loans = LoanLenderStatus.objects.values_list("loan_id", flat=True)
+    pending_loans = LoanRequest.objects.filter(status="Pending").exclude(id__in=handled_loans).select_related("applicant").order_by("-created_at")
 
-    pending_loans = (
-        LoanRequest.objects.filter(status="Pending")
-        .exclude(id__in=handled_loans)
-        .select_related("applicant")
-        .order_by("-created_at")
-    )
-
-    # ---- Loans jo applicant ne Accept ya Hold kar diye ----
-    finalised_loans = LoanRequest.objects.filter(
-        status__in=["Accepted", "Hold"]
-    ).select_related("applicant", "accepted_lender")
+    finalised_loans = LoanRequest.objects.filter(status__in=["Accepted", "Hold"]).select_related("applicant", "accepted_lender")
 
     context = {
-        # lender ke apne actions
+        "profile": profile,
         "lender_feedbacks": lender_feedbacks,
         "total_today": total_today,
         "total_approved": total_approved,
         "total_rejected": total_rejected,
         "total_pending": total_pending,
-
-        # sare pending loans (unhandled by any lender)
         "pending_loans": pending_loans,
-
-        # applicant side ka final decision
         "finalised_loans": finalised_loans,
     }
     return render(request, "dashboard_lender.html", context)

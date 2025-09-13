@@ -32,7 +32,6 @@ SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 # Debugging line (optional, remove in prod)
 print("🌍 ALLOWED_HOSTS loaded:", ALLOWED_HOSTS)
 
-
 # ---------------------------
 # APPLICATIONS
 # ---------------------------
@@ -176,6 +175,15 @@ SECURE_HSTS_PRELOAD = (
 )
 
 X_FRAME_OPTIONS = os.getenv("X_FRAME_OPTIONS", "DENY")
+
+# ---------------------------
+# CSRF TRUSTED ORIGINS
+# ---------------------------
+CSRF_TRUSTED_ORIGINS = [
+    "https://www.loansaathihub.in",
+    "https://loansaathihub.in",
+    "https://loansaathi-hub.onrender.com",
+]
 
 # ---------------------------
 # DEFAULT PRIMARY KEY

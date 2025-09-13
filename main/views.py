@@ -268,6 +268,31 @@ def dashboard_applicant(request):
         "total_pending": total_pending,
     })
 
+# -------------------- Dashboard Applicant -Accept / Hold-----------------
+@login_required
+def applicant_accept_loan(request, loan_id, lender_id):
+    loan = get_object_or_404(LoanRequest, id=loan_id, applicant=request.user)
+    lender = get_object_or_404(User, id=lender_id, role="lender")
+
+    # loan finalise
+    loan.status = "Accepted"
+    loan.accepted_lender = lender
+    loan.save()
+
+    messages.success(request, "After Accepted this loan will no more for Lenders.")
+    return redirect("applicant_dashboard")
+
+
+@login_required
+def applicant_hold_loan(request, loan_id):
+    loan = get_object_or_404(LoanRequest, id=loan_id, applicant=request.user)
+
+    loan.status = "Hold"
+    loan.save()
+
+    messages.info(request, "Loan request is on Hold. Lenders cannot proceed until you Accept.")
+    return redirect("applicant_dashboard")
+
 
 # -------------------- Dashboard Lender --------------------
 @login_required
@@ -275,9 +300,10 @@ def dashboard_lender(request):
     from main.models import LoanRequest, LoanLenderStatus
 
     # ---- Lender ke apne feedbacks (jis par usne already action liya) ----
-    lender_feedbacks = LoanLenderStatus.objects.filter(
-        lender=request.user
-    ).select_related('loan', 'loan__applicant')
+    lender_feedbacks = (
+        LoanLenderStatus.objects.filter(lender=request.user)
+        .select_related("loan", "loan__applicant")
+    )
 
     today = timezone.now().date()
     total_today = lender_feedbacks.filter(loan__created_at__date=today).count()
@@ -285,24 +311,34 @@ def dashboard_lender(request):
     total_rejected = lender_feedbacks.filter(status="Rejected").count()
     total_pending = lender_feedbacks.filter(status="Pending").count()
 
-    # ---- Sare applicants ke PENDING loans jo abhi tak kisi lender ne handle nahi kiye ----
-    # Step 1: loans jinke liye koi feedback hai unko exclude karo
+    # ---- Sare applicants ke still PENDING loans jo kisi ne handle nahi kiye ----
     handled_loans = LoanLenderStatus.objects.values_list("loan_id", flat=True)
 
-    # Step 2: unhandled loans filter karo
-    pending_loans = LoanRequest.objects.filter(
-        status="Pending"
-    ).exclude(
-        id__in=handled_loans
-    ).select_related("applicant").order_by("-created_at")
+    pending_loans = (
+        LoanRequest.objects.filter(status="Pending")
+        .exclude(id__in=handled_loans)
+        .select_related("applicant")
+        .order_by("-created_at")
+    )
+
+    # ---- Loans jo applicant ne Accept ya Hold kar diye ----
+    finalised_loans = LoanRequest.objects.filter(
+        status__in=["Accepted", "Hold"]
+    ).select_related("applicant", "accepted_lender")
 
     context = {
+        # lender ke apne actions
         "lender_feedbacks": lender_feedbacks,
         "total_today": total_today,
         "total_approved": total_approved,
         "total_rejected": total_rejected,
         "total_pending": total_pending,
-        "pending_loans": pending_loans,  # 👈 NEW
+
+        # sare pending loans (unhandled by any lender)
+        "pending_loans": pending_loans,
+
+        # applicant side ka final decision
+        "finalised_loans": finalised_loans,
     }
     return render(request, "dashboard_lender.html", context)
 

@@ -16,7 +16,9 @@
         h1 { margin: 20px; font-size: 28px; color: #212529; text-align: center; }
 
         /* ---------- Buttons ---------- */
-        .btn-request, .btn-track, .btn-view, .btn-warning, .btn-info { border-radius: 8px; padding: 10px 16px; font-weight: 600; transition: all 0.3s ease; }
+        .btn-request, .btn-track, .btn-view, .btn-warning, .btn-info, .btn-accept, .btn-hold {
+            border-radius: 8px; padding: 10px 16px; font-weight: 600; transition: all 0.3s ease;
+        }
         .btn-request { background: #0d6efd; color: #fff; }
         .btn-request:hover { background: #0b5ed7; }
         .btn-track { background: #28a745; color: #fff; }
@@ -27,6 +29,10 @@
         .btn-warning:hover { background: #e0a800; }
         .btn-info { background: #0dcaf0; color: #212529; }
         .btn-info:hover { background: #31d2f2; }
+        .btn-accept { background: #28a745; color: #fff; }
+        .btn-accept:hover { background: #218838; }
+        .btn-hold { background: #ffc107; color: #212529; }
+        .btn-hold:hover { background: #e0a800; }
 
         /* ---------- Cards ---------- */
         .card { border-radius: 12px; box-shadow: 0 8px 20px rgba(0,0,0,0.08); transition: transform 0.3s ease; cursor: pointer; }
@@ -137,6 +143,8 @@
                <span class="badge bg-success">Approved</span>
             {% elif loan.status == "Rejected" %}
                <span class="badge bg-danger">Rejected</span>
+            {% elif loan.status == "Finalised" %}
+               <span class="badge bg-info">Finalised</span>
             {% else %}
                <span class="badge bg-warning text-dark">Pending</span>
             {% endif %}
@@ -156,8 +164,7 @@
               <tr>
                 <th>Sl. No.</th>
                 <th>Date</th>
-                <th>Loan ID</th>
-                <th>Lender Type</th>
+                <th>Lender</th>
                 <th>Status</th>
                 <th>Action</th>
               </tr>
@@ -168,7 +175,6 @@
                 <tr>
                   <td>{{ forloop.counter }}</td>
                   <td>{{ fb.updated_at|date:"d-m-Y H:i" }}</td>
-                  <td>{{ loan.loan_id }}</td>
                   <td>{{ fb.lender.lender_details.lender_type|default:"N/A" }}</td>
                   <td>
                     {% if fb.status == "Rejected" %}
@@ -201,6 +207,13 @@
                         <p><strong>Mobile:</strong> {{ fb.lender.profile.mobile|default:"N/A" }}</p>
                         <p><strong>Bank / Firm Name:</strong> {{ fb.lender.lender_details.bank_firm_name|default:"N/A" }}</p>
                         <p><strong>Branch Name:</strong> {{ fb.lender.lender_details.branch_name|default:"N/A" }}</p>
+                        <hr>
+                        <form method="post" action="{% url 'applicant_accept_lender' loan.id fb.lender.id %}">
+                          {% csrf_token %}
+                          <button type="submit" class="btn btn-accept">Accept</button>
+                          <button type="button" class="btn btn-hold" data-bs-dismiss="modal">Hold</button>
+                          <p class="text-muted mt-2">After Accepted this loan will no more for Lenders</p>
+                        </form>
                       </div>
                     </div>
                   </div>
@@ -257,7 +270,7 @@ document.addEventListener("DOMContentLoaded", function () {
       const created = row.dataset.created;
       let show = true;
       if (kind === "today") show = (created === todayISO);
-      else if (["approved","rejected","pending"].includes(kind)) show = (status === kind);
+      else if (["approved","rejected","pending","finalised"].includes(kind)) show = (status === kind);
 
       if (show) { row.style.display = ""; showSubRow(row); }
       else { row.style.display = "none"; hideSubRow(row); }

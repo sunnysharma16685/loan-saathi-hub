@@ -126,7 +126,9 @@
             <td>{{ fb.loan.duration_months }} months</td>
             <td>{{ fb.loan.interest_rate }}%</td>
             <td>
-                {% if fb.status == "Approved" %}
+                {% if fb.loan.finalised_by_applicant %}
+                    <span class="badge bg-secondary">Finalised by Applicant</span>
+                {% elif fb.status == "Approved" %}
                     <span class="badge bg-success">Approved</span>
                 {% elif fb.status == "Rejected" %}
                     <span class="badge bg-danger">Rejected</span>
@@ -136,18 +138,21 @@
             </td>
             <td>{{ fb.loan.reason_for_loan|default:"N/A" }}</td>
             <td>
-    {% if fb.status == "Approved" %}
-        <a href="{% url 'view_profile' fb.loan.id %}" class="btn btn-view">View Full Profile</a>
-    {% elif fb.status == "Pending" %}
-        <a href="{% url 'make_dummy_payment' fb.loan.id %}" class="btn btn-approve">Make Dummy Payment</a>
-        <button class="btn btn-reject" data-bs-toggle="modal" data-bs-target="#rejectModal{{fb.loan.id}}">Reject</button>
-        <a href="{% url 'partial_profile' fb.loan.id %}" class="btn btn-view">View Partial Profile</a>
-    {% elif fb.status == "Rejected" %}
-        <span class="text-danger">Rejected</span>
-        <a href="{% url 'partial_profile' fb.loan.id %}" class="btn btn-view">View Partial Profile</a>
-    {% endif %}
-</td>
+                {% if fb.loan.finalised_by_applicant %}
+                    <span class="text-muted">Applicant has bought loan from other Lender</span>
+                {% elif fb.status == "Approved" %}
+                    <a href="{% url 'view_profile' fb.loan.id %}" class="btn btn-view">View Full Profile</a>
+                {% elif fb.status == "Pending" %}
+                    <a href="{% url 'make_dummy_payment' fb.loan.id %}" class="btn btn-approve">Make Dummy Payment</a>
+                    <button class="btn btn-reject" data-bs-toggle="modal" data-bs-target="#rejectModal{{fb.loan.id}}">Reject</button>
+                    <a href="{% url 'partial_profile' fb.loan.id %}" class="btn btn-view">View Partial Profile</a>
+                {% elif fb.status == "Rejected" %}
+                    <span class="text-danger">Rejected</span>
+                    <a href="{% url 'partial_profile' fb.loan.id %}" class="btn btn-view">View Partial Profile</a>
+                {% endif %}
+            </td>
         </tr>
+
         <!-- Reject Modal -->
         <div class="modal fade" id="rejectModal{{fb.loan.id}}" tabindex="-1">
             <div class="modal-dialog">
@@ -178,12 +183,55 @@
                 </div>
             </div>
         </div>
-        {% empty %}
-        <tr><td colspan="11">No loan requests assigned yet.</td></tr>
+        {% endfor %}
+
+        {% for loan in pending_loans %}
+        <tr data-status="pending" data-created="{{ loan.created_at|date:'Y-m-d' }}">
+            <td>{{ forloop.counter }}</td>
+            <td>{{ loan.created_at|date:"d-m-Y" }}</td>
+            <td>{{ loan.loan_id }}</td>
+            <td>{{ loan.applicant.profile.full_name|default:loan.applicant.email }}</td>
+            <td>{{ loan.loan_type }}</td>
+            <td>₹{{ loan.amount_requested }}</td>
+            <td>{{ loan.duration_months }} months</td>
+            <td>{{ loan.interest_rate }}%</td>
+            <td>
+                {% if loan.finalised_by_applicant %}
+                    <span class="badge bg-secondary">Finalised by Applicant</span>
+                {% else %}
+                    <span class="badge bg-warning text-dark">Pending</span>
+                {% endif %}
+            </td>
+            <td>{{ loan.reason_for_loan|default:"N/A" }}</td>
+            <td>
+                {% if loan.finalised_by_applicant %}
+                    <span class="text-muted">Applicant has bought loan from other Lender</span>
+                {% else %}
+                    <a href="{% url 'approve_loan' loan.id %}" class="btn btn-approve">Approve</a>
+                    <a href="{% url 'reject_loan' loan.id %}" class="btn btn-reject">Reject</a>
+                    <a href="{% url 'partial_profile' loan.id %}" class="btn btn-view">View Partial Profile</a>
+                {% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+
+        {% for loan in finalised_loans %}
+        <tr data-status="finalised" data-created="{{ loan.created_at|date:'Y-m-d' }}">
+            <td>{{ forloop.counter }}</td>
+            <td>{{ loan.created_at|date:"d-m-Y" }}</td>
+            <td>{{ loan.loan_id }}</td>
+            <td>{{ loan.applicant.profile.full_name|default:loan.applicant.email }}</td>
+            <td>{{ loan.loan_type }}</td>
+            <td>₹{{ loan.amount_requested }}</td>
+            <td>{{ loan.duration_months }} months</td>
+            <td>{{ loan.interest_rate }}%</td>
+            <td><span class="badge bg-secondary">Finalised by Applicant</span></td>
+            <td>{{ loan.reason_for_loan|default:"N/A" }}</td>
+            <td><span class="text-muted">Applicant has bought loan from other Lender</span></td>
+        </tr>
         {% endfor %}
     </tbody>
 </table>
-
 <footer>
     © 2025 LoanSaathiHub. All rights reserved. |
     <a href="#">About us</a> |
@@ -214,7 +262,7 @@ document.addEventListener("DOMContentLoaded", function() {
             const created = row.dataset.created;
             let show = true;
             if(kind === "today") show = (created === todayISO);
-            else if(["approved","rejected","pending"].includes(kind)) show = (status===kind);
+            else if(["approved","rejected","pending","finalised"].includes(kind)) show = (status===kind);
             if(show) { row.style.display=""; showSubRow(row); } else { row.style.display="none"; hideSubRow(row); }
         });
     }

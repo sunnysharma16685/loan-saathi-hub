@@ -173,11 +173,29 @@ class LoanRequest(models.Model):
     duration_months = models.IntegerField()
     interest_rate = models.DecimalField(max_digits=5, decimal_places=2)
     reason_for_loan = models.TextField(blank=True, null=True)
+
+    # ✅ अब Applicant final decision भी handle होगा
     status = models.CharField(
         max_length=20,
-        choices=[("Pending", "Pending"), ("Approved", "Approved"), ("Rejected", "Rejected")],
+        choices=[
+            ("Pending", "Pending"),      # loan raised
+            ("Approved", "Approved"),    # lender approved
+            ("Rejected", "Rejected"),    # lender rejected
+            ("Hold", "Hold"),            # applicant put on hold
+            ("Accepted", "Accepted"),    # applicant accepted
+        ],
         default="Pending"
     )
+
+    # ✅ applicant किस lender को choose किया यह track होगा
+    accepted_lender = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="accepted_loans"
+    )
+
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):

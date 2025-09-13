@@ -205,7 +205,7 @@
             <td>{{ loan.reason_for_loan|default:"N/A" }}</td>
             <td>
                 {% if loan.finalised_by_applicant %}
-                    <span class="text-muted">Applicant has bought loan from other Lender</span>
+                    <span class="text-muted">Applicant has accepted to other Lender</span>
                 {% else %}
                     <a href="{% url 'approve_loan' loan.id %}" class="btn btn-approve">Approve</a>
                     <a href="{% url 'reject_loan' loan.id %}" class="btn btn-reject">Reject</a>
@@ -216,20 +216,42 @@
         {% endfor %}
 
         {% for loan in finalised_loans %}
-        <tr data-status="finalised" data-created="{{ loan.created_at|date:'Y-m-d' }}">
-            <td>{{ forloop.counter }}</td>
-            <td>{{ loan.created_at|date:"d-m-Y" }}</td>
-            <td>{{ loan.loan_id }}</td>
-            <td>{{ loan.applicant.profile.full_name|default:loan.applicant.email }}</td>
-            <td>{{ loan.loan_type }}</td>
-            <td>₹{{ loan.amount_requested }}</td>
-            <td>{{ loan.duration_months }} months</td>
-            <td>{{ loan.interest_rate }}%</td>
-            <td><span class="badge bg-secondary">Finalised by Applicant</span></td>
-            <td>{{ loan.reason_for_loan|default:"N/A" }}</td>
-            <td><span class="text-muted">Applicant has bought loan from other Lender</span></td>
-        </tr>
-        {% endfor %}
+<tr>
+  <td>{{ forloop.counter }}</td>
+  <td>{{ loan.created_at|date:"d-m-Y" }}</td>
+  <td>{{ loan.loan_id }}</td>
+  <td>{{ loan.applicant.profile.full_name|default:"N/A" }}</td>
+  <td>{{ loan.loan_type }}</td>
+  <td>₹{{ loan.amount_requested }}</td>
+  <td>{{ loan.duration_months }} months</td>
+  <td>{{ loan.interest_rate }}%</td>
+  <td>
+    {% if loan.accepted_lender == request.user %}
+        <span class="badge bg-success">Accepted by Applicant</span>
+    {% else %}
+        <span class="badge bg-secondary">Finalised by Applicant</span>
+    {% endif %}
+  </td>
+  <td>{{ loan.reason_for_loan }}</td>
+  <td>
+    {% if loan.accepted_lender == request.user %}
+        <p class="text-success fw-bold">
+            Applicant has accepted to Lender for further communicate.
+        </p>
+        <a href="{% url 'view_profile' loan.id %}" class="btn btn-primary btn-sm">
+            View Full Profile
+        </a>
+    {% else %}
+        <p class="text-muted">
+            Applicant has accepted to other Lender.
+        </p>
+    {% endif %}
+  </td>
+</tr>
+{% empty %}
+<tr><td colspan="11">No finalised loans found.</td></tr>
+{% endfor %}
+
     </tbody>
 </table>
 <footer>

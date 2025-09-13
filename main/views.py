@@ -280,7 +280,7 @@ def applicant_accept_loan(request, loan_id, lender_id):
     loan.save()
 
     messages.success(request, "After Accepted this loan will no more for Lenders.")
-    return redirect("applicant_dashboard")
+    return redirect("dashboard_applicant")
 
 
 @login_required
@@ -291,7 +291,7 @@ def applicant_hold_loan(request, loan_id):
     loan.save()
 
     messages.info(request, "Loan request is on Hold. Lenders cannot proceed until you Accept.")
-    return redirect("applicant_dashboard")
+    return redirect("dashboard_applicant")
 
 
 # -------------------- Dashboard Lender --------------------
@@ -299,7 +299,12 @@ def applicant_hold_loan(request, loan_id):
 def dashboard_lender(request):
     profile = getattr(request.user, "profile", None)
 
-    lender_feedbacks = LoanLenderStatus.objects.filter(lender=request.user).select_related("loan", "loan__applicant")
+    # Lender ke apne feedbacks (lekin finalised loans exclude kar diye)
+    lender_feedbacks = (
+        LoanLenderStatus.objects.filter(lender=request.user)
+        .exclude(loan__status__in=["Accepted", "Hold"])  # ✅ yaha filter lagaya
+        .select_related("loan", "loan__applicant")
+    )
 
     today = timezone.now().date()
     total_today = lender_feedbacks.filter(loan__created_at__date=today).count()
@@ -307,10 +312,20 @@ def dashboard_lender(request):
     total_rejected = lender_feedbacks.filter(status="Rejected").count()
     total_pending = lender_feedbacks.filter(status="Pending").count()
 
+    # Sare applicants ke unhandled pending loans
     handled_loans = LoanLenderStatus.objects.values_list("loan_id", flat=True)
-    pending_loans = LoanRequest.objects.filter(status="Pending").exclude(id__in=handled_loans).select_related("applicant").order_by("-created_at")
+    pending_loans = (
+        LoanRequest.objects.filter(status="Pending")
+        .exclude(id__in=handled_loans)
+        .select_related("applicant")
+        .order_by("-created_at")
+    )
 
-    finalised_loans = LoanRequest.objects.filter(status__in=["Accepted", "Hold"]).select_related("applicant", "accepted_lender")
+    # Applicant ke finalised loans (Accepted ya Hold)
+    finalised_loans = (
+        LoanRequest.objects.filter(status__in=["Accepted", "Hold"])
+        .select_related("applicant", "accepted_lender")
+    )
 
     context = {
         "profile": profile,

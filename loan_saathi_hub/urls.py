@@ -35,6 +35,11 @@ urlpatterns = [
     path("dashboard/lender/payment/<uuid:loan_id>/", views.payment_page, name="payment_page"),
     path("dashboard/lender/dummy-payment/<uuid:loan_id>/", views.make_dummy_payment, name="make_dummy_payment"),
     path("dashboard/lender/reject/<uuid:loan_id>/", views.reject_loan, name="reject_loan"),
+    path("dashboard/lender/approve/<uuid:loan_id>/", views.approve_loan, name="approve_loan"),
+
+    # ---------------- Applicant Loan Actions ----------------
+    path("applicant/accept/<uuid:loan_id>/<uuid:lender_id>/", views.applicant_accept_loan, name="applicant_accept_loan"),
+    path("applicant/hold/<uuid:loan_id>/", views.applicant_hold_loan, name="applicant_hold_loan"),
 
     # ---------------- Django Admin ----------------
     path("admin/", admin.site.urls),

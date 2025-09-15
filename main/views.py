@@ -14,6 +14,8 @@ from django.urls import reverse
 from datetime import date
 import uuid
 from django.utils import timezone
+from django.views.decorators.http import require_POST
+
 
 from .models import (
     User,
@@ -211,20 +213,164 @@ def profile_form(request, user_id):
         "lender_details": lender_details,
     })
 
+# -------------------- Admin Custom Login --------------------
+def admin_login(request):
+    if request.method == "POST":
+        identifier = request.POST.get("identifier")
+        password = request.POST.get("password")
+
+        user = None
+        # identifier can be email or mobile
+        try:
+            user = User.objects.get(email=identifier)
+        except User.DoesNotExist:
+            try:
+                user = User.objects.get(profile__mobile=identifier)
+            except User.DoesNotExist:
+                pass
+
+        if user:
+            auth_user = authenticate(request, email=user.email, password=password) or \
+                        authenticate(request, username=user.email, password=password)
+            if auth_user and (auth_user.is_staff or auth_user.is_superuser):
+                login(request, auth_user, backend="django.contrib.auth.backends.ModelBackend")
+                return redirect("dashboard_admin")
+        messages.error(request, "❌ Invalid credentials or not authorized for admin access.")
+
+    return render(request, "admin_login.html")
+
+
 # -------------------- Admin Dashboard --------------------
 @login_required
 def dashboard_admin(request):
+    # only superuser
     if not request.user.is_superuser:
         messages.error(request, "Access denied. Admins only.")
         return redirect("index")
 
+    # users: all registered (applicant + lender)
+    users_qs = User.objects.all().order_by("-created_at")  # generic
+
+    applicants = ApplicantDetails.objects.select_related("user").all().order_by("-id")
+    lenders = LenderDetails.objects.select_related("user").all().order_by("-id")
+    loans = LoanRequest.objects.all().order_by("-created_at")
+    payments = Payment.objects.select_related("lender", "loan_request").all().order_by("-id")
+
     context = {
-        "applicants": ApplicantDetails.objects.all(),
-        "lenders": LenderDetails.objects.all(),
-        "payments": Payment.objects.all(),
-        "loans": LoanRequest.objects.all(),
+        "users": users_qs,
+        "applicants": applicants,
+        "lenders": lenders,
+        "loans": loans,
+        "payments": payments,
     }
     return render(request, "dashboard_admin.html", context)
+
+
+# -------------------- Admin: User action (activate / deactivate / delete) --------------------
+@login_required
+@require_POST
+def admin_user_action(request, user_id):
+    if not request.user.is_superuser:
+        return JsonResponse({"ok": False, "message": "Access denied."}, status=403)
+
+    action = request.POST.get("action")  # values: activate, deactivate, delete
+    reason = request.POST.get("reason", "")[:1000]  # optional admin reason
+
+    try:
+        target = User.objects.get(id=user_id)
+    except User.DoesNotExist:
+        return JsonResponse({"ok": False, "message": "User not found."}, status=404)
+
+    # Common vars for mails
+    support_from = "support@loansaathihub.in"
+    ctx = {"user": target, "admin": request.user, "reason": reason}
+
+    if action == "deactivate":
+        target.is_active = False
+        # optionally mark some flag on profile if exists
+        profile = getattr(target, "profile", None)
+        if profile:
+            try:
+                profile.is_blocked = True
+                profile.save()
+            except Exception:
+                pass
+        target.save()
+
+        # send email to user
+        subject = "Action Required: Your Account May Be Deactivated Due to Misuses"
+        body = (
+            f"Dear {getattr(target, 'first_name', '') or target.email},\n\n"
+            "Warning: Your account on Loan Saathi Hub has been temporarily DEACTIVATED due to reported misuse or policy violation.\n\n"
+            "If you believe this is a mistake, please contact our support team immediately at support@loansaathihub.in with your account details and any supporting information.\n\n"
+            "Regards,\nLoan Saathi Hub Support\n"
+        )
+        try:
+            send_mail(subject, body, support_from, [target.email], fail_silently=True)
+        except Exception:
+            pass
+
+        return JsonResponse({"ok": True, "message": "User deactivated and email sent."})
+
+    elif action == "activate":
+        target.is_active = True
+        profile = getattr(target, "profile", None)
+        if profile:
+            try:
+                profile.is_blocked = False
+                profile.save()
+            except Exception:
+                pass
+        target.save()
+
+        subject = "Your Account Activated — Loan Saathi Hub"
+        body = (
+            f"Dear {getattr(target, 'first_name', '') or target.email},\n\n"
+            "Congratulations! Your Loan Saathi Hub account has been re-activated. Please ensure you follow the platform's guidelines to avoid future actions.\n\n"
+            "Regards,\nLoan Saathi Hub Support\n"
+        )
+        try:
+            send_mail(subject, body, support_from, [target.email], fail_silently=True)
+        except Exception:
+            pass
+
+        return JsonResponse({"ok": True, "message": "User activated and email sent."})
+
+    elif action == "delete":
+        # We will 'disable' the account permanently: mark inactive and obfuscate email
+        orig_email = target.email
+        try:
+            target.is_active = False
+            # obfuscate email to prevent reuse/login
+            target.email = f"disabled+{target.id}@blocked.loansaathihub"
+            target.username = None if hasattr(target, "username") else getattr(target, "username", None)
+            target.save()
+        except Exception:
+            pass
+
+        subject = "Account Permanently Disabled"
+        body = (
+            f"Dear {getattr(target, 'first_name', '') or orig_email},\n\n"
+            "Warning: Your account has been permanently blocked due to misuse of the platform. If you think this is an error, please contact support@loansaathihub.in.\n\n"
+            "This action is irreversible.\n\n"
+            "Regards,\nLoan Saathi Hub Support\n"
+        )
+        try:
+            send_mail(subject, body, support_from, [orig_email], fail_silently=True)
+        except Exception:
+            pass
+
+        return JsonResponse({"ok": True, "message": "User permanently disabled and email sent."})
+
+    else:
+        return JsonResponse({"ok": False, "message": "Unknown action."}, status=400)
+
+# -------------------- Admin Logout --------------------
+@login_required
+def admin_logout(request):
+    logout(request)
+    messages.success(request, "✅ Admin logged out successfully")
+    return redirect("admin_login")
 
 
 # -------------------- Dashboard Router --------------------

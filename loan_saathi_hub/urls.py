@@ -41,8 +41,11 @@ urlpatterns = [
     path("applicant/accept/<uuid:loan_id>/<uuid:lender_id>/", views.applicant_accept_loan, name="applicant_accept_loan"),
     path("applicant/hold/<uuid:loan_id>/", views.applicant_hold_loan, name="applicant_hold_loan"),
 
-    # ---------------- Django Admin ----------------
-    path("admin/", admin.site.urls),
+    # ---------------- Custom Admin ----------------
+    path("admin_login/", views.admin_login, name="admin_login"),
+    path("dashboard_admin/", views.dashboard_admin, name="dashboard_admin"),
+    path("admin/user_action/<uuid:user_id>/", views.admin_user_action, name="admin_user_action"),
+    path("admin_logout/", views.admin_logout, name="admin_logout"),
 
     # ---------------- Footer static pages ----------------
     path("about/", TemplateView.as_view(template_name="about.html"), name="about"),

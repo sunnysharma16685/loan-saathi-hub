@@ -239,6 +239,31 @@ def admin_login(request):
 
     return render(request, "admin_login.html")
 
+# -------------------- Admin Login --------------------
+
+def admin_login(request):
+    if request.method == "POST":
+        identifier = request.POST.get("identifier")  # email or mobile
+        password = request.POST.get("password")
+
+        try:
+            # सिर्फ email से login
+            user = User.objects.filter(email=identifier).first()
+        except User.DoesNotExist:
+            user = None
+
+        if user:
+            auth_user = authenticate(request, email=user.email, password=password) \
+                        or authenticate(request, username=user.email, password=password)
+            if auth_user and auth_user.is_superuser:
+                login(request, auth_user)
+                return redirect("dashboard_admin")
+            else:
+                messages.error(request, "❌ Invalid credentials or not an admin user.")
+        else:
+            messages.error(request, "❌ User not found.")
+
+    return render(request, "admin_login.html")
 
 # -------------------- Admin Dashboard --------------------
 @login_required

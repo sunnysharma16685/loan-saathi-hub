@@ -1,45 +1,27 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Feedback | Loan Saathi Hub</title>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
-    <style>
-        body { font-family: 'Poppins', sans-serif; margin: 0; padding: 0; background: #f8f9fa; color: #333; }
-        header, footer { background: #0d6efd; color: white; padding: 15px 20px; }
-        header a, footer a { color: white; text-decoration: none; margin-left: 15px; }
-        header a:hover, footer a:hover { text-decoration: underline; }
-        .container { max-width: 900px; margin: auto; padding: 30px; background: white; border-radius: 10px; margin-top: 30px; }
-        h1 { color: #0d6efd; }
-        .stars { font-size: 24px; color: gold; cursor: pointer; }
-    </style>
-</head>
-<body>
-    <header>
-        <span style="font-weight:600;">Loan Saathi Hub</span>
-        <span style="float:right;">
-            <a href="index.html">Home</a>
-        </span>
-    </header>
+{% extends "base.html" %}
+{% load static %}
 
-    <div class="container">
-        <h1>Feedback</h1>
-        <p>We value your feedback! Rate your experience below:</p>
-        <div class="stars">⭐⭐⭐⭐⭐</div>
-        <p><textarea rows="5" style="width:100%; padding:10px; border-radius:5px; border:1px solid #ccc;" placeholder="Your feedback..."></textarea></p>
-        <button style="background:#0d6efd; color:white; padding:10px 20px; border:none; border-radius:5px;">Submit</button>
-    </div>
+{% block title %}Feedback | Loan Saathi Hub{% endblock %}
 
-    <footer>
-        © 2025 LoanSaathiHub. All rights reserved. |
-        <a href="about.html">About us</a> |
-        <a href="terms.html">Terms & Conditions</a> |
-        <a href="privacy.html">Privacy Policy</a> |
-        <a href="faq.html">FAQ</a> |
-        <a href="support.html">Support</a> |
-        <a href="contacts.html">Contacts</a> |
-        <a href="feedback.html">Feedback</a>
-    </footer>
-</body>
-</html>
+{% block content %}
+<div class="container container-max my-5">
+  <div class="card p-4 shadow-sm">
+    <h2 class="text-primary">Feedback</h2>
+    <p class="muted-small">Your feedback helps us improve.</p>
+
+    {% if success %}
+      <div class="alert alert-success">✅ Thank you for your feedback.</div>
+    {% endif %}
+
+    <form method="post" novalidate>
+      {% csrf_token %}
+      <div class="mb-2">{{ form.role.label_tag }} {{ form.role }}</div>
+      <div class="mb-2">{{ form.name.label_tag }} {{ form.name }}</div>
+      <div class="mb-2">{{ form.email.label_tag }} {{ form.email }}</div>
+      <div class="mb-2"><label>Rating</label> {{ form.rating }}</div>
+      <div class="mb-2">{{ form.message.label_tag }} {{ form.message }}</div>
+      <button class="btn btn-info">Send Feedback</button>
+    </form>
+  </div>
+</div>
+{% endblock %}

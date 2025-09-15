@@ -267,7 +267,7 @@
           <input type="hidden" name="action" id="modalActionInput" value="">
           <input type="hidden" name="reason" id="modalReasonInput" value="">
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-          <button type="submit" class="btn btn-danger" id="confirmSubmitBtn">Confirm</button>
+          <button type="submit" class="btn" id="confirmSubmitBtn">Confirm</button>
         </div>
       </form>
     </div>
@@ -296,7 +296,6 @@
   document.querySelectorAll('.search-input').forEach(function(el){
     el.addEventListener('input', function(){
       var targetKey = el.dataset.target;
-      // map data-target to table id
       var map = {
         'users-table-search': 'users-table',
         'applicants-table-search': 'applicants-table',
@@ -335,7 +334,10 @@
       var emailCell = btn.closest('tr').querySelector('td:nth-child(2)');
       var email = emailCell ? emailCell.innerText.trim() : '';
       modalAction.value = action;
-      form.action = "/admin/user-action/" + userId + "/"; // matches urls.py
+
+      // ✅ FIXED URL
+      form.action = "/admin/user_action/" + userId + "/";
+
       if(action === 'deactivate'){
         modalTitle.innerText = "Deactivate Account?";
         modalBody.innerHTML = "<p class='mb-2'>You are about to <strong>Deactivate</strong> the account <strong>" + email + "</strong>.</p>"
@@ -355,13 +357,11 @@
         modalBody.innerText = "Proceed?";
       }
 
-      // set hidden reason input on submit: copy from textarea
       form.onsubmit = function(e){
         var reasonText = document.getElementById('modalReasonInputField');
         var r = reasonText ? reasonText.value : '';
-        // set hidden input
         document.getElementById('modalReasonInput').value = r;
-        // actually submit via fetch (AJAX) and update UI without reload
+
         e.preventDefault();
         var actionVal = modalAction.value;
         var url = form.action;
@@ -377,10 +377,8 @@
           body: new URLSearchParams({ action: actionVal, reason: r })
         }).then(resp => resp.json()).then(data => {
           if(data.ok){
-            // feedback and update row UI quickly
             confirmModal.hide();
             alert(data.message || "Action completed");
-            // reload small portion: here we will reload the whole page to keep it simple and consistent
             location.reload();
           } else {
             alert(data.message || "Error");

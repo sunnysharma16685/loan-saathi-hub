@@ -1,6 +1,15 @@
 from django import forms
 from django.contrib.auth.forms import AuthenticationForm
-from .models import User, Profile, applicantdetails, lenderdetails
+from .models import (
+    User,
+    Profile,
+    ApplicantDetails,
+    LenderDetails,
+    SupportTicket,
+    Complaint,
+    Feedback,
+)
+from django.contrib.auth import get_user_model
 
 
 # -----------------------------
@@ -68,7 +77,7 @@ class ApplicantRegistrationForm(forms.ModelForm):
             )
 
             # ApplicantDetails create
-            applicantdetails.objects.create(
+            ApplicantDetails.objects.create(
                 user=user,
                 job_type=self.cleaned_data.get("job_type"),
                 cibil_score=self.cleaned_data.get("cibil_score"),
@@ -94,7 +103,7 @@ class ApplicantRegistrationForm(forms.ModelForm):
 class LenderRegistrationForm(forms.ModelForm):
     password = forms.CharField(widget=forms.PasswordInput)
 
-    # Profile fields (basic)
+    # Profile fields
     full_name = forms.CharField(max_length=200, required=False)
     mobile = forms.CharField(max_length=20, required=True)
     gender = forms.CharField(max_length=20, required=True)
@@ -139,7 +148,7 @@ class LenderRegistrationForm(forms.ModelForm):
             )
 
             # LenderDetails create
-            lenderdetails.objects.create(
+            LenderDetails.objects.create(
                 user=user,
                 lender_type=self.cleaned_data.get("lender_type"),
                 dsa_code=self.cleaned_data.get("dsa_code"),
@@ -156,3 +165,53 @@ class LenderRegistrationForm(forms.ModelForm):
 # -----------------------------
 class LoginForm(AuthenticationForm):
     username = forms.EmailField(label="Email")
+
+
+# -----------------------------
+# FOOTER FORMS
+# -----------------------------
+class SupportForm(forms.ModelForm):
+    class Meta:
+        model = SupportTicket
+        fields = ["name", "email", "subject", "message"]
+        widgets = {
+            "name": forms.TextInput(attrs={"placeholder": "Your name (optional)", "class": "form-control"}),
+            "email": forms.EmailInput(attrs={"placeholder": "Your email", "class": "form-control"}),
+            "subject": forms.TextInput(attrs={"placeholder": "Subject", "class": "form-control"}),
+            "message": forms.Textarea(attrs={"rows": 4, "maxlength": 2000, "class": "form-control"}),
+        }
+
+
+class ComplaintForm(forms.ModelForm):
+    class Meta:
+        model = Complaint
+        fields = ["name", "email", "complaint_against", "against_role", "message"]
+        widgets = {
+            "name": forms.TextInput(attrs={"placeholder": "Your name (optional)", "class": "form-control"}),
+            "email": forms.EmailInput(attrs={"placeholder": "Your email", "class": "form-control"}),
+            "complaint_against": forms.TextInput(attrs={"placeholder": "Email or User ID (if known)", "class": "form-control"}),
+            "against_role": forms.Select(attrs={"class": "form-select"}),
+            "message": forms.Textarea(attrs={"rows": 5, "maxlength": 2000, "placeholder": "Describe complaint (max ~250 words)", "class": "form-control"}),
+        }
+
+    def clean_message(self):
+        data = self.cleaned_data.get("message", "")
+        if len(data.split()) > 250:
+            raise forms.ValidationError("Please limit to about 250 words.")
+        return data
+
+
+class FeedbackForm(forms.ModelForm):
+    class Meta:
+        model = Feedback
+        fields = ["role", "name", "email", "rating", "message"]
+        widgets = {
+            "role": forms.Select(attrs={"class": "form-select"}),
+            "name": forms.TextInput(attrs={"placeholder": "Name (if logged in will prefill)", "class": "form-control"}),
+            "email": forms.EmailInput(attrs={"placeholder": "Email (if logged in will prefill)", "class": "form-control"}),
+            "rating": forms.Select(
+                choices=[("", "Choose..."), (1, "★☆☆☆☆"), (2, "★★☆☆☆"), (3, "★★★☆☆"), (4, "★★★★☆"), (5, "★★★★★")],
+                attrs={"class": "form-select"},
+            ),
+            "message": forms.Textarea(attrs={"rows": 4, "class": "form-control"}),
+        }

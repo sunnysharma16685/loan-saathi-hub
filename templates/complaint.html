@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Complaint | Loan Saathi Hub{% endblock %}
+
+{% block content %}
+<div class="container container-max my-5">
+  <div class="card p-4 shadow-sm">
+    <h2 class="text-danger">Submit a Complaint</h2>
+    <p class="muted-small">Report misuse by an applicant or lender.</p>
+
+    {% if success %}
+      <div class="alert alert-success">✅ Complaint submitted. Our compliance team will investigate.</div>
+    {% endif %}
+
+    <form method="post" novalidate>
+      {% csrf_token %}
+      <div class="mb-2">{{ form.name.label_tag }} {{ form.name }}</div>
+      <div class="mb-2">{{ form.email.label_tag }} {{ form.email }}</div>
+      <div class="mb-2">{{ form.complaint_against.label_tag }} {{ form.complaint_against }}</div>
+      <div class="mb-2">{{ form.against_role.label_tag }} {{ form.against_role }}</div>
+      <div class="mb-2">{{ form.message.label_tag }} {{ form.message }}</div>
+      <button class="btn btn-danger">Submit Complaint</button>
+    </form>
+  </div>
+</div>
+{% endblock %}

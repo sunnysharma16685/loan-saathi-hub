@@ -1,22 +1,28 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.auth import authenticate, login, logout, get_user_model
 from django.contrib import messages
+from django.contrib.auth import (
+    authenticate, login, logout, get_user_model
+)
 from django.contrib.auth.decorators import login_required
-from django.utils.crypto import get_random_string
-from django.utils.dateparse import parse_date
+from django.views.decorators.http import require_POST
+from django.views.decorators.csrf import csrf_exempt, csrf_protect
+from django.utils.decorators import method_decorator
 from django.core.mail import send_mail
+from django.utils import timezone
+from django.utils.crypto import get_random_string
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.utils.encoding import force_bytes
 from django.contrib.auth.tokens import default_token_generator
 from django.contrib.auth.forms import SetPasswordForm
-from django.conf import settings
+from django.core.exceptions import ObjectDoesNotExist
+from django.http import JsonResponse
 from django.urls import reverse
-from datetime import date
+from django.conf import settings
+
 import uuid
-from django.utils import timezone
-from django.views.decorators.http import require_POST
+from datetime import date
 
-
+# -------------------- Local Models --------------------
 from .models import (
     User,
     Profile,
@@ -24,10 +30,25 @@ from .models import (
     LenderDetails,
     LoanRequest,
     LoanLenderStatus,
-    Payment
+    Payment,
+    SupportTicket,
+    Complaint,
+    Feedback,
 )
 
+# -------------------- Local Forms --------------------
+from .forms import (
+    ApplicantRegistrationForm,
+    LenderRegistrationForm,
+    LoginForm,
+    SupportForm,
+    ComplaintForm,
+    FeedbackForm,
+)
+
+# Ensure User refers to the active custom user model
 User = get_user_model()
+
 
 
 # -------------------- Home --------------------
@@ -213,50 +234,31 @@ def profile_form(request, user_id):
         "lender_details": lender_details,
     })
 
+
 # -------------------- Admin Custom Login --------------------
 def admin_login(request):
+    """
+    Custom admin login page.
+    Accepts 'identifier' (email or mobile) and password.
+    Only allows superusers (admins) to login here.
+    """
     if request.method == "POST":
-        identifier = request.POST.get("identifier")
-        password = request.POST.get("password")
+        identifier = (request.POST.get("identifier") or "").strip()
+        password = request.POST.get("password") or ""
 
-        user = None
-        # identifier can be email or mobile
-        try:
-            user = User.objects.get(email=identifier)
-        except User.DoesNotExist:
-            try:
-                user = User.objects.get(profile__mobile=identifier)
-            except User.DoesNotExist:
-                pass
+        # Try email first
+        user = User.objects.filter(email__iexact=identifier).first()
+
+        # If not found by email, try profile.mobile (if provided)
+        if not user:
+            user = User.objects.filter(profile__mobile=identifier).first()
 
         if user:
-            auth_user = authenticate(request, email=user.email, password=password) or \
-                        authenticate(request, username=user.email, password=password)
-            if auth_user and (auth_user.is_staff or auth_user.is_superuser):
-                login(request, auth_user, backend="django.contrib.auth.backends.ModelBackend")
-                return redirect("dashboard_admin")
-        messages.error(request, "❌ Invalid credentials or not authorized for admin access.")
-
-    return render(request, "admin_login.html")
-
-# -------------------- Admin Login --------------------
-
-def admin_login(request):
-    if request.method == "POST":
-        identifier = request.POST.get("identifier")  # email or mobile
-        password = request.POST.get("password")
-
-        try:
-            # सिर्फ email से login
-            user = User.objects.filter(email=identifier).first()
-        except User.DoesNotExist:
-            user = None
-
-        if user:
+            # Try authenticating via email (and username fallback)
             auth_user = authenticate(request, email=user.email, password=password) \
                         or authenticate(request, username=user.email, password=password)
             if auth_user and auth_user.is_superuser:
-                login(request, auth_user)
+                login(request, auth_user, backend="django.contrib.auth.backends.ModelBackend")
                 return redirect("dashboard_admin")
             else:
                 messages.error(request, "❌ Invalid credentials or not an admin user.")
@@ -265,20 +267,30 @@ def admin_login(request):
 
     return render(request, "admin_login.html")
 
+
 # -------------------- Admin Dashboard --------------------
 @login_required
 def dashboard_admin(request):
-    # only superuser
+    """
+    Admin dashboard view — only superusers allowed.
+    Provides lists for: all users, applicants, lenders, loans, payments.
+    """
     if not request.user.is_superuser:
         messages.error(request, "Access denied. Admins only.")
         return redirect("index")
 
-    # users: all registered (applicant + lender)
-    users_qs = User.objects.all().order_by("-created_at")  # generic
+    # All users (applicants + lenders). order by created_at if available, else by id desc
+    if hasattr(User._meta.model, "created_at") or "created_at" in [f.name for f in User._meta.fields]:
+        users_qs = User.objects.all().order_by("-created_at")
+    else:
+        users_qs = User.objects.all().order_by("-id")
 
+    # ApplicantDetails and LenderDetails
     applicants = ApplicantDetails.objects.select_related("user").all().order_by("-id")
     lenders = LenderDetails.objects.select_related("user").all().order_by("-id")
-    loans = LoanRequest.objects.all().order_by("-created_at")
+
+    # Loans and payments
+    loans = LoanRequest.objects.select_related("applicant", "accepted_lender").all().order_by("-created_at")
     payments = Payment.objects.select_related("lender", "loan_request").all().order_by("-id")
 
     context = {
@@ -294,25 +306,46 @@ def dashboard_admin(request):
 # -------------------- Admin: User action (activate / deactivate / delete) --------------------
 @login_required
 @require_POST
+@csrf_protect
 def admin_user_action(request, user_id):
+    """
+    AJAX endpoint for admin actions on users: activate / deactivate / delete.
+    Returns JSON for AJAX; redirects with messages if not AJAX.
+    """
     if not request.user.is_superuser:
-        return JsonResponse({"ok": False, "message": "Access denied."}, status=403)
+        if request.headers.get("x-requested-with") == "XMLHttpRequest":
+            return JsonResponse({"ok": False, "message": "Access denied."}, status=403)
+        messages.error(request, "Access denied.")
+        return redirect("dashboard_admin")
 
-    action = request.POST.get("action")  # values: activate, deactivate, delete
-    reason = request.POST.get("reason", "")[:1000]  # optional admin reason
+    action = (request.POST.get("action") or "").strip().lower()
+    reason = (request.POST.get("reason") or "").strip()[:1000]
 
     try:
         target = User.objects.get(id=user_id)
-    except User.DoesNotExist:
-        return JsonResponse({"ok": False, "message": "User not found."}, status=404)
+    except (User.DoesNotExist, ValueError, TypeError):
+        if request.headers.get("x-requested-with") == "XMLHttpRequest":
+            return JsonResponse({"ok": False, "message": "User not found."}, status=404)
+        messages.error(request, "User not found.")
+        return redirect("dashboard_admin")
 
-    # Common vars for mails
-    support_from = "support@loansaathihub.in"
-    ctx = {"user": target, "admin": request.user, "reason": reason}
+    support_from = getattr(settings, "DEFAULT_FROM_EMAIL", "support@loansaathihub.in")
+    orig_email = target.email
 
+    # Helper to send mail (fail silently)
+    def _send(subject, body, to_email):
+        try:
+            send_mail(subject, body, support_from, [to_email], fail_silently=True)
+        except Exception:
+            # swallow to avoid crashing the admin action
+            pass
+
+    # ----- Deactivate -----
     if action == "deactivate":
         target.is_active = False
-        # optionally mark some flag on profile if exists
+        target.save()
+
+        # mark profile flag if exists
         profile = getattr(target, "profile", None)
         if profile:
             try:
@@ -320,25 +353,22 @@ def admin_user_action(request, user_id):
                 profile.save()
             except Exception:
                 pass
-        target.save()
 
-        # send email to user
         subject = "Action Required: Your Account May Be Deactivated Due to Misuses"
         body = (
-            f"Dear {getattr(target, 'first_name', '') or target.email},\n\n"
+            f"Dear {getattr(target, 'first_name', '') or orig_email},\n\n"
             "Warning: Your account on Loan Saathi Hub has been temporarily DEACTIVATED due to reported misuse or policy violation.\n\n"
-            "If you believe this is a mistake, please contact our support team immediately at support@loansaathihub.in with your account details and any supporting information.\n\n"
+            f"Reason: {reason or 'Policy violation'}\n\n"
+            "If you believe this is a mistake, please contact our support team at support@loansaathihub.in.\n\n"
             "Regards,\nLoan Saathi Hub Support\n"
         )
-        try:
-            send_mail(subject, body, support_from, [target.email], fail_silently=True)
-        except Exception:
-            pass
+        _send(subject, body, orig_email)
+        resp = {"ok": True, "message": "User deactivated and email sent."}
 
-        return JsonResponse({"ok": True, "message": "User deactivated and email sent."})
-
+    # ----- Activate -----
     elif action == "activate":
         target.is_active = True
+        target.save()
         profile = getattr(target, "profile", None)
         if profile:
             try:
@@ -346,29 +376,25 @@ def admin_user_action(request, user_id):
                 profile.save()
             except Exception:
                 pass
-        target.save()
 
         subject = "Your Account Activated — Loan Saathi Hub"
         body = (
-            f"Dear {getattr(target, 'first_name', '') or target.email},\n\n"
-            "Congratulations! Your Loan Saathi Hub account has been re-activated. Please ensure you follow the platform's guidelines to avoid future actions.\n\n"
+            f"Dear {getattr(target, 'first_name', '') or orig_email},\n\n"
+            "Congratulations! Your Loan Saathi Hub account has been re-activated. Please follow the platform's guidelines to avoid future actions.\n\n"
             "Regards,\nLoan Saathi Hub Support\n"
         )
-        try:
-            send_mail(subject, body, support_from, [target.email], fail_silently=True)
-        except Exception:
-            pass
+        _send(subject, body, orig_email)
+        resp = {"ok": True, "message": "User activated and email sent."}
 
-        return JsonResponse({"ok": True, "message": "User activated and email sent."})
-
+    # ----- Delete (soft disable + obfuscate email) -----
     elif action == "delete":
-        # We will 'disable' the account permanently: mark inactive and obfuscate email
-        orig_email = target.email
         try:
             target.is_active = False
-            # obfuscate email to prevent reuse/login
+            # store original email to notify
+            original = orig_email
             target.email = f"disabled+{target.id}@blocked.loansaathihub"
-            target.username = None if hasattr(target, "username") else getattr(target, "username", None)
+            if hasattr(target, "username"):
+                target.username = f"disabled_{target.id}"
             target.save()
         except Exception:
             pass
@@ -376,19 +402,28 @@ def admin_user_action(request, user_id):
         subject = "Account Permanently Disabled"
         body = (
             f"Dear {getattr(target, 'first_name', '') or orig_email},\n\n"
-            "Warning: Your account has been permanently blocked due to misuse of the platform. If you think this is an error, please contact support@loansaathihub.in.\n\n"
-            "This action is irreversible.\n\n"
+            "Warning: Your account has been permanently blocked due to misuse of the platform. This action is irreversible.\n\n"
+            "If you think this is an error, contact support@loansaathihub.in.\n\n"
             "Regards,\nLoan Saathi Hub Support\n"
         )
-        try:
-            send_mail(subject, body, support_from, [orig_email], fail_silently=True)
-        except Exception:
-            pass
-
-        return JsonResponse({"ok": True, "message": "User permanently disabled and email sent."})
+        _send(subject, body, orig_email)
+        resp = {"ok": True, "message": "User permanently disabled and email sent."}
 
     else:
-        return JsonResponse({"ok": False, "message": "Unknown action."}, status=400)
+        resp = {"ok": False, "message": "Unknown action."}
+        # return 400 for AJAX
+        if request.headers.get("x-requested-with") == "XMLHttpRequest":
+            return JsonResponse(resp, status=400)
+        messages.error(request, resp["message"])
+        return redirect("dashboard_admin")
+
+    # Return JSON for AJAX requests (fetch), fallback to redirect with message
+    if request.headers.get("x-requested-with") == "XMLHttpRequest":
+        return JsonResponse(resp)
+    else:
+        messages.success(request, resp.get("message", "Action processed."))
+        return redirect("dashboard_admin")
+
 
 # -------------------- Admin Logout --------------------
 @login_required
@@ -397,11 +432,17 @@ def admin_logout(request):
     messages.success(request, "✅ Admin logged out successfully")
     return redirect("admin_login")
 
-
 # -------------------- Dashboard Router --------------------
 @login_required
 def dashboard_router(request):
-    return redirect("dashboard_lender") if getattr(request.user, "role", None) == "lender" else redirect("dashboard_applicant")
+    if getattr(request.user, "role", None) == "lender":
+        return redirect("dashboard_lender")
+    elif getattr(request.user, "role", None) == "applicant":
+        return redirect("dashboard_applicant")
+    elif request.user.is_superuser:
+        return redirect("dashboard_admin")
+    else:
+        return redirect("index")
 
 
 # -------------------- Dashboard Applicant --------------------
@@ -439,41 +480,16 @@ def dashboard_applicant(request):
         "total_pending": total_pending,
     })
 
-# -------------------- Dashboard Applicant -Accept / Hold-----------------
-@login_required
-def applicant_accept_loan(request, loan_id, lender_id):
-    loan = get_object_or_404(LoanRequest, id=loan_id, applicant=request.user)
-    lender = get_object_or_404(User, id=lender_id, role="lender")
-
-    # loan finalise
-    loan.status = "Accepted"
-    loan.accepted_lender = lender
-    loan.save()
-
-    messages.success(request, "After Accepted this loan will no more for Lenders.")
-    return redirect("dashboard_applicant")
-
-
-@login_required
-def applicant_hold_loan(request, loan_id):
-    loan = get_object_or_404(LoanRequest, id=loan_id, applicant=request.user)
-
-    loan.status = "Hold"
-    loan.save()
-
-    messages.info(request, "Loan request is on Hold. Lenders cannot proceed until you Accept.")
-    return redirect("dashboard_applicant")
-
 
 # -------------------- Dashboard Lender --------------------
 @login_required
 def dashboard_lender(request):
     profile = getattr(request.user, "profile", None)
 
-    # Lender ke apne feedbacks (lekin finalised loans exclude kar diye)
+    # Lender ke apne feedbacks (Accepted loans exclude)
     lender_feedbacks = (
         LoanLenderStatus.objects.filter(lender=request.user)
-        .exclude(loan__status__in=["Accepted", "Hold"])  # ✅ yaha filter lagaya
+        .exclude(loan__status__in=["Accepted",])
         .select_related("loan", "loan__applicant")
     )
 
@@ -483,7 +499,7 @@ def dashboard_lender(request):
     total_rejected = lender_feedbacks.filter(status="Rejected").count()
     total_pending = lender_feedbacks.filter(status="Pending").count()
 
-    # Sare applicants ke unhandled pending loans
+    # Unhandled pending loans
     handled_loans = LoanLenderStatus.objects.values_list("loan_id", flat=True)
     pending_loans = (
         LoanRequest.objects.filter(status="Pending")
@@ -492,9 +508,9 @@ def dashboard_lender(request):
         .order_by("-created_at")
     )
 
-    # Applicant ke finalised loans (Accepted ya Hold)
+    # Finalised loans
     finalised_loans = (
-        LoanRequest.objects.filter(status__in=["Accepted", "Hold"])
+        LoanRequest.objects.filter(status__in=["Accepted",])
         .select_related("applicant", "accepted_lender")
     )
 
@@ -510,6 +526,19 @@ def dashboard_lender(request):
     }
     return render(request, "dashboard_lender.html", context)
 
+# -------------------- Applicant Accept Loan --------------------
+@login_required
+def applicant_accept_loan(request, loan_id, lender_id):
+    loan = get_object_or_404(LoanRequest, id=loan_id, applicant=request.user)
+    lender = get_object_or_404(User, id=lender_id, role="lender")
+
+    # Finalize loan
+    loan.status = "Accepted"
+    loan.accepted_lender = lender
+    loan.save()
+
+    messages.success(request, "✅ You have accepted this lender. Other lenders can no longer access this loan.")
+    return redirect("dashboard_applicant")
 
 # -------------------- Loan Request --------------------
 @login_required
@@ -776,3 +805,69 @@ def reset_password_view(request, uidb64, token):
         return render(request, "reset_password.html", {"form": form})
     messages.error(request, "❌ Invalid or expired link.")
     return redirect("forgot_password")
+
+# ---------- Support page ----------
+def support_view(request):
+    if request.method == "POST":
+        form = SupportForm(request.POST)
+        if form.is_valid():
+            ticket = form.save()
+            # send email to support
+            subject = f"[Support] {ticket.subject}"
+            body = f"Support ticket from {ticket.name or 'Guest'} <{ticket.email}>\n\nMessage:\n{ticket.message}\n\nTicket ID: {ticket.id}"
+            send_mail(subject, body, settings.DEFAULT_FROM_EMAIL, [settings.DEFAULT_FROM_EMAIL], fail_silently=True)
+            return render(request, "support.html", {"form": SupportForm(), "success": True})
+    else:
+        form = SupportForm(initial={
+            "name": getattr(request.user, "profile", None) and request.user.profile.full_name or "",
+            "email": request.user.email if request.user.is_authenticated else ""
+        })
+    return render(request, "support.html", {"form": form})
+
+
+# ---------- Complaint page ----------
+def complaint_view(request):
+    if request.method == "POST":
+        form = ComplaintForm(request.POST)
+        if form.is_valid():
+            c = form.save()
+            # email to support
+            subject = f"[Complaint] Against {c.complaint_against or 'Unknown'}"
+            body = f"Complaint from {c.name or 'Guest'} <{c.email}>\nAgainst: {c.complaint_against}\nRole: {c.against_role}\n\nMessage:\n{c.message}\n\nID: {c.id}"
+            send_mail(subject, body, settings.DEFAULT_FROM_EMAIL, [settings.DEFAULT_FROM_EMAIL], fail_silently=True)
+            return render(request, "complaint.html", {"form": ComplaintForm(), "success": True})
+    else:
+        initial = {}
+        if request.user.is_authenticated:
+            initial["email"] = request.user.email
+            initial["name"] = getattr(request.user.profile, "full_name", "") if getattr(request.user, "profile", None) else ""
+            # if logged in set role
+            initial["against_role"] = request.user.role if getattr(request.user, "role", None) in ("applicant","lender") else "guest"
+        form = ComplaintForm(initial=initial)
+    return render(request, "complaint.html", {"form": form})
+
+
+# ---------- Feedback page ----------
+def feedback_view(request):
+    if request.method == "POST":
+        form = FeedbackForm(request.POST)
+        if form.is_valid():
+            fb = form.save(commit=False)
+            if request.user.is_authenticated:
+                fb.user = request.user
+                fb.email = fb.email or request.user.email
+                fb.name = fb.name or getattr(request.user.profile, "full_name", "")
+            fb.save()
+            # optionally email a copy
+            subject = f"[Feedback] {fb.role} rating:{fb.rating or 'n/a'}"
+            body = f"Feedback from {fb.name or 'Guest'} <{fb.email or 'n/a'}>\nRole: {fb.role}\nRating: {fb.rating}\n\n{fb.message}\n\nID: {fb.id}"
+            send_mail(subject, body, settings.DEFAULT_FROM_EMAIL, [settings.DEFAULT_FROM_EMAIL], fail_silently=True)
+            return render(request, "feedback.html", {"form": FeedbackForm(), "success": True})
+    else:
+        initial = {"role": "guest"}
+        if request.user.is_authenticated:
+            initial["role"] = request.user.role or "guest"
+            initial["email"] = request.user.email
+            initial["name"] = getattr(request.user.profile, "full_name", "")
+        form = FeedbackForm(initial=initial)
+    return render(request, "feedback.html", {"form": form})

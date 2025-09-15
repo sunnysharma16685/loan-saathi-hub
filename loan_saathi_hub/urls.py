@@ -4,6 +4,7 @@ from main import views
 from django.views.generic import TemplateView
 from django.conf import settings
 from django.conf.urls.static import static
+from main import views as main_views
 
 urlpatterns = [
     # ---------------- Home ----------------
@@ -39,7 +40,7 @@ urlpatterns = [
 
     # ---------------- Applicant Loan Actions ----------------
     path("applicant/accept/<uuid:loan_id>/<uuid:lender_id>/", views.applicant_accept_loan, name="applicant_accept_loan"),
-    path("applicant/hold/<uuid:loan_id>/", views.applicant_hold_loan, name="applicant_hold_loan"),
+    
 
     # ---------------- Custom Admin ----------------
     path("admin_login/", views.admin_login, name="admin_login"),
@@ -47,15 +48,25 @@ urlpatterns = [
     path("admin/user_action/<uuid:user_id>/", views.admin_user_action, name="admin_user_action"),
     path("admin_logout/", views.admin_logout, name="admin_logout"),
 
+    # -------Support, complaint, feedback routes------------------------
+    path("support/", main_views.support_view, name="support"),
+    path("complaint/", main_views.complaint_view, name="complaint"),
+    path("feedback/", main_views.feedback_view, name="feedback"),
+
     # ---------------- Footer static pages ----------------
     path("about/", TemplateView.as_view(template_name="about.html"), name="about"),
     path("terms/", TemplateView.as_view(template_name="terms.html"), name="terms"),
     path("privacy/", TemplateView.as_view(template_name="privacy.html"), name="privacy"),
     path("faq/", TemplateView.as_view(template_name="faq.html"), name="faq"),
     path("support/", TemplateView.as_view(template_name="support.html"), name="support"),
+    path("complaint/", TemplateView.as_view(template_name="complaint.html"), name="complaint"),
+    path("feedback/", TemplateView.as_view(template_name="feedback.html"), name="feedback"),
+    path("contact/", TemplateView.as_view(template_name="contact.html"), name="contact"),  # ✅ add this
+
 ]
 
 # ---------------- Static & Media (development only) ----------------
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
     urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+

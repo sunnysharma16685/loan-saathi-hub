@@ -4,15 +4,23 @@
 {% block title %}Support | Loan Saathi Hub{% endblock %}
 
 {% block content %}
-<div class="container my-5">
-    <div class="bg-white p-4 rounded shadow-sm">
-        <h1 class="text-primary mb-3">Support</h1>
-        <p>Need help? Our support team is here to assist you with any issues or questions.</p>
-        <div class="p-3 bg-light rounded border">
-            <p><strong>Email:</strong> support@loansaathihub.com</p>
-            <p><strong>Phone:</strong> +91-9999888800</p>
-            <p><strong>Working Hours:</strong> Mon - Fri, 10 AM to 6 PM</p>
-        </div>
-    </div>
+<div class="container container-max my-5">
+  <div class="card p-4 shadow-sm">
+    <h2 class="text-primary">Support</h2>
+    <p class="muted-small">Need help? Submit your request below. Our support team will respond within 24–48 hours.</p>
+
+    {% if success %}
+      <div class="alert alert-success">✅ Your request was submitted successfully.</div>
+    {% endif %}
+
+    <form method="post" novalidate>
+      {% csrf_token %}
+      <div class="mb-2">{{ form.name.label_tag }} {{ form.name }}</div>
+      <div class="mb-2">{{ form.email.label_tag }} {{ form.email }}</div>
+      <div class="mb-2">{{ form.subject.label_tag }} {{ form.subject }}</div>
+      <div class="mb-2">{{ form.message.label_tag }} {{ form.message }}</div>
+      <button class="btn btn-primary">Submit</button>
+    </form>
+  </div>
 </div>
 {% endblock %}

@@ -4,6 +4,7 @@ from django.utils import timezone
 from django.conf import settings
 import uuid
 
+
 # ---------------------------
 # USER MANAGER
 # ---------------------------
@@ -250,3 +251,59 @@ class Payment(models.Model):
 
     def __str__(self):
         return f"{self.loan_request.loan_id} - {self.amount} ({self.status})"
+
+
+# ---------- Support / Complaint / Feedback Models ----------
+class SupportTicket(models.Model):
+    """
+    Generic support ticket — simple contact form saved to DB and emailed to support.
+    """
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    name = models.CharField(max_length=150, blank=True, null=True)
+    email = models.EmailField()
+    subject = models.CharField(max_length=255)
+    message = models.TextField()
+    created_at = models.DateTimeField(default=timezone.now)
+    resolved = models.BooleanField(default=False)
+
+    def __str__(self):
+        return f"SupportTicket({self.email} - {self.subject})"
+
+
+class Complaint(models.Model):
+    """
+    Complaint submitted by guest or registered user.
+    """
+    ROLE_CHOICES = (("applicant", "Applicant"), ("lender", "Lender"), ("guest", "Guest"))
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    name = models.CharField(max_length=150, blank=True)
+    email = models.EmailField()
+    complaint_against = models.CharField(max_length=255, blank=True, help_text="Email or User ID of the person complaint is against")
+    against_role = models.CharField(max_length=20, choices=ROLE_CHOICES, default="guest")
+    message = models.TextField(help_text="Max 250 words")
+    created_at = models.DateTimeField(default=timezone.now)
+    handled = models.BooleanField(default=False)
+
+    def __str__(self):
+        return f"Complaint({self.email} -> {self.complaint_against})"
+
+
+class Feedback(models.Model):
+    """
+    Feedback from guest or registered user. Rating stored as 1-5.
+    """
+    ROLE_CHOICES = (("applicant", "Applicant"), ("lender", "Lender"), ("guest", "Guest"))
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    role = models.CharField(max_length=20, choices=ROLE_CHOICES, default="guest")
+    name = models.CharField(max_length=150, blank=True)
+    email = models.EmailField(blank=True, null=True)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL)
+    rating = models.PositiveSmallIntegerField(null=True, blank=True, help_text="1-5 stars")
+    message = models.TextField(blank=True)
+    created_at = models.DateTimeField(default=timezone.now)
+
+    def __str__(self):
+        return f"Feedback({self.role} {self.email or ''} - {self.rating})"
+

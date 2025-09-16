@@ -236,8 +236,7 @@ def profile_form(request, user_id):
         "lender_details": lender_details,
     })
 
-
-# -------------------- Admin Custom Login --------------------
+# -------------------- Admin Login --------------------
 def admin_login(request):
     """
     Custom admin login page.
@@ -248,27 +247,27 @@ def admin_login(request):
         identifier = (request.POST.get("identifier") or "").strip()
         password = request.POST.get("password") or ""
 
-        # Try email first
-        user = User.objects.filter(email__iexact=identifier).first()
+        user = None
+        if identifier:
+            # Try email first
+            user = User.objects.filter(email__iexact=identifier).first()
 
-        # If not found by email, try profile.mobile (if provided)
-        if not user:
-            user = User.objects.filter(profile__mobile=identifier).first()
+            # If not found by email, try profile.mobile
+            if not user:
+                user = User.objects.filter(profile__mobile=identifier).first()
 
         if user:
-            # Try authenticating via email (and username fallback)
-            auth_user = authenticate(request, email=user.email, password=password) \
-                        or authenticate(request, username=user.email, password=password)
+            # Authenticate only with username (email is username in custom user)
+            auth_user = authenticate(request, username=user.email, password=password)
             if auth_user and auth_user.is_superuser:
-                login(request, auth_user, backend="django.contrib.auth.backends.ModelBackend")
+                login(request, auth_user)
                 return redirect("dashboard_admin")
             else:
-                messages.error(request, "❌ Invalid credentials or not an admin user.")
+                messages.error(request, "❌ Invalid password or not an admin user.")
         else:
             messages.error(request, "❌ User not found.")
 
     return render(request, "admin_login.html")
-
 
 # -------------------- Admin Dashboard --------------------
 @login_required

@@ -1,44 +1,70 @@
+{% extends "base.html" %}
 {% load static %}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Admin Login - LoanSaathiHub</title>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
-  <style>
-    body { font-family: 'Poppins', sans-serif; background-color: #f8f9fa; }
-    .form-container {
-      max-width: 400px; background: #fff; margin: 80px auto; padding: 30px;
-      border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+
+{% block title %}Admin Login | Loan Saathi Hub{% endblock %}
+
+{% block extra_head %}
+<style>
+    .login-container {
+        max-width: 420px;
+        margin: 60px auto;
+        background: #fff;
+        padding: 25px;
+        border-radius: 12px;
+        box-shadow: 0 8px 20px rgba(0,0,0,0.08);
     }
-    h2 { text-align: center; color: #0d6efd; font-weight: 600; margin-bottom: 20px; }
-    label { display: block; margin-top: 10px; font-weight: 500; }
-    input {
-      width: 100%; padding: 10px; border: 1px solid #ccc;
-      border-radius: 8px; margin-bottom: 10px;
+    .login-container h2 {
+        font-size: 24px;
+        font-weight: 600;
+        text-align: center;
+        margin-bottom: 20px;
+        color: #0d6efd;
     }
-    button {
-      width: 100%; background: #0d6efd; color: white; border: none;
-      padding: 12px; border-radius: 8px; font-weight: 600;
-      cursor: pointer;
+    .form-control {
+        border-radius: 8px;
+        padding: 10px;
     }
-    button:hover { background: #0b5ed7; }
-  </style>
-</head>
-<body>
-  <div class="form-container">
+    .btn-login {
+        background: #0d6efd;
+        color: #fff;
+        font-weight: 600;
+        border-radius: 8px;
+        padding: 10px;
+        transition: 0.3s ease;
+    }
+    .btn-login:hover {
+        background: #0b5ed7;
+    }
+    .alert {
+        border-radius: 8px;
+        font-size: 14px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="login-container">
     <h2>Admin Login</h2>
-    <form method="POST" action="{% url 'admin_login' %}">
-      {% csrf_token %}
-      <label for="identifier">Email or Mobile</label>
-      <input type="text" id="identifier" name="identifier" placeholder="Enter Email or Mobile">
 
-      <label for="password">Password</label>
-      <input type="password" id="password" name="password" placeholder="Enter Password">
+    {% if messages %}
+        {% for msg in messages %}
+            <div class="alert alert-danger">{{ msg }}</div>
+        {% endfor %}
+    {% endif %}
 
-      <button type="submit">Login</button>
+    <form method="post" novalidate>
+        {% csrf_token %}
+        <div class="mb-3">
+            <label for="identifier" class="form-label">Email or Mobile</label>
+            <input type="text" name="identifier" id="identifier" class="form-control" required placeholder="Enter your admin email or mobile">
+        </div>
+
+        <div class="mb-3">
+            <label for="password" class="form-label">Password</label>
+            <input type="password" name="password" id="password" class="form-control" required placeholder="Enter your password">
+        </div>
+
+        <button type="submit" class="btn btn-login w-100">Login</button>
     </form>
-  </div>
-</body>
-</html>
+</div>
+{% endblock %}

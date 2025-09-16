@@ -8,7 +8,6 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # ---------------------------
 # ENVIRONMENT DETECTION
 # ---------------------------
-# Local dev में .env.local load होगा
 local_env_file = BASE_DIR / ".env.local"
 if local_env_file.exists():
     load_dotenv(local_env_file)
@@ -22,15 +21,12 @@ DEBUG = os.getenv("DJANGO_DEBUG", "0").strip().lower() in ("1", "true", "yes")
 
 ALLOWED_HOSTS = [
     h.strip()
-    for h in os.getenv("DJANGO_ALLOWED_HOSTS", "127.0.0.1,localhost").split(",")
+    for h in os.getenv("DJANGO_ALLOWED_HOSTS", "127.0.0.1,localhost,loansaathihub.in,www.loansaathihub.in").split(",")
     if h.strip()
 ]
 
 # Render / proxy HTTPS fix
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
-
-# Debugging line (optional, remove in prod)
-print("🌍 ALLOWED_HOSTS loaded:", ALLOWED_HOSTS)
 
 # ---------------------------
 # APPLICATIONS
@@ -85,7 +81,6 @@ WSGI_APPLICATION = "loan_saathi_hub.wsgi.application"
 DATABASE_URL = os.getenv("DATABASE_URL")
 
 if DATABASE_URL:
-    # Render (production) → DATABASE_URL से
     DATABASES = {
         "default": dj_database_url.parse(
             DATABASE_URL,
@@ -94,7 +89,6 @@ if DATABASE_URL:
         )
     }
 elif os.getenv("DB_NAME"):
-    # Local Postgres (DB_* vars से)
     DATABASES = {
         "default": {
             "ENGINE": os.getenv("DB_ENGINE", "django.db.backends.postgresql"),
@@ -106,7 +100,6 @@ elif os.getenv("DB_NAME"):
         }
     }
 else:
-    # Fallback SQLite (development emergency)
     DATABASES = {
         "default": {
             "ENGINE": "django.db.backends.sqlite3",
@@ -152,29 +145,22 @@ DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL", EMAIL_HOST_USER)
 # ---------------------------
 # SECURITY HEADERS
 # ---------------------------
-SECURE_SSL_REDIRECT = (
-    os.getenv("SECURE_SSL_REDIRECT", "True").strip().lower() in ("1", "true", "yes")
-    if not DEBUG else False
-)
-SESSION_COOKIE_SECURE = (
-    os.getenv("SESSION_COOKIE_SECURE", "True").strip().lower() in ("1", "true", "yes")
-    if not DEBUG else False
-)
-CSRF_COOKIE_SECURE = (
-    os.getenv("CSRF_COOKIE_SECURE", "True").strip().lower() in ("1", "true", "yes")
-    if not DEBUG else False
-)
-SECURE_HSTS_SECONDS = int(os.getenv("SECURE_HSTS_SECONDS", "31536000")) if not DEBUG else 0
-SECURE_HSTS_INCLUDE_SUBDOMAINS = (
-    os.getenv("SECURE_HSTS_INCLUDE_SUBDOMAINS", "True").strip().lower() in ("1", "true", "yes")
-    if not DEBUG else False
-)
-SECURE_HSTS_PRELOAD = (
-    os.getenv("SECURE_HSTS_PRELOAD", "True").strip().lower() in ("1", "true", "yes")
-    if not DEBUG else False
-)
+if not DEBUG:
+    SECURE_SSL_REDIRECT = True
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SECURE_HSTS_SECONDS = 31536000  # 1 year
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
+else:
+    SECURE_SSL_REDIRECT = False
+    SESSION_COOKIE_SECURE = False
+    CSRF_COOKIE_SECURE = False
+    SECURE_HSTS_SECONDS = 0
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = False
+    SECURE_HSTS_PRELOAD = False
 
-X_FRAME_OPTIONS = os.getenv("X_FRAME_OPTIONS", "DENY")
+X_FRAME_OPTIONS = "DENY"
 
 # ---------------------------
 # CSRF TRUSTED ORIGINS
@@ -189,3 +175,11 @@ CSRF_TRUSTED_ORIGINS = [
 # DEFAULT PRIMARY KEY
 # ---------------------------
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+# ---------------------------
+# AUTHENTICATION BACKENDS
+# ---------------------------
+AUTHENTICATION_BACKENDS = [
+    "django.contrib.auth.backends.ModelBackend",  # default
+]
+

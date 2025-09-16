@@ -255,7 +255,7 @@
       <td>{{ loan.reason_for_loan }}</td>
       <td>
         {% if loan.accepted_lender == request.user %}
-          <p class="text-success fw-bold">Applicant has accepted to Lender for further communicate.</p>
+          <p class="text-success fw-bold">Congratulations..!Applicant has accepted for further communicate.</p>
           <a href="{% url 'view_profile' loan.id %}" class="btn btn-primary btn-sm">View Full Profile</a>
         {% else %}
           <p class="text-muted">Applicant has accepted to other Lender.</p>

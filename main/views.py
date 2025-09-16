@@ -744,27 +744,47 @@ def make_dummy_payment(request, loan_id):
 # -------------------- View Profile --------------------
 @login_required
 def view_profile(request, loan_id):
+    # Loan aur applicant fetch
     loan = get_object_or_404(LoanRequest, id=loan_id)
     applicant = loan.applicant
 
+    # ✅ Sirf lenders ke liye allow
+    if request.user.role != "lender":
+        messages.error(request, "⚠️ Only lenders can view applicant profiles.")
+        return redirect("dashboard_router")
+
+    # ✅ Payment check (Completed ya Success status required)
     payment_done = Payment.objects.filter(
-        loan_request=loan, lender=request.user, status="Completed"
+        loan_request=loan,
+        lender=request.user,
+        status__in=["Completed", "Success"]
     ).exists()
 
     if not payment_done:
-        messages.error(request, "⚠️ You can only view applicant's full profile after payment is done.")
+        messages.error(
+            request,
+            "⚠️ You can only view applicant's full profile after completing payment."
+        )
         return redirect("dashboard_lender")
 
-    profile = getattr(applicant, "profile", None) or Profile.objects.filter(user=applicant).first()
-    applicant_details = getattr(applicant, "applicantdetails", None) or ApplicantDetails.objects.filter(user=applicant).first()
+    # ✅ Safe profile + applicant details fetch
+    profile = getattr(applicant, "profile", None)
+    if not profile:
+        profile = Profile.objects.filter(user=applicant).first()
 
+    applicant_details = getattr(applicant, "applicantdetails", None)
+    if not applicant_details:
+        applicant_details = ApplicantDetails.objects.filter(user=applicant).first()
+
+    # ✅ Context pass
     return render(request, "view_profile.html", {
+        "loan": loan,
         "applicant": applicant,
         "profile": profile,
         "applicant_details": applicant_details,
-        "loan": loan,
-        "hide_sensitive": False,
+        "hide_sensitive": False,  # future toggle agar partial profile dikhani ho
     })
+
 
 
 # -------------------- Partial Profile --------------------

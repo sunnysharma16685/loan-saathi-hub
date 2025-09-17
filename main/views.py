@@ -19,6 +19,7 @@ from django.http import JsonResponse
 from django.urls import reverse
 from django.conf import settings
 from django.utils.dateparse import parse_date
+from django.db.models import Q
 
 
 import uuid
@@ -450,45 +451,55 @@ def dashboard_router(request):
 # -------------------- Dashboard Applicant --------------------
 @login_required
 def dashboard_applicant(request):
-    loans = LoanRequest.objects.filter(applicant=request.user).prefetch_related("lender_statuses").order_by("-created_at")
+    loans = (
+        LoanRequest.objects.filter(applicant=request.user)
+        .prefetch_related("lender_statuses")
+        .order_by("-created_at")
+    )
 
-    # Loan status calculation
+    # Loan status calculation (Applicant's perspective)
     for loan in loans:
-        # Map Accepted → Approved, Finalised → Rejected
         if loan.status == "Accepted":
             loan.global_status = "Approved"
-            loan.global_remarks = "You accepted this lender."
+            loan.global_remarks = "✅ You accepted this lender."
         elif loan.status == "Finalised":
             loan.global_status = "Rejected"
-            loan.global_remarks = "Finalised by Applicant"
+            loan.global_remarks = "❌ You finalised another lender."
         else:
-            statuses = loan.lender_statuses.all() if hasattr(loan, "lender_statuses") else LoanLenderStatus.objects.filter(loan=loan)
+            statuses = (
+                loan.lender_statuses.all()
+                if hasattr(loan, "lender_statuses")
+                else LoanLenderStatus.objects.filter(loan=loan)
+            )
             if not statuses or all(ls.status == "Pending" for ls in statuses):
                 loan.global_status = "Pending"
-                loan.global_remarks = "Lender Reviewing Your Loan"
+                loan.global_remarks = "⌛ Lender reviewing your loan."
             elif any(ls.status == "Approved" for ls in statuses):
                 loan.global_status = "Approved"
-                loan.global_remarks = "Lender Reviewing Your Loan"
+                loan.global_remarks = "✅ A lender approved your loan."
             elif all(ls.status == "Rejected" for ls in statuses):
                 loan.global_status = "Rejected"
-                loan.global_remarks = "Lender Reviewing Your Loan"
+                loan.global_remarks = "❌ All lenders rejected this loan."
             else:
                 loan.global_status = "Pending"
-                loan.global_remarks = "Lender Reviewing Your Loan"
+                loan.global_remarks = "⌛ Lender reviewing your loan."
 
     today = date.today()
+
+    # Stats (Applicant view)
     total_today = loans.filter(created_at__date=today).count()
-    total_approved = loans.filter(status__in=["Approved", "Accepted"]).count()   # ✅ Accepted treated as Approved
-    total_rejected = loans.filter(status__in=["Rejected", "Finalised"]).count()  # ✅ Finalised treated as Rejected
+    total_approved = loans.filter(status="Accepted").count()   # Applicant accepted
+    total_rejected = loans.filter(status="Finalised").count()  # Applicant finalised other
     total_pending = loans.filter(status="Pending").count()
 
-    return render(request, "dashboard_applicant.html", {
+    context = {
         "loans": loans,
         "total_today": total_today,
         "total_approved": total_approved,
         "total_rejected": total_rejected,
         "total_pending": total_pending,
-    })
+    }
+    return render(request, "dashboard_applicant.html", context)
 
 
 # -------------------- Dashboard Lender --------------------
@@ -502,31 +513,41 @@ def dashboard_lender(request):
         .order_by("-updated_at")
     )
 
-    # Map Accepted → Approved, Finalised → Rejected
     for fb in lender_feedbacks:
-        if fb.loan.status == "Accepted":
+        loan = fb.loan
+        # 👉 Check if applicant accepted this lender
+        if loan.status == "Accepted":
+            if loan.accepted_lender == request.user:
+                fb.loan.global_status = "Approved"   # ✅ Approved only for this lender
+            else:
+                fb.loan.global_status = "Rejected"   # ❌ Rejected for others
+        elif loan.status == "Finalised":
+            fb.loan.global_status = "Rejected"
+        elif fb.status == "Approved":
             fb.loan.global_status = "Approved"
-        elif fb.loan.status == "Finalised":
+        elif fb.status == "Rejected":
             fb.loan.global_status = "Rejected"
         else:
-            fb.loan.global_status = fb.loan.status
+            fb.loan.global_status = "Pending"
 
     today = timezone.now().date()
-    total_today = lender_feedbacks.filter(loan__created_at__date=today).count()
-    total_approved = lender_feedbacks.filter(loan__status__in=["Approved", "Accepted"]).count()
-    total_rejected = lender_feedbacks.filter(loan__status__in=["Rejected", "Finalised"]).count()
-    total_pending = lender_feedbacks.filter(loan__status="Pending").count()
 
-    # Unhandled pending loans
-    handled_loans = LoanLenderStatus.objects.values_list("loan_id", flat=True)
+    # ✅ Counts now simple
+    total_today = lender_feedbacks.filter(loan__created_at__date=today).count()
+    total_approved = sum(1 for fb in lender_feedbacks if fb.loan.global_status == "Approved")
+    total_rejected = sum(1 for fb in lender_feedbacks if fb.loan.global_status == "Rejected")
+    total_pending = sum(1 for fb in lender_feedbacks if fb.loan.global_status == "Pending")
+
+    # Pending loans (not yet handled by this lender)
+    handled_loans = LoanLenderStatus.objects.filter(lender=request.user).values_list("loan_id", flat=True)
     pending_loans = (
-        LoanRequest.objects.filter(status="Pending")
+        LoanRequest.objects.filter(status="Pending", accepted_lender__isnull=True)
         .exclude(id__in=handled_loans)
         .select_related("applicant")
         .order_by("-created_at")
     )
 
-    # Finalised loans (Accepted bhi yaha aayenge)
+    # Finalised loans (Accepted or Finalised by applicant)
     finalised_loans = (
         LoanRequest.objects.filter(status__in=["Accepted", "Finalised"])
         .select_related("applicant", "accepted_lender")
@@ -543,7 +564,6 @@ def dashboard_lender(request):
         "finalised_loans": finalised_loans,
     }
     return render(request, "dashboard_lender.html", context)
-
 
 # -------------------- Applicant Accept Loan --------------------
 @login_required

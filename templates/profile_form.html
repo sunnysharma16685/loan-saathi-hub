@@ -125,93 +125,119 @@
           </div>
         </div>
 
-        <!-- Address -->
-        <div class="form-section">
-          <div class="mb-3">
-            <label class="form-label">Full Address</label>
-            <textarea class="form-control" name="address" rows="2" placeholder="Enter your full address">{{ profile.address|default:'' }}</textarea>
-          </div>
-        </div>
+     <!-- Location -->
+<div class="form-section">
+  <h4 class="mb-3">Location</h4>
 
-        <!-- KYC -->
-        <div class="form-section">
-          <h4 class="mb-3">KYC</h4>
-          <div class="row g-3 mb-3">
-            <div class="col-md-6">
-              <label class="form-label">PAN Card Number</label>
-              <input
-                type="text"
-                class="form-control"
-                name="pancard_number"
-                id="pancard_number"
-                maxlength="10"
-                pattern="[A-Z]{5}[0-9]{4}[A-Z]"
-                placeholder="e.g., AEFED4785K"
-                oninput="this.value = this.value.toUpperCase();"
-                value="{{ profile.pancard_number|default:'' }}"
-                required
-              >
-              <small class="small-muted">Format: 5 letters, 4 digits, 1 letter</small>
-            </div>
+  <!-- Full Address -->
+  <div class="mb-3">
+    <label class="form-label">Full Address</label>
+    <textarea class="form-control" name="address" rows="2" placeholder="Enter your full address">{{ profile.address|default:'' }}</textarea>
+  </div>
 
-            <div class="col-md-6">
-              <label class="form-label">Aadhaar Number</label>
-              <input
-                type="text"
-                class="form-control"
-                name="aadhaar_number"
-                id="aadhaar_number"
-                maxlength="12"
-                inputmode="numeric"
-                pattern="\d{12}"
-                placeholder="12-digit Aadhaar"
-                value="{{ profile.aadhaar_number|default:'' }}"
-                required
-              >
-            </div>
-          </div>
-        </div>
+  <!-- Pin, City, State -->
+  <div class="row g-3 mb-3">
+    <div class="col-md-4">
+      <label class="form-label">Pin Code</label>
+      <input
+        type="text"
+        class="form-control"
+        name="pincode"
+        id="pincode"
+        maxlength="6"
+        pattern="\d{6}"
+        placeholder="6-digit PIN"
+        oninput="fetchCityState(this.value)"
+        value="{{ profile.pincode|default:'' }}"
+      >
+    </div>
+    <div class="col-md-4">
+      <label class="form-label">City</label>
+      <input type="text" class="form-control" name="city" required value="{{ profile.city|default:'' }}">
+    </div>
+    <div class="col-md-4">
+      <label class="form-label">State</label>
+      <select class="form-select" name="state" required>
+        <option value="">-- Select State --</option>
+        <option {% if profile.state == "Andhra Pradesh" %}selected{% endif %}>Andhra Pradesh</option>
+        <option {% if profile.state == "Arunachal Pradesh" %}selected{% endif %}>Arunachal Pradesh</option>
+        <option {% if profile.state == "Assam" %}selected{% endif %}>Assam</option>
+        <option {% if profile.state == "Bihar" %}selected{% endif %}>Bihar</option>
+        <option {% if profile.state == "Chhattisgarh" %}selected{% endif %}>Chhattisgarh</option>
+        <option {% if profile.state == "Goa" %}selected{% endif %}>Goa</option>
+        <option {% if profile.state == "Gujarat" %}selected{% endif %}>Gujarat</option>
+        <option {% if profile.state == "Haryana" %}selected{% endif %}>Haryana</option>
+        <option {% if profile.state == "Himachal Pradesh" %}selected{% endif %}>Himachal Pradesh</option>
+        <option {% if profile.state == "Jharkhand" %}selected{% endif %}>Jharkhand</option>
+        <option {% if profile.state == "Karnataka" %}selected{% endif %}>Karnataka</option>
+        <option {% if profile.state == "Kerala" %}selected{% endif %}>Kerala</option>
+        <option {% if profile.state == "Madhya Pradesh" %}selected{% endif %}>Madhya Pradesh</option>
+        <option {% if profile.state == "Maharashtra" %}selected{% endif %}>Maharashtra</option>
+        <option {% if profile.state == "Manipur" %}selected{% endif %}>Manipur</option>
+        <option {% if profile.state == "Meghalaya" %}selected{% endif %}>Meghalaya</option>
+        <option {% if profile.state == "Mizoram" %}selected{% endif %}>Mizoram</option>
+        <option {% if profile.state == "Nagaland" %}selected{% endif %}>Nagaland</option>
+        <option {% if profile.state == "Odisha" %}selected{% endif %}>Odisha</option>
+        <option {% if profile.state == "Punjab" %}selected{% endif %}>Punjab</option>
+        <option {% if profile.state == "Rajasthan" %}selected{% endif %}>Rajasthan</option>
+        <option {% if profile.state == "Sikkim" %}selected{% endif %}>Sikkim</option>
+        <option {% if profile.state == "Tamil Nadu" %}selected{% endif %}>Tamil Nadu</option>
+        <option {% if profile.state == "Telangana" %}selected{% endif %}>Telangana</option>
+        <option {% if profile.state == "Tripura" %}selected{% endif %}>Tripura</option>
+        <option {% if profile.state == "Uttar Pradesh" %}selected{% endif %}>Uttar Pradesh</option>
+        <option {% if profile.state == "Uttarakhand" %}selected{% endif %}>Uttarakhand</option>
+        <option {% if profile.state == "West Bengal" %}selected{% endif %}>West Bengal</option>
+        <option {% if profile.state == "Andaman and Nicobar Islands" %}selected{% endif %}>Andaman and Nicobar Islands</option>
+        <option {% if profile.state == "Chandigarh" %}selected{% endif %}>Chandigarh</option>
+        <option {% if profile.state == "Dadra and Nagar Haveli and Daman and Diu" %}selected{% endif %}>Dadra and Nagar Haveli and Daman and Diu</option>
+        <option {% if profile.state == "Delhi" %}selected{% endif %}>Delhi</option>
+        <option {% if profile.state == "Jammu and Kashmir" %}selected{% endif %}>Jammu and Kashmir</option>
+        <option {% if profile.state == "Ladakh" %}selected{% endif %}>Ladakh</option>
+        <option {% if profile.state == "Lakshadweep" %}selected{% endif %}>Lakshadweep</option>
+        <option {% if profile.state == "Puducherry" %}selected{% endif %}>Puducherry</option>
+      </select>
+    </div>
+  </div>
+</div>
 
-        <!-- Location -->
-        <div class="form-section">
-          <h4 class="mb-3">Location</h4>
-          <div class="row g-3 mb-3">
-            <div class="col-md-4">
-              <label class="form-label">Pin Code</label>
-              <input
-                type="text"
-                class="form-control"
-                name="pincode"
-                id="pincode"
-                maxlength="6"
-                pattern="\d{6}"
-                placeholder="6-digit PIN"
-                oninput="fetchCityState(this.value)"
-                value="{{ profile.pincode|default:'' }}"
-              >
-            </div>
-            <div class="col-md-4">
-              <label class="form-label">City</label>
-              <input type="text" class="form-control" name="city" required value="{{ profile.city|default:'' }}">
-            </div>
-            <div class="col-md-4">
-              <label class="form-label">State</label>
-              <select class="form-select" name="state" required>
-                <option value="">-- Select State --</option>
-                <option {% if profile.state == "Andhra Pradesh" %}selected{% endif %}>Andhra Pradesh</option><option {% if profile.state == "Arunachal Pradesh" %}selected{% endif %}>Arunachal Pradesh</option><option {% if profile.state == "Assam" %}selected{% endif %}>Assam</option>
-                <option {% if profile.state == "Bihar" %}selected{% endif %}>Bihar</option><option {% if profile.state == "Chhattisgarh" %}selected{% endif %}>Chhattisgarh</option><option {% if profile.state == "Goa" %}selected{% endif %}>Goa</option><option {% if profile.state == "Gujarat" %}selected{% endif %}>Gujarat</option>
-                <option {% if profile.state == "Haryana" %}selected{% endif %}>Haryana</option><option {% if profile.state == "Himachal Pradesh" %}selected{% endif %}>Himachal Pradesh</option><option {% if profile.state == "Jharkhand" %}selected{% endif %}>Jharkhand</option>
-                <option {% if profile.state == "Karnataka" %}selected{% endif %}>Karnataka</option><option {% if profile.state == "Kerala" %}selected{% endif %}>Kerala</option><option {% if profile.state == "Madhya Pradesh" %}selected{% endif %}>Madhya Pradesh</option><option {% if profile.state == "Maharashtra" %}selected{% endif %}>Maharashtra</option>
-                <option {% if profile.state == "Manipur" %}selected{% endif %}>Manipur</option><option {% if profile.state == "Meghalaya" %}selected{% endif %}>Meghalaya</option><option {% if profile.state == "Mizoram" %}selected{% endif %}>Mizoram</option><option {% if profile.state == "Nagaland" %}selected{% endif %}>Nagaland</option>
-                <option {% if profile.state == "Odisha" %}selected{% endif %}>Odisha</option><option {% if profile.state == "Punjab" %}selected{% endif %}>Punjab</option><option {% if profile.state == "Rajasthan" %}selected{% endif %}>Rajasthan</option><option {% if profile.state == "Sikkim" %}selected{% endif %}>Sikkim</option>
-                <option {% if profile.state == "Tamil Nadu" %}selected{% endif %}>Tamil Nadu</option><option {% if profile.state == "Telangana" %}selected{% endif %}>Telangana</option><option {% if profile.state == "Tripura" %}selected{% endif %}>Tripura</option><option {% if profile.state == "Uttar Pradesh" %}selected{% endif %}>Uttar Pradesh</option>
-                <option {% if profile.state == "Uttarakhand" %}selected{% endif %}>Uttarakhand</option><option {% if profile.state == "West Bengal" %}selected{% endif %}>West Bengal</option>
-                <option {% if profile.state == "Andaman and Nicobar Islands" %}selected{% endif %}>Andaman and Nicobar Islands</option><option {% if profile.state == "Chandigarh" %}selected{% endif %}>Chandigarh</option><option {% if profile.state == "Dadra and Nagar Haveli and Daman and Diu" %}selected{% endif %}>Dadra and Nagar Haveli and Daman and Diu</option>
-                <option {% if profile.state == "Delhi" %}selected{% endif %}>Delhi</option><option {% if profile.state == "Jammu and Kashmir" %}selected{% endif %}>Jammu and Kashmir</option><option {% if profile.state == "Ladakh" %}selected{% endif %}>Ladakh</option><option {% if profile.state == "Lakshadweep" %}selected{% endif %}>Lakshadweep</option><option {% if profile.state == "Puducherry" %}selected{% endif %}>Puducherry</option>
-              </select>
-            </div>
-          </div>
-        </div>
+<!-- KYC -->
+<div class="form-section">
+  <h4 class="mb-3">KYC</h4>
+  <div class="row g-3 mb-3">
+    <div class="col-md-6">
+      <label class="form-label">PAN Card Number</label>
+      <input
+        type="text"
+        class="form-control"
+        name="pancard_number"
+        id="pancard_number"
+        maxlength="10"
+        pattern="[A-Z]{5}[0-9]{4}[A-Z]"
+        placeholder="e.g., AEFED4785K"
+        oninput="this.value = this.value.toUpperCase();"
+        value="{{ profile.pancard_number|default:'' }}"
+        required
+      >
+      <small class="small-muted">Format: 5 letters, 4 digits, 1 letter</small>
+    </div>
+    <div class="col-md-6">
+      <label class="form-label">Aadhaar Number</label>
+      <input
+        type="text"
+        class="form-control"
+        name="aadhaar_number"
+        id="aadhaar_number"
+        maxlength="12"
+        inputmode="numeric"
+        pattern="\d{12}"
+        placeholder="12-digit Aadhaar"
+        value="{{ profile.aadhaar_number|default:'' }}"
+        required
+      >
+    </div>
+  </div>
+</div>
+
 
         <!-- Applicant Only -->
         <div id="applicantFields" {% if user.role|lower != "applicant" %}style="display:none;"{% endif %}>

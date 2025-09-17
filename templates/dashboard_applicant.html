@@ -130,33 +130,32 @@
         </tr>
     </thead>
     <tbody>
-        {% for loan in loans %}
-        <tr data-status="{{ loan.status|lower }}" data-created="{{ loan.created_at|date:'Y-m-d' }}">
-            <td>{{ forloop.counter }}</td>
-            <td>{{ loan.created_at|date:"d-m-Y" }}</td>
-            <td>{{ loan.loan_id }}</td>
-            <td>{{ loan.loan_type }}</td>
-            <td>₹{{ loan.amount_requested }}</td>
-            <td>{{ loan.duration_months }} months</td>
-            <td>{{ loan.interest_rate }}%</td>
-            <td>
-                {% if loan.status == "Approved" %}
-                    <span class="badge bg-success">Approved</span>
-                {% elif loan.status == "Rejected" %}
-                    <span class="badge bg-danger">Rejected</span>
-                {% elif loan.status == "Accepted" %}
-                    <span class="badge bg-info">Accepted</span>
-                {% else %}
-                    <span class="badge bg-warning text-dark">Pending</span>
-                {% endif %}
-            </td>
-            <td>{{ loan.reason_for_loan }}</td>
-            <td>
-                <button class="btn btn-link" data-bs-toggle="collapse" data-bs-target="#lenderFeedback{{loan.id}}">
-                    View Lenders Feedback
-                </button>
-            </td>
-        </tr>
+    {% for loan in loans %}
+    <tr data-status="{{ loan.global_status|lower }}" data-created="{{ loan.created_at|date:'Y-m-d' }}">
+        <td>{{ forloop.counter }}</td>
+        <td>{{ loan.created_at|date:"d-m-Y" }}</td>
+        <td>{{ loan.loan_id }}</td>
+        <td>{{ loan.loan_type }}</td>
+        <td>₹{{ loan.amount_requested }}</td>
+        <td>{{ loan.duration_months }} months</td>
+        <td>{{ loan.interest_rate }}%</td>
+        <td>
+            {% if loan.global_status == "Approved" %}
+                <span class="badge bg-success">Approved</span>
+            {% elif loan.global_status == "Rejected" %}
+                <span class="badge bg-danger">Rejected</span>
+            {% elif loan.global_status == "Pending" %}
+                <span class="badge bg-warning text-dark">Pending</span>
+            {% endif %}
+        </td>
+        <td>{{ loan.reason_for_loan }}</td>
+        <td>
+            <button class="btn btn-link" data-bs-toggle="collapse" data-bs-target="#lenderFeedback{{loan.id}}">
+                View Lenders Feedback
+            </button>
+        </td>
+    </tr>
+
 
         <!-- Feedback Row -->
         <tr class="collapse" id="lenderFeedback{{loan.id}}">

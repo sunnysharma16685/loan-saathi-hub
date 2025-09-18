@@ -20,6 +20,10 @@ from django.urls import reverse
 from django.conf import settings
 from django.utils.dateparse import parse_date
 from django.db.models import Q
+from .models import LoanRequest, CibilReport, Payment
+from datetime import timedelta
+from django.contrib.auth.decorators import login_required
+
 
 
 import uuid
@@ -161,6 +165,7 @@ def profile_form(request, user_id):
     lender_details = LenderDetails.objects.filter(user=user).first() if role == "lender" else None
 
     def G(*keys):
+        """Helper to fetch value from POST safely."""
         for k in keys:
             v = request.POST.get(k)
             if v and str(v).strip():
@@ -170,6 +175,33 @@ def profile_form(request, user_id):
     if request.method == "POST":
         if not profile:
             profile = Profile(user=user)
+
+        # ✅ PAN Validation
+        pancard_number = G("pancard_number", "panCardNumber")
+        if not pancard_number:
+            messages.error(request, "PAN Card Number is required.")
+            return render(request, "profile_form.html", {
+                "user": user, "profile": profile, "role": role,
+                "applicant_details": applicant_details, "lender_details": lender_details
+            })
+
+        if Profile.objects.filter(pancard_number=pancard_number).exclude(user=user).exists():
+            messages.error(request, f"PAN Card Number {pancard_number} is already registered with another user.")
+            return render(request, "profile_form.html", {
+                "user": user, "profile": profile, "role": role,
+                "applicant_details": applicant_details, "lender_details": lender_details
+            })
+
+        # ✅ Aadhaar Validation (optional but safe)
+        aadhaar_number = G("aadhaar_number", "aadhaarNumber")
+        if aadhaar_number and Profile.objects.filter(aadhaar_number=aadhaar_number).exclude(user=user).exists():
+            messages.error(request, f"Aadhaar Number {aadhaar_number} is already registered with another user.")
+            return render(request, "profile_form.html", {
+                "user": user, "profile": profile, "role": role,
+                "applicant_details": applicant_details, "lender_details": lender_details
+            })
+
+        # 🔹 Update Profile
         profile.full_name = G("full_name", "fullName") or ""
         profile.mobile = G("mobile") or ""
         dob_val = G("dob")
@@ -180,18 +212,16 @@ def profile_form(request, user_id):
         profile.pincode = G("pincode")
         profile.city = G("city")
         profile.state = G("state")
-        pancard_number = G("pancard_number", "panCardNumber")
-        if not pancard_number:
-            messages.error(request, "PAN Card Number is required.")
-            return render(request, "profile_form.html", {"user": user, "profile": profile, "role": role})
         profile.pancard_number = pancard_number
-        profile.aadhaar_number = G("aadhaar_number", "aadhaarNumber")
+        profile.aadhaar_number = aadhaar_number
         profile.save()
 
+        # 🔹 Save ApplicantDetails
         if role == "applicant":
             details, _ = ApplicantDetails.objects.get_or_create(user=user)
             details.employment_type = G("employment_type", "employmentType")
             details.cibil_score = G("cibil_score")
+
             if details.employment_type == "Business":
                 details.business_name = G("business_name", "businessName")
                 details.business_type = G("business_type", "businessType")
@@ -200,6 +230,8 @@ def profile_form(request, user_id):
                 details.last_year_turnover = G("last_year_turnover", "lastYearTurnover")
                 details.business_total_emi = G("business_total_emi", "businessTotalEmi")
                 details.business_itr_status = G("business_itr_status", "businessItrStatus")
+
+                # nullify job fields
                 details.company_name = details.company_type = details.designation = None
                 details.current_salary = details.other_income = details.total_emi = details.itr = None
             else:
@@ -210,11 +242,15 @@ def profile_form(request, user_id):
                 details.other_income = G("other_income", "otherIncome")
                 details.total_emi = G("total_emi", "totalEmi")
                 details.itr = G("itr")
+
+                # nullify business fields
                 details.business_name = details.business_type = details.business_sector = None
                 details.total_turnover = details.last_year_turnover = details.business_total_emi = details.business_itr_status = None
+
             details.save()
             applicant_details = details
 
+        # 🔹 Save LenderDetails
         elif role == "lender":
             l, _ = LenderDetails.objects.get_or_create(user=user)
             l.lender_type = G("lender_type")
@@ -227,8 +263,9 @@ def profile_form(request, user_id):
             lender_details = l
 
         messages.success(request, "✅ Profile saved successfully.")
-        return redirect("dashboard_router")
+        return redirect("review_profile",)  # ⬅ first show review page
 
+    # GET request → render form
     return render(request, "profile_form.html", {
         "user": user,
         "profile": profile,
@@ -236,6 +273,7 @@ def profile_form(request, user_id):
         "applicant_details": applicant_details,
         "lender_details": lender_details,
     })
+
 
 # -------------------- Admin Login --------------------
 def admin_login(request):
@@ -270,32 +308,55 @@ def admin_login(request):
 
     return render(request, "admin_login.html")
 
+
+# -------------------- Admin: View Full Profile --------------------
+@login_required
+def admin_view_profile(request, user_id):
+    if not request.user.is_superuser:
+        messages.error(request, "Access denied. Admins only.")
+        return redirect("dashboard_admin")
+
+    user = get_object_or_404(User, id=user_id)
+    profile = getattr(user, "profile", None)
+    applicant_details = None
+    lender_details = None
+
+    if user.role == "applicant":
+        applicant_details = ApplicantDetails.objects.filter(user=user).first()
+    elif user.role == "lender":
+        lender_details = LenderDetails.objects.filter(user=user).first()
+
+    return render(request, "admin_full_profile.html", {
+        "user": user,
+        "profile": profile,
+        "applicant_details": applicant_details,
+        "lender_details": lender_details,
+    })
+
+
+# -------------------- Review Profile --------------------
+@login_required
+def review_profile(request):
+    return render(request, "review_profile.html")
+
+
 # -------------------- Admin Dashboard --------------------
 @login_required
 def dashboard_admin(request):
-    """
-    Admin dashboard view — only superusers allowed.
-    Provides lists for: all users, applicants, lenders, loans, payments.
-    """
     if not request.user.is_superuser:
         messages.error(request, "Access denied. Admins only.")
         return redirect("index")
 
-    # 🔹 All users (applicants + lenders) ordered by created_at if field exists
     if "created_at" in [f.name for f in User._meta.fields]:
         users_qs = User.objects.all().order_by("-created_at")
     else:
         users_qs = User.objects.all().order_by("-id")
 
-    # 🔹 ApplicantDetails & LenderDetails
     applicants = ApplicantDetails.objects.select_related("user").all().order_by("-id")
     lenders = LenderDetails.objects.select_related("user").all().order_by("-id")
-
-    # 🔹 Loans & Payments
     loans = LoanRequest.objects.select_related("applicant", "accepted_lender").all().order_by("-created_at")
     payments = Payment.objects.select_related("lender", "loan_request").all().order_by("-id")
 
-    # 🔹 Context for template
     context = {
         "users": users_qs,
         "applicants": applicants,
@@ -306,15 +367,11 @@ def dashboard_admin(request):
     return render(request, "dashboard_admin.html", context)
 
 
-# -------------------- Admin: User action (activate / deactivate / delete) --------------------
+# -------------------- Admin: User action (activate / deactivate / delete / accept) --------------------
 @login_required
 @require_POST
 @csrf_protect
 def admin_user_action(request, user_id):
-    """
-    AJAX endpoint for admin actions on users: activate / deactivate / delete.
-    Returns JSON for AJAX; redirects with messages if not AJAX.
-    """
     if not request.user.is_superuser:
         if request.headers.get("x-requested-with") == "XMLHttpRequest":
             return JsonResponse({"ok": False, "message": "Access denied."}, status=403)
@@ -332,101 +389,100 @@ def admin_user_action(request, user_id):
         messages.error(request, "User not found.")
         return redirect("dashboard_admin")
 
+    profile = getattr(target, "profile", None)
     support_from = getattr(settings, "DEFAULT_FROM_EMAIL", "support@loansaathihub.in")
     orig_email = target.email
 
-    # Helper to send mail (fail silently)
-    def _send(subject, body, to_email):
-        try:
-            send_mail(subject, body, support_from, [to_email], fail_silently=True)
-        except Exception:
-            # swallow to avoid crashing the admin action
-            pass
+    # ✅ Accept / Approve Profile
+    if action == "accept":
+        if profile:
+            profile.is_reviewed = True
+            profile.status = "Accepted"
+            profile.save()
 
-    # ----- Deactivate -----
-    if action == "deactivate":
-        target.is_active = False
+        target.is_active = True
         target.save()
 
-        # mark profile flag if exists
-        profile = getattr(target, "profile", None)
-        if profile:
-            try:
-                profile.is_blocked = True
-                profile.save()
-            except Exception:
-                pass
-
-        subject = "Action Required: Your Account May Be Deactivated Due to Misuses"
+        subject = "Profile Approved — Loan Saathi Hub"
         body = (
-            f"Dear {getattr(target, 'first_name', '') or orig_email},\n\n"
-            "Warning: Your account on Loan Saathi Hub has been temporarily DEACTIVATED due to reported misuse or policy violation.\n\n"
-            f"Reason: {reason or 'Policy violation'}\n\n"
-            "If you believe this is a mistake, please contact our support team at support@loansaathihub.in.\n\n"
+            f"Dear {profile.full_name or target.email},\n\n"
+            "Congratulations! 🎉 Your profile has been successfully reviewed and approved by Loan Saathi Hub.\n\n"
+            "You can now access your dashboard.\n\n"
             "Regards,\nLoan Saathi Hub Support\n"
         )
-        _send(subject, body, orig_email)
+        send_mail(subject, body, support_from, [orig_email], fail_silently=True)
+
+        resp = {"ok": True, "message": "User profile accepted and activated."}
+
+    # 🚫 Deactivate
+    elif action == "deactivate":
+        target.is_active = False
+        target.save()
+        if profile:
+            profile.is_blocked = True
+            profile.save()
+
+        subject = "Account Deactivated — Loan Saathi Hub"
+        body = (
+            f"Dear {profile.full_name or target.email},\n\n"
+            "Your account has been temporarily DEACTIVATED due to reported misuse or policy violation.\n\n"
+            f"Reason: {reason or 'Policy violation'}\n\n"
+            "If you believe this is a mistake, please contact support@loansaathihub.in.\n\n"
+            "Regards,\nLoan Saathi Hub Support\n"
+        )
+        send_mail(subject, body, support_from, [orig_email], fail_silently=True)
         resp = {"ok": True, "message": "User deactivated and email sent."}
 
-    # ----- Activate -----
+    # ✅ Activate
     elif action == "activate":
         target.is_active = True
         target.save()
-        profile = getattr(target, "profile", None)
         if profile:
-            try:
-                profile.is_blocked = False
-                profile.save()
-            except Exception:
-                pass
+            profile.is_blocked = False
+            profile.save()
 
-        subject = "Your Account Activated — Loan Saathi Hub"
+        subject = "Account Activated — Loan Saathi Hub"
         body = (
-            f"Dear {getattr(target, 'first_name', '') or orig_email},\n\n"
-            "Congratulations! Your Loan Saathi Hub account has been re-activated. Please follow the platform's guidelines to avoid future actions.\n\n"
+            f"Dear {profile.full_name or target.email},\n\n"
+            "Good news! Your account has been re-activated. Please follow platform rules to avoid future actions.\n\n"
             "Regards,\nLoan Saathi Hub Support\n"
         )
-        _send(subject, body, orig_email)
+        send_mail(subject, body, support_from, [orig_email], fail_silently=True)
         resp = {"ok": True, "message": "User activated and email sent."}
 
-    # ----- Delete (soft disable + obfuscate email) -----
+    # ❌ Delete
     elif action == "delete":
-        try:
-            target.is_active = False
-            # store original email to notify
-            original = orig_email
-            target.email = f"disabled+{target.id}@blocked.loansaathihub"
-            if hasattr(target, "username"):
-                target.username = f"disabled_{target.id}"
-            target.save()
-        except Exception:
-            pass
+        target.is_active = False
+        original_email = orig_email
+        target.email = f"disabled+{target.id}@blocked.loansaathihub"
+        if hasattr(target, "username"):
+            target.username = f"disabled_{target.id}"
+        target.save()
 
-        subject = "Account Permanently Disabled"
+        subject = "Account Deleted — Loan Saathi Hub"
         body = (
-            f"Dear {getattr(target, 'first_name', '') or orig_email},\n\n"
-            "Warning: Your account has been permanently blocked due to misuse of the platform. This action is irreversible.\n\n"
-            "If you think this is an error, contact support@loansaathihub.in.\n\n"
+            f"Dear {profile.full_name or original_email},\n\n"
+            "Your account has been permanently disabled due to misuse of the platform. This action is irreversible.\n\n"
+            "If you think this is a mistake, contact support@loansaathihub.in.\n\n"
             "Regards,\nLoan Saathi Hub Support\n"
         )
-        _send(subject, body, orig_email)
-        resp = {"ok": True, "message": "User permanently disabled and email sent."}
+        send_mail(subject, body, support_from, [original_email], fail_silently=True)
+        resp = {"ok": True, "message": "User deleted and email sent."}
 
+    # Unknown action
     else:
         resp = {"ok": False, "message": "Unknown action."}
-        # return 400 for AJAX
         if request.headers.get("x-requested-with") == "XMLHttpRequest":
             return JsonResponse(resp, status=400)
         messages.error(request, resp["message"])
         return redirect("dashboard_admin")
 
-    # Return JSON for AJAX requests (fetch), fallback to redirect with message
+    # 🔄 Return Response
     if request.headers.get("x-requested-with") == "XMLHttpRequest":
         return JsonResponse(resp)
     else:
         messages.success(request, resp.get("message", "Action processed."))
         return redirect("dashboard_admin")
-
 
 # -------------------- Admin Logout --------------------
 @login_required
@@ -438,12 +494,27 @@ def admin_logout(request):
 # -------------------- Dashboard Router --------------------
 @login_required
 def dashboard_router(request):
-    if getattr(request.user, "role", None) == "lender":
-        return redirect("dashboard_lender")
-    elif getattr(request.user, "role", None) == "applicant":
-        return redirect("dashboard_applicant")
-    elif request.user.is_superuser:
+    """
+    Route the user to the correct dashboard based on role and admin approval.
+    If profile not accepted yet -> show review_profile page.
+    """
+
+    # Superuser always goes to Admin Dashboard
+    if request.user.is_superuser:
         return redirect("dashboard_admin")
+
+    role = getattr(request.user, "role", None)
+    profile = getattr(request.user, "profile", None)
+
+    # 🔹 If profile exists but not yet reviewed → show review page
+    if profile and not getattr(profile, "is_reviewed", False):
+        return render(request, "review_profile.html", {"profile": profile})
+
+    # 🔹 Otherwise normal routing based on role
+    if role == "lender":
+        return redirect("dashboard_lender")
+    elif role == "applicant":
+        return redirect("dashboard_applicant")
     else:
         return redirect("index")
 
@@ -829,7 +900,18 @@ def partial_profile(request, loan_id):
         "hide_sensitive": True,
         "hidden_fields": hidden_fields,
     })
+    recent_cibil = (
+        CibilReport.objects.filter(loan=loan, lender=request.user)
+        .order_by("-created_at")
+        .first()
+    )
 
+    context = {
+        "loan": loan,
+        # other context keys...
+        "recent_cibil": recent_cibil,
+    }
+    return render(request, "partial_profile.html", context)
 
 # -------------------- Forgot / Reset Password --------------------
 def forgot_password_view(request):
@@ -930,3 +1012,72 @@ def feedback_view(request):
             initial["name"] = getattr(request.user.profile, "full_name", "")
         form = FeedbackForm(initial=initial)
     return render(request, "feedback.html", {"form": form})
+
+# -----------------------------
+# Helper: fetch_credit_score
+# -----------------------------
+def fetch_credit_score(loan: LoanRequest, lender_user):
+    """
+    Placeholder stub for credit bureau integration.
+
+    Replace this function with your real provider integration. It should:
+      - Accept identifiers (PAN, name, DOB, mobile) from loan.applicant.profile / applicant details
+      - Call the provider with proper consent headers / tokens
+      - Return a dict like: {"score": 712, "raw": {...}}
+
+    For now it returns a mocked score between 300 and 900.
+    """
+    # TODO: Replace with real API call
+    score = random.randint(300, 900)
+    raw = {
+        "mocked": True,
+        "note": "Replace fetch_credit_score() with real API integration",
+        "applicant_email": loan.applicant.email,
+    }
+    return {"score": score, "raw": raw}
+
+# -----------------------------
+# CIBIL generate view (AJAX)
+# -----------------------------
+@login_required
+def generate_cibil_score(request, loan_id):
+    loan = get_object_or_404(LoanRequest, id=loan_id)
+
+    # Only lenders can generate
+    if request.user.role != "lender":
+        return JsonResponse({"ok": False, "message": "Only lenders can generate CIBIL."}, status=403)
+
+    # Cooldown: 30 days
+    recent = CibilReport.objects.filter(loan=loan, lender=request.user).order_by("-created_at").first()
+    if recent and (timezone.now() - recent.created_at) < timedelta(days=30):
+        return JsonResponse({
+            "ok": False,
+            "already": True,
+            "score": recent.score,
+            "created_at": recent.created_at.isoformat(),
+            "message": "CIBIL already generated. Try again after 30 days."
+        })
+
+    # Generate fake score for now (can integrate real API later)
+    score = random.randint(300, 900)
+    report = CibilReport.objects.create(
+        loan=loan,
+        lender=request.user,
+        score=score
+    )
+
+    # 🔑 Update applicant_details (sync)
+    applicant_details = loan.applicant.applicant_details
+    applicant_details.cibil_score = score
+    applicant_details.cibil_generated_at = timezone.now()
+    applicant_details.save(update_fields=["cibil_score", "cibil_generated_at"])
+
+    # You can also create a Notification model here if you want to show alerts
+    # Notification.objects.create(user=loan.applicant, message="Your CIBIL score was generated")
+
+    return JsonResponse({
+        "ok": True,
+        "score": report.score,
+        "created_at": report.created_at.isoformat(),
+        "message": "CIBIL generated successfully"
+    })

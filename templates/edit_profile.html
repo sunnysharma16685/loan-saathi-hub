@@ -86,8 +86,28 @@
       <div class="row g-3">
         <div class="col-md-4"><label>Job Type</label><input type="text" name="job_type" class="form-control" value="{{ applicant_details.job_type }}"></div>
         <div class="col-md-4"><label>Employment Type</label><input type="text" name="employment_type" class="form-control" value="{{ applicant_details.employment_type }}"></div>
-        <div class="col-md-4"><label>CIBIL Score</label><input type="number" name="cibil_score" class="form-control" value="{{ applicant_details.cibil_score }}"></div>
-      </div>
+        
+<!-- CIBIL Score (readonly) -->
+<div class="mb-3">
+  <label class="form-label">CIBIL Score (300-900)</label>
+
+  {% if applicant_details.cibil_score %}
+    <input type="number" class="form-control"
+           value="{{ applicant_details.cibil_score }}"
+           readonly style="background:#f8f9fa; cursor:not-allowed;">
+    <small class="text-muted">
+      Generated on {{ applicant_details.cibil_generated_at|date:"d M Y, H:i" }}
+    </small>
+  {% else %}
+    <input type="text" class="form-control"
+           value="Not generated yet"
+           readonly style="background:#f8f9fa; cursor:not-allowed;">
+    <small class="text-muted">
+      A lender will generate your CIBIL score during loan review.
+    </small>
+  {% endif %}
+</div>
+
 
       <h5>Job Information</h5>
       <div class="row g-3">

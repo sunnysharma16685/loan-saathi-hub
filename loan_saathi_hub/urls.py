@@ -24,12 +24,14 @@ urlpatterns = [
     path("profile/<uuid:user_id>/edit/", views.edit_profile, name="edit_profile"),
     path("dashboard/lender/view_profile/<uuid:loan_id>/", views.view_profile, name="view_profile"),
     path("dashboard/lender/partial_profile/<uuid:loan_id>/", views.partial_profile, name="partial_profile"),
+    path("review_profile/", views.review_profile, name="review_profile"),
 
     # ---------------- Dashboards ----------------
     path("dashboard/admin/", views.dashboard_admin, name="dashboard_admin"),
     path("dashboard/applicant/", views.dashboard_applicant, name="dashboard_applicant"),
     path("dashboard/lender/", views.dashboard_lender, name="dashboard_lender"),
     path("dashboard/", views.dashboard_router, name="dashboard_router"),  # auto redirect based on role
+    path("dashboard/lender/cibil/generate/<uuid:loan_id>/", main_views.generate_cibil_score, name="generate_cibil_score"),
 
     # ---------------- Loan + Payment ----------------
     path("loan/request/", views.loan_request, name="loan_request"),
@@ -47,6 +49,8 @@ urlpatterns = [
     path("dashboard_admin/", views.dashboard_admin, name="dashboard_admin"),
     path("admin/user_action/<uuid:user_id>/", views.admin_user_action, name="admin_user_action"),
     path("admin_logout/", views.admin_logout, name="admin_logout"),
+    path("admin/full_profile/<uuid:user_id>/", views.admin_view_profile, name="admin_full_profile"),
+
 
     # -------Support, complaint, feedback routes------------------------
     path("support/", main_views.support_view, name="support"),

@@ -49,14 +49,33 @@
         <div class="form-section">
           <h4 class="mb-3">Basic Details</h4>
           <div class="row g-3 mb-3">
-            <div class="col-md-6">
-              <label class="form-label">Full Name</label>
-              <input type="text" class="form-control" name="full_name" required value="{{ profile.full_name|default:'' }}">
-            </div>
-            <div class="col-md-6">
-              <label class="form-label">Date of Birth</label>
-              <input type="date" class="form-control" name="dob" placeholder="dd-mm-yyyy" required value="{{ profile.dob|date:'Y-m-d'|default:'' }}">
-            </div>
+            <!-- Full Name -->
+<div class="col-md-6 mb-3">
+  <label class="form-label">Full Name</label>
+  <input 
+    type="text" 
+    class="form-control" 
+    id="full_name"
+    name="full_name" 
+    required 
+    value="{{ profile.full_name|default:'' }}">
+  <small class="text-danger fw-semibold">⚠️ Full Name as per Pan Card</small>
+</div>
+
+<!-- Date of Birth -->
+<div class="col-md-6 mb-3">
+  <label class="form-label">Date of Birth</label>
+  <input 
+    type="date" 
+    class="form-control" 
+    id="dob"
+    name="dob" 
+    placeholder="dd-mm-yyyy" 
+    required 
+    value="{{ profile.dob|date:'Y-m-d'|default:'' }}">
+  <small class="text-danger fw-semibold">⚠️ DOB as per Pan Card</small>
+</div>
+
           </div>
         </div>
 
@@ -132,7 +151,7 @@
   <!-- Full Address -->
   <div class="mb-3">
     <label class="form-label">Full Address</label>
-    <textarea class="form-control" name="address" rows="2" placeholder="Enter your full address">{{ profile.address|default:'' }}</textarea>
+    <textarea class="form-control" name="address" rows="2" placeholder="Enter your full communication address">{{ profile.address|default:'' }}</textarea>
   </div>
 
   <!-- Pin, City, State -->
@@ -221,24 +240,23 @@
       <small class="small-muted">Format: 5 letters, 4 digits, 1 letter</small>
     </div>
     <div class="col-md-6">
-      <label class="form-label">Aadhaar Number</label>
-      <input
-        type="text"
-        class="form-control"
-        name="aadhaar_number"
-        id="aadhaar_number"
-        maxlength="12"
-        inputmode="numeric"
-        pattern="\d{12}"
-        placeholder="12-digit Aadhaar"
-        value="{{ profile.aadhaar_number|default:'' }}"
-        required
-      >
-    </div>
+  <label class="form-label">Aadhaar Number</label>
+  <input
+    type="text"
+    class="form-control"
+    name="aadhaar_number"
+    id="aadhaar_number"
+    maxlength="12"
+    inputmode="numeric"
+    pattern="\d{12}"
+    placeholder="12-digit Aadhaar"
+    value="{{ profile.aadhaar_number|default:'' }}"
+    required
+  >
+  <small class="text-danger fw-semibold">⚠️Aadhaar as per provided by UIDAI</small>
+</div>
   </div>
 </div>
-
-
         <!-- Applicant Only -->
         <div id="applicantFields" {% if user.role|lower != "applicant" %}style="display:none;"{% endif %}>
           <h4 class="mb-3">Applicant Details</h4>
@@ -255,11 +273,25 @@
             </div>
           </div>
 
-          <div class="mb-3">
-            <label class="form-label">CIBIL Score (300-900)</label>
-            <input type="number" class="form-control" name="cibil_score" min="300" max="900" value="{{ applicant_details.cibil_score|default:'' }}">
-          </div>
-
+         <!-- CIBIL Score Display -->
+<div class="mb-3">
+  <label class="form-label">CIBIL Score (300-900)</label>
+  
+  {% if applicant_details.cibil_score %}
+    <input type="number" class="form-control" 
+           value="{{ applicant_details.cibil_score }}" 
+           readonly style="background:#f8f9fa; cursor:not-allowed;">
+    <small class="text-muted">
+      Generated on {{ applicant_details.cibil_generated_at|date:"d M Y, H:i" }}
+    </small>
+  {% else %}
+    <input type="text" class="form-control" value="Not generated yet" 
+           readonly style="background:#f8f9fa; cursor:not-allowed;">
+    <small class="text-muted">
+      A lender will generate your CIBIL score during loan review.
+    </small>
+  {% endif %}
+</div>
           <!-- Job Fields -->
           <div id="jobFields" class="mb-3">
             <div class="mb-3">

@@ -269,7 +269,9 @@ class SupportTicket(models.Model):
     def __str__(self):
         return f"SupportTicket({self.email} - {self.subject})"
 
-
+# -------------------------------
+# Complaint
+# -------------------------------
 class Complaint(models.Model):
     """
     Complaint submitted by guest or registered user.
@@ -288,7 +290,9 @@ class Complaint(models.Model):
     def __str__(self):
         return f"Complaint({self.email} -> {self.complaint_against})"
 
-
+# -------------------------------
+# Feedback
+# -------------------------------
 class Feedback(models.Model):
     """
     Feedback from guest or registered user. Rating stored as 1-5.
@@ -306,4 +310,26 @@ class Feedback(models.Model):
 
     def __str__(self):
         return f"Feedback({self.role} {self.email or ''} - {self.rating})"
+
+# -------------------------------
+# CibilReport
+# -------------------------------
+class CibilReport(models.Model):
+    """
+    Stores a generated CIBIL/credit-score record.
+    One record represents a lender generating a credit score for a specific loan.
+    """
+    loan = models.ForeignKey("LoanRequest", on_delete=models.CASCADE, related_name="cibil_reports")
+    lender = models.ForeignKey("User", on_delete=models.CASCADE, related_name="cibil_reports")
+    score = models.PositiveSmallIntegerField(null=True, blank=True)  # e.g. 300-900
+    raw_response = models.JSONField(null=True, blank=True)           # store full API response (if any)
+    created_at = models.DateTimeField(default=timezone.now)
+
+    class Meta:
+        ordering = ["-created_at"]
+        verbose_name = "CIBIL Report"
+        verbose_name_plural = "CIBIL Reports"
+
+    def __str__(self):
+        return f"CIBIL-{self.loan.loan_id} by {self.lender.email} @ {self.created_at:%Y-%m-%d %H:%M}"
 

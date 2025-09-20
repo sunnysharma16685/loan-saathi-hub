@@ -367,19 +367,19 @@ def admin_login(request):
 
         user = None
         if identifier:
-            # 🔎 Check by email OR mobile
+            # 🔎 check by email OR mobile
             user = (
                 User.objects.filter(email__iexact=identifier).first()
                 or User.objects.filter(profile__mobile=identifier).first()
             )
 
         if user:
-            # 🔑 Authenticate using email as username
-            auth_user = authenticate(request, username=user.email, password=password)
+            # ✅ use email because USERNAME_FIELD = "email"
+            auth_user = authenticate(request, email=user.email, password=password)
 
             if auth_user and auth_user.is_superuser:
                 login(request, auth_user)
-                return redirect("dashboard_admin")  # ✅ redirect after success
+                return redirect("dashboard_admin")  # redirect on success
             else:
                 messages.error(request, "❌ Invalid password or not an admin user.")
         else:
@@ -387,8 +387,7 @@ def admin_login(request):
 
     return render(request, "admin_login.html")
 
-
-# -------------------- Admin: Full Profile --------------------
+# -------------------- Admin: Full Profile (Applicant & Lender)--------------------
 @login_required
 def admin_view_profile(request, user_id):
     if not request.user.is_superuser:

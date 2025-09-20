@@ -55,6 +55,7 @@ yarn-error.log
 .env.production
 .env.development
 
+
 # Allow example/reference env files
 !.env.example
 
@@ -62,3 +63,8 @@ yarn-error.log
 # Render / Deployment
 # ------------------------
 render.yaml
+
+# ------------------------
+# Admin
+# ------------------------
+createprodadmin.py

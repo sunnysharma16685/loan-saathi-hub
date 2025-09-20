@@ -149,7 +149,7 @@
       <td>{{ fb.loan.interest_rate }}%</td>
       <td>
         {% if fb.loan.status == "Accepted" and fb.loan.accepted_lender == request.user %}
-          <span class="badge bg-success">Approved</span>
+          <span class="badge bg-success">Accepted by Applicant</span>
         {% elif fb.loan.status == "Accepted" and fb.loan.accepted_lender != request.user %}
           <span class="badge bg-danger">Finalised by Applicant</span>
         {% elif fb.loan.global_status == "Approved" %}
@@ -161,17 +161,25 @@
         {% endif %}
       </td>
       <td>{{ fb.loan.reason_for_loan|default:"N/A" }}</td>
-      <td>
-        {% if fb.loan.status == "Accepted" and fb.loan.accepted_lender == request.user %}
-          <a href="{% url 'view_profile' fb.loan.id %}" class="btn btn-view">Full Profile</a>
-        {% elif fb.loan.global_status == "Pending" %}
-          <a href="{% url 'make_dummy_payment' fb.loan.id %}" class="btn btn-approve">Make Payment</a>
-          <button class="btn btn-reject" data-bs-toggle="modal" data-bs-target="#rejectModal{{fb.loan.id}}">Reject</button>
-          <a href="{% url 'partial_profile' fb.loan.id %}" class="btn btn-view">Partial Profile</a>
-        {% elif fb.loan.global_status == "Rejected" or fb.loan.status == "Accepted" %}
-          <span class="text-danger">Rejected</span>
-          <a href="{% url 'partial_profile' fb.loan.id %}" class="btn btn-view">Partial Profile</a>
-        {% endif %}
+      <td class="action-cell">
+        <div class="action-box">
+          {% if fb.loan.status == "Accepted" and fb.loan.accepted_lender == request.user %}
+            <p class="text-success fw-bold">🎉 Applicant has accepted you for further communication.</p>
+            <a href="{% url 'view_profile' fb.loan.id %}" class="btn btn-view btn-sm">Full Profile</a>
+
+          {% elif fb.loan.global_status == "Pending" %}
+            <a href="{% url 'make_dummy_payment' fb.loan.id %}" class="btn btn-approve btn-sm">Make Payment</a>
+            <button class="btn btn-reject btn-sm" data-bs-toggle="modal" data-bs-target="#rejectModal{{fb.loan.id}}">Reject</button>
+            <a href="{% url 'partial_profile' fb.loan.id %}" class="btn btn-view btn-sm">Partial Profile</a>
+
+          {% elif fb.loan.global_status == "Rejected" %}
+            <p class="text-danger fw-bold">❌ This loan has been rejected.</p>
+            <a href="{% url 'partial_profile' fb.loan.id %}" class="btn btn-view btn-sm">Partial Profile</a>
+
+          {% elif fb.loan.global_status == "Approved" %}
+            <a href="{% url 'view_profile' fb.loan.id %}" class="btn btn-view btn-sm">Full Profile</a>
+          {% endif %}
+        </div>
       </td>
     </tr>
 
@@ -207,27 +215,6 @@
     </div>
     {% endfor %}
 
-    <!-- Pending Loans -->
-    {% for loan in pending_loans %}
-    <tr data-status="pending" data-created="{{ loan.created_at|date:'Y-m-d' }}">
-      <td>{{ forloop.counter }}</td>
-      <td>{{ loan.created_at|date:"d-m-Y" }}</td>
-      <td>{{ loan.loan_id }}</td>
-      <td>{{ loan.applicant.profile.full_name|default:loan.applicant.email }}</td>
-      <td>{{ loan.loan_type }}</td>
-      <td>₹{{ loan.amount_requested }}</td>
-      <td>{{ loan.duration_months }} months</td>
-      <td>{{ loan.interest_rate }}%</td>
-      <td><span class="badge bg-warning text-dark">Pending</span></td>
-      <td>{{ loan.reason_for_loan|default:"N/A" }}</td>
-      <td>
-        <a href="{% url 'approve_loan' loan.id %}" class="btn btn-approve">Approve</a>
-        <a href="{% url 'reject_loan' loan.id %}" class="btn btn-reject">Reject</a>
-        <a href="{% url 'partial_profile' loan.id %}" class="btn btn-view">View Partial Profile</a>
-      </td>
-    </tr>
-    {% endfor %}
-
     <!-- Finalised Loans -->
     {% for loan in finalised_loans %}
     <tr data-status="{{ loan.global_status|lower }}" data-created="{{ loan.created_at|date:'Y-m-d' }}">
@@ -247,13 +234,16 @@
         {% endif %}
       </td>
       <td>{{ loan.reason_for_loan }}</td>
-      <td>
-        {% if loan.accepted_lender == request.user %}
-          <p class="text-success fw-bold">🎉 Applicant has accepted you for further communication.</p>
-          <a href="{% url 'view_profile' loan.id %}" class="btn btn-primary btn-sm">View Full Profile</a>
-        {% else %}
-          <p class="text-muted fw-bold">😞 Applicant has chosen another lender.</p>
-        {% endif %}
+      <td class="action-cell">
+        <div class="action-box">
+          {% if loan.accepted_lender == request.user %}
+            <p class="text-success fw-bold">🎉 Applicant has accepted you for further communication.</p>
+            <a href="{% url 'view_profile' loan.id %}" class="btn btn-primary btn-sm">View Full Profile</a>
+          {% else %}
+            <p class="text-muted fw-bold mb-1">😞 Applicant has chosen another lender.</p>
+            <a href="{% url 'partial_profile' loan.id %}" class="btn btn-view btn-sm">Partial Profile</a>
+          {% endif %}
+        </div>
       </td>
     </tr>
     {% empty %}

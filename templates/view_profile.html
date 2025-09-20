@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% block content %}
+
 {% if request.user.role == 'applicant' %}
   {% url 'dashboard_applicant' as dashboard_url %}
 {% elif request.user.role == 'lender' %}
@@ -10,76 +11,109 @@
 
 <style>
   body { font-family: 'Poppins', sans-serif; background: #f5f8fa; }
-  .container { max-width:900px; margin-top:30px; }
-  h2, h4, h5 { color:#333; margin-top:20px; }
-  .card { background:#fff; padding:20px; border-radius:12px; box-shadow:0 8px 16px rgba(0,0,0,0.06); margin-bottom:20px; }
-  .card p { margin-bottom:8px; color:#555; }
-  table { width:100%; margin-top:15px; border-collapse:collapse; }
-  table th, table td { border:1px solid #e9ecef; padding:8px; text-align:left; }
-  table th { background:#0d6efd; color:#fff; }
-  .btn-secondary { background:#6c757d; color:#fff; padding:10px 16px; border-radius:6px; text-decoration:none; }
+  .container { max-width: 960px; margin-top: 30px; }
+  h2, h4, h5 { color: #333; margin-top: 20px; font-weight: 600; }
+  .card {
+    background: #fff;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 8px 16px rgba(0,0,0,0.05);
+    margin-bottom: 20px;
+  }
+  .card p { margin-bottom: 8px; color: #555; }
+  table { width: 100%; margin-top: 15px; border-collapse: collapse; }
+  table th, table td {
+    border: 1px solid #e9ecef;
+    padding: 10px;
+    text-align: left;
+    vertical-align: middle;
+  }
+  table th {
+    background: #0d6efd;
+    color: #fff;
+    width: 220px;
+    font-weight: 500;
+  }
+  .btn-secondary {
+    background: #6c757d;
+    color: #fff;
+    padding: 10px 18px;
+    border-radius: 6px;
+    text-decoration: none;
+    transition: 0.2s;
+  }
+  .btn-secondary:hover { background: #5a6268; }
 </style>
 
+<div class="container">
+  <h2 class="mb-4">Applicant Full Profile (Unlocked after Payment)</h2>
 
-  <h2>Full Profile (After Payment)</h2>
-
+  <!-- ✅ Basic Information -->
   <div class="card">
     <h4>Basic Information</h4>
-    <p><strong>Full Name:</strong> {{ profile.full_name }}</p>
+    <p><strong>Full Name:</strong> {{ profile.full_name|default:"N/A" }}</p>
     <p><strong>Email:</strong> {{ applicant.email }}</p>
-    <p><strong>Mobile:</strong> {{ profile.mobile }}</p>
-    <p><strong>Gender:</strong> {{ profile.gender }}</p>
-    <p><strong>Marital Status:</strong> {{ profile.marital_status }}</p>
-    <p><strong>Address:</strong> {{ profile.address }}, {{ profile.city }}, {{ profile.state }} - {{ profile.pincode }}</p>
-    <p><strong>PANCARD Number:</strong> {{ profile.pancard_number }}</p>
-    <p><strong>Aadhaar Number:</strong> {{ profile.aadhaar_number }}</p>
-    <p><strong>Date of Birth:</strong> {{ profile.dob }}</p>
+    <p><strong>Mobile:</strong> {{ profile.mobile|default:"N/A" }}</p>
+    <p><strong>Gender:</strong> {{ profile.gender|default:"N/A" }}</p>
+    <p><strong>Marital Status:</strong> {{ profile.marital_status|default:"N/A" }}</p>
+    <p><strong>Address:</strong>
+      {{ profile.address|default:"" }}{% if profile.city %}, {{ profile.city }}{% endif %}
+      {% if profile.state %}, {{ profile.state }}{% endif %}
+      {% if profile.pincode %} - {{ profile.pincode }}{% endif %}
+    </p>
+    <p><strong>PAN Number:</strong> {{ profile.pancard_number }}</p>
+    <p><strong>Aadhaar Number:</strong> {{ profile.aadhaar_number|default:"N/A" }}</p>
+    <p><strong>Date of Birth:</strong> {{ profile.dob|date:"d-m-Y"|default:"N/A" }}</p>
   </div>
 
+  <!-- ✅ Applicant Details -->
   <div class="card">
     <h4>Applicant Details</h4>
-    <p><strong>Job Type:</strong> {{ applicant_details.job_type }}</p>
-    <p><strong>Employment Type:</strong> {{ applicant_details.employment_type }}</p>
-    <p><strong>CIBIL Score:</strong> {{ applicant_details.cibil_score }}</p>
+    <p><strong>Job Type:</strong> {{ applicant_details.job_type|default:"N/A" }}</p>
+    <p><strong>Employment Type:</strong> {{ applicant_details.employment_type|default:"N/A" }}</p>
+    <p><strong>CIBIL Score:</strong> {{ applicant_details.cibil_score|default:"N/A" }}</p>
 
     {% if applicant_details.employment_type == "Salaried" %}
-      <h5>Job Information</h5>
-      <p><strong>Company Name:</strong> {{ applicant_details.company_name }}</p>
-      <p><strong>Company Type:</strong> {{ applicant_details.company_type }}</p>
-      <p><strong>Designation:</strong> {{ applicant_details.designation }}</p>
-      <p><strong>ITR:</strong> {{ applicant_details.itr }}</p>
-      <p><strong>Current Salary:</strong> {{ applicant_details.current_salary }}</p>
-      <p><strong>Other Income:</strong> {{ applicant_details.other_income }}</p>
-      <p><strong>Total EMI:</strong> {{ applicant_details.total_emi }}</p>
+      <h5 class="mt-3">Job Information</h5>
+      <p><strong>Company Name:</strong> {{ applicant_details.company_name|default:"N/A" }}</p>
+      <p><strong>Company Type:</strong> {{ applicant_details.company_type|default:"N/A" }}</p>
+      <p><strong>Designation:</strong> {{ applicant_details.designation|default:"N/A" }}</p>
+      <p><strong>ITR:</strong> {{ applicant_details.itr|default:"N/A" }}</p>
+      <p><strong>Current Salary:</strong> ₹{{ applicant_details.current_salary|default:"0" }}</p>
+      <p><strong>Other Income:</strong> ₹{{ applicant_details.other_income|default:"0" }}</p>
+      <p><strong>Total EMI:</strong> ₹{{ applicant_details.total_emi|default:"0" }}</p>
+
     {% elif applicant_details.employment_type == "Business" %}
-      <h5>Business Information</h5>
-      <p><strong>Business Name:</strong> {{ applicant_details.business_name }}</p>
-      <p><strong>Business Type:</strong> {{ applicant_details.business_type }}</p>
-      <p><strong>Business Sector:</strong> {{ applicant_details.business_sector }}</p>
-      <p><strong>Total Turnover:</strong> {{ applicant_details.total_turnover }}</p>
-      <p><strong>Last Year Turnover:</strong> {{ applicant_details.last_year_turnover }}</p>
-      <p><strong>Business Total EMI:</strong> {{ applicant_details.business_total_emi }}</p>
-      <p><strong>Business ITR Status:</strong> {{ applicant_details.business_itr_status }}</p>
+      <h5 class="mt-3">Business Information</h5>
+      <p><strong>Business Name:</strong> {{ applicant_details.business_name|default:"N/A" }}</p>
+      <p><strong>Business Type:</strong> {{ applicant_details.business_type|default:"N/A" }}</p>
+      <p><strong>Business Sector:</strong> {{ applicant_details.business_sector|default:"N/A" }}</p>
+      <p><strong>Total Turnover:</strong> ₹{{ applicant_details.total_turnover|default:"0" }}</p>
+      <p><strong>Last Year Turnover:</strong> ₹{{ applicant_details.last_year_turnover|default:"0" }}</p>
+      <p><strong>Business Total EMI:</strong> ₹{{ applicant_details.business_total_emi|default:"0" }}</p>
+      <p><strong>Business ITR Status:</strong> {{ applicant_details.business_itr_status|default:"N/A" }}</p>
     {% endif %}
   </div>
 
+  <!-- ✅ Loan Details -->
   <div class="card">
     <h4>Loan Details</h4>
     <table>
       <tbody>
         <tr><th>Loan ID</th><td>{{ loan.loan_id|default:"N/A" }}</td></tr>
-        <tr><th>Amount Requested</th><td>₹{{ loan.amount_requested|default:"N/A" }}</td></tr>
+        <tr><th>Amount Requested</th><td>₹{{ loan.amount_requested|default:"0" }}</td></tr>
         <tr><th>Reason for Loan</th><td>{{ loan.reason_for_loan|default:"N/A" }}</td></tr>
-        <tr><th>Duration Months</th><td>{{ loan.duration_months|default:"N/A" }} months</td></tr>
-        <tr><th>Interest Rate</th><td>{{ loan.interest_rate|default:"N/A" }}%</td></tr>
+        <tr><th>Duration</th><td>{{ loan.duration_months|default:"0" }} months</td></tr>
+        <tr><th>Interest Rate</th><td>{{ loan.interest_rate|default:"0" }}%</td></tr>
         <tr><th>Status</th><td>{{ loan.status|default:"N/A" }}</td></tr>
-        <tr><th>Created At</th><td>{{ loan.created_at|date:"d-m-Y H:i" }}</td></tr>
+        <tr><th>Created At</th><td>{{ loan.created_at|date:"d-m-Y H:i"|default:"N/A" }}</td></tr>
       </tbody>
     </table>
   </div>
 
- <div class="mt-3">
-    <a href="{{ dashboard_url }}" class="btn-secondary">Back to Dashboard</a>
+  <!-- ✅ Back -->
+  <div class="mt-3">
+    <a href="{{ dashboard_url }}" class="btn-secondary">← Back to Dashboard</a>
   </div>
 </div>
 {% endblock %}

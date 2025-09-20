@@ -6,15 +6,20 @@
 {% block content %}
 <div class="row justify-content-center">
   <div class="col-md-6 col-lg-5">
-    <div class="card card-soft p-4">
+    <div class="card card-soft p-4 shadow-sm">
       <h3 class="text-center mb-2">Welcome back</h3>
       <p class="text-muted text-center mb-4">Login to access your account</p>
 
-      <!-- Messages -->
+      <!-- ✅ Messages (Bootstrap Alerts) -->
       {% if messages %}
         <div class="mb-3">
           {% for message in messages %}
-            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+            <div class="alert 
+                        {% if 'error' in message.tags %}alert-danger
+                        {% elif 'warning' in message.tags %}alert-warning
+                        {% elif 'success' in message.tags %}alert-success
+                        {% else %}alert-info{% endif %}
+                        alert-dismissible fade show small" role="alert">
               {{ message }}
               <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
             </div>
@@ -26,8 +31,6 @@
         {% csrf_token %}
         <div class="mb-3">
           <label for="role" class="form-label">Login as</label>
-
-          {# Clear, parser-safe: handle two branches separately and close each with its own endwith #}
           {% if role %}
             {% with selected_role=role %}
               <select name="role" id="role" class="form-select" required autocomplete="off">
@@ -45,23 +48,31 @@
               </select>
             {% endwith %}
           {% endif %}
-
         </div>
 
         <div class="mb-3">
-          <label for="email" class="form-label">Email</label>
-          {% if email %}
-            <input type="email" name="email" id="email" class="form-control" value="{{ email }}" required autocomplete="email" autofocus>
-          {% elif request.POST.email %}
-            <input type="email" name="email" id="email" class="form-control" value="{{ request.POST.email }}" required autocomplete="email" autofocus>
-          {% else %}
-            <input type="email" name="email" id="email" class="form-control" value="" required autocomplete="email" autofocus>
-          {% endif %}
-        </div>
+  <label for="email" class="form-label">Email</label>
+  {% if email %}
+    <input type="email" name="email" id="email" class="form-control"
+           value="{{ email }}" required autocomplete="email" autofocus>
+  {% elif request.POST.email %}
+    <input type="email" name="email" id="email" class="form-control"
+           value="{{ request.POST.email }}" required autocomplete="email" autofocus>
+  {% else %}
+    <input type="email" name="email" id="email" class="form-control"
+           value="" required autocomplete="email" autofocus>
+  {% endif %}
+</div>
+
 
         <div class="mb-3">
           <label for="password" class="form-label">Password</label>
-          <input type="password" name="password" id="password" class="form-control" required autocomplete="current-password">
+          <input type="password" 
+                 name="password" 
+                 id="password" 
+                 class="form-control" 
+                 required 
+                 autocomplete="current-password">
         </div>
 
         <div class="d-grid mt-3">
@@ -83,18 +94,20 @@
 (function(){
   const form = document.getElementById('loginForm');
   if (!form) return;
+
   form.addEventListener('submit', function(e){
     const role = (document.getElementById('role')?.value || '').trim();
     const email = (document.getElementById('email')?.value || '').trim();
     const password = document.getElementById('password')?.value || '';
+
     if (!role) {
       e.preventDefault();
-      alert('Please select a role (Applicant or Lender).');
+      alert('⚠️ Please select a role (Applicant or Lender).');
       return;
     }
     if (!email || !password) {
       e.preventDefault();
-      alert('Please enter both email and password.');
+      alert('⚠️ Please enter both email and password.');
       return;
     }
   }, { passive: false });

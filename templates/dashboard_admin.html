@@ -52,7 +52,6 @@
             <th>Email</th>
             <th>Joined Date</th>
             <th>Role</th>
-            <th>Active</th>
             <th>Profile Status</th>
             <th style="text-align:right">Actions</th>
           </tr>
@@ -71,42 +70,46 @@
             </td>
             <td>{{ u.role|default:"-"|capfirst }}</td>
             <td>
-              {% if u.is_active %}
-                <span class="badge bg-success badge-status">Active</span>
+              {% if u.profile %}
+                {% if u.profile.status == "Active" %}
+                  <span class="badge bg-success">Active</span>
+                {% elif u.profile.status == "Hold" %}
+                  <span class="badge bg-warning text-dark">Hold</span>
+                {% elif u.profile.status == "Deactivated" %}
+                  <span class="badge bg-secondary">Deactivated</span>
+                {% elif u.profile.status == "Deleted" %}
+                  <span class="badge bg-danger">Deleted</span>
+                {% else %}
+                  <span class="badge bg-light text-dark">Pending</span>
+                {% endif %}
               {% else %}
-                <span class="badge bg-secondary badge-status">Deactivated</span>
-              {% endif %}
-            </td>
-            <td>
-              {% if u.profile and u.profile.is_reviewed %}
-                <span class="badge bg-success">Accepted</span>
-              {% else %}
-                <span class="badge bg-warning text-dark">Hold</span>
+                <span class="badge bg-light text-dark">No Profile</span>
               {% endif %}
             </td>
             <td class="text-end actions-btns">
-              {% if u.profile and not u.profile.is_reviewed %}
+              {% if u.profile and u.profile.status == "Hold" %}
                 <button class="btn btn-sm btn-primary js-action-btn"
                         data-action="accept" data-user="{{ u.id }}">
                   Accept
                 </button>
-                <button class="btn btn-sm btn-secondary disabled">Hold</button>
               {% endif %}
-              {% if u.is_active %}
+              {% if u.profile and u.profile.status == "Active" %}
                 <button class="btn btn-sm btn-warning js-action-btn"
                         data-action="deactivate" data-user="{{ u.id }}">
                   Deactivate
                 </button>
-              {% else %}
+              {% elif u.profile and u.profile.status == "Deactivated" %}
                 <button class="btn btn-sm btn-success js-action-btn"
                         data-action="activate" data-user="{{ u.id }}">
                   Activate
                 </button>
               {% endif %}
-              <button class="btn btn-sm btn-danger js-action-btn"
-                      data-action="delete" data-user="{{ u.id }}">
-                Delete
-              </button>
+              {% if u.profile and u.profile.status != "Deleted" %}
+                <button class="btn btn-sm btn-danger js-action-btn"
+                        data-action="delete" data-user="{{ u.id }}">
+                  Delete
+                </button>
+              {% endif %}
               {% if u.profile %}
                 <a href="{% url 'admin_full_profile' u.id %}"
                    class="btn btn-sm btn-info">
@@ -116,13 +119,12 @@
             </td>
           </tr>
           {% empty %}
-          <tr><td colspan="7">No users registered.</td></tr>
+          <tr><td colspan="6">No users registered.</td></tr>
           {% endfor %}
         </tbody>
       </table>
     </div>
   </div>
-
   <!-- 2) Applicants -->
   <div class="card">
     <div class="d-flex justify-content-between align-items-center mb-2">
@@ -140,6 +142,7 @@
             <th>Name</th>
             <th>Email</th>
             <th>Mobile</th>
+            <th>Profile Status</th>
             <th style="text-align:right">Actions</th>
           </tr>
         </thead>
@@ -148,30 +151,47 @@
           <tr data-search="{{ a.user.email|lower }} {{ a.user.profile.full_name|default:''|lower }}"
               data-userid="{{ a.user.id }}">
             <td>{{ forloop.counter }}</td>
-            <td>LSHA{{ a.id|stringformat:"04d" }}</td>
+            <td>{{ a.user.user_id }}</td>
             <td>{{ a.user.profile.full_name|default:"N/A" }}</td>
             <td>{{ a.user.email }}</td>
             <td>{{ a.user.profile.mobile|default:"N/A" }}</td>
+            <td>
+              {% if a.user.profile %}
+                {% if a.user.profile.status == "Active" %}
+                  <span class="badge bg-success">Active</span>
+                {% elif a.user.profile.status == "Hold" %}
+                  <span class="badge bg-warning text-dark">Hold</span>
+                {% elif a.user.profile.status == "Deactivated" %}
+                  <span class="badge bg-secondary">Deactivated</span>
+                {% elif a.user.profile.status == "Deleted" %}
+                  <span class="badge bg-danger">Deleted</span>
+                {% else %}
+                  <span class="badge bg-light text-dark">Pending</span>
+                {% endif %}
+              {% endif %}
+            </td>
             <td class="text-end">
-              {% if a.user.is_active %}
+              {% if a.user.profile and a.user.profile.status == "Active" %}
                 <button class="btn btn-sm btn-warning js-action-btn"
                         data-action="deactivate" data-user="{{ a.user.id }}">
                   Deactivate
                 </button>
-              {% else %}
+              {% elif a.user.profile and a.user.profile.status == "Deactivated" %}
                 <button class="btn btn-sm btn-success js-action-btn"
                         data-action="activate" data-user="{{ a.user.id }}">
                   Activate
                 </button>
               {% endif %}
-              <button class="btn btn-sm btn-danger js-action-btn"
-                      data-action="delete" data-user="{{ a.user.id }}">
-                Delete
-              </button>
+              {% if a.user.profile and a.user.profile.status != "Deleted" %}
+                <button class="btn btn-sm btn-danger js-action-btn"
+                        data-action="delete" data-user="{{ a.user.id }}">
+                  Delete
+                </button>
+              {% endif %}
             </td>
           </tr>
           {% empty %}
-          <tr><td colspan="6">No applicants found.</td></tr>
+          <tr><td colspan="7">No applicants found.</td></tr>
           {% endfor %}
         </tbody>
       </table>
@@ -195,6 +215,7 @@
             <th>Name</th>
             <th>Email</th>
             <th>Mobile</th>
+            <th>Profile Status</th>
             <th style="text-align:right">Actions</th>
           </tr>
         </thead>
@@ -203,30 +224,47 @@
           <tr data-search="{{ l.user.email|lower }} {{ l.user.profile.full_name|default:''|lower }}"
               data-userid="{{ l.user.id }}">
             <td>{{ forloop.counter }}</td>
-            <td>LSHL{{ l.id|stringformat:"04d" }}</td>
+            <td>{{ l.user.user_id }}</td>
             <td>{{ l.user.profile.full_name|default:"N/A" }}</td>
             <td>{{ l.user.email }}</td>
             <td>{{ l.user.profile.mobile|default:"N/A" }}</td>
+            <td>
+              {% if l.user.profile %}
+                {% if l.user.profile.status == "Active" %}
+                  <span class="badge bg-success">Active</span>
+                {% elif l.user.profile.status == "Hold" %}
+                  <span class="badge bg-warning text-dark">Hold</span>
+                {% elif l.user.profile.status == "Deactivated" %}
+                  <span class="badge bg-secondary">Deactivated</span>
+                {% elif l.user.profile.status == "Deleted" %}
+                  <span class="badge bg-danger">Deleted</span>
+                {% else %}
+                  <span class="badge bg-light text-dark">Pending</span>
+                {% endif %}
+              {% endif %}
+            </td>
             <td class="text-end">
-              {% if l.user.is_active %}
+              {% if l.user.profile and l.user.profile.status == "Active" %}
                 <button class="btn btn-sm btn-warning js-action-btn"
                         data-action="deactivate" data-user="{{ l.user.id }}">
                   Deactivate
                 </button>
-              {% else %}
+              {% elif l.user.profile and l.user.profile.status == "Deactivated" %}
                 <button class="btn btn-sm btn-success js-action-btn"
                         data-action="activate" data-user="{{ l.user.id }}">
                   Activate
                 </button>
               {% endif %}
-              <button class="btn btn-sm btn-danger js-action-btn"
-                      data-action="delete" data-user="{{ l.user.id }}">
-                Delete
-              </button>
+              {% if l.user.profile and l.user.profile.status != "Deleted" %}
+                <button class="btn btn-sm btn-danger js-action-btn"
+                        data-action="delete" data-user="{{ l.user.id }}">
+                  Delete
+                </button>
+              {% endif %}
             </td>
           </tr>
           {% empty %}
-          <tr><td colspan="6">No lenders found.</td></tr>
+          <tr><td colspan="7">No lenders found.</td></tr>
           {% endfor %}
         </tbody>
       </table>
@@ -263,7 +301,8 @@
               <span class="badge 
                 {% if loan.status == 'Approved' %}bg-success
                 {% elif loan.status == 'Rejected' %}bg-danger
-                {% else %}bg-secondary{% endif %}">
+                {% elif loan.status == 'Pending' %}bg-secondary
+                {% else %}bg-warning text-dark{% endif %}">
                 {{ loan.status }}
               </span>
             </td>
@@ -275,7 +314,6 @@
       </table>
     </div>
   </div>
-
   <!-- 5) Payments -->
   <div class="card">
     <div class="d-flex justify-content-between align-items-center mb-2">
@@ -307,14 +345,15 @@
             <td>{{ p.lender.profile.full_name|default:"N/A" }}</td>
             <td>{{ p.lender.email }}</td>
             <td>{{ p.lender.profile.mobile|default:"N/A" }}</td>
+            <td>₹{{ p.amount }}</td>
             <td>
-              ₹{% if p.profile_view_amount %}
-                {{ p.profile_view_amount }}
-              {% else %}
-                {{ p.amount }}
-              {% endif %}
+              <span class="badge 
+                {% if p.status == 'Completed' %}bg-success
+                {% elif p.status == 'Pending' %}bg-secondary
+                {% else %}bg-warning text-dark{% endif %}">
+                {{ p.status }}
+              </span>
             </td>
-            <td>{{ p.status }}</td>
           </tr>
           {% empty %}
           <tr><td colspan="8">No payments found.</td></tr>
@@ -364,8 +403,10 @@
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-(function(){
+document.addEventListener("DOMContentLoaded", function(){
+  // ---------------------------
   // Search filter
+  // ---------------------------
   document.querySelectorAll('.search-input').forEach(function(el){
     el.addEventListener('input', function(){
       var targetKey = el.dataset.target;
@@ -388,7 +429,9 @@
     });
   });
 
-  // Modal + AJAX
+  // ---------------------------
+  // Modal + Normal Form Submit
+  // ---------------------------
   var actionButtons = document.querySelectorAll('.js-action-btn');
   var confirmModal = new bootstrap.Modal(document.getElementById('confirmModal'));
   var form = document.getElementById('adminActionForm');
@@ -402,14 +445,17 @@
       var userId = btn.dataset.user;
       var emailCell = btn.closest('tr').querySelector('td:nth-child(2)');
       var email = emailCell ? emailCell.innerText.trim() : '';
-      modalAction.value = action;
-      form.action = "/admin/user_action/" + userId + "/";
 
+      // ✅ Correct action URL
+      form.action = "/admin/user_action/" + userId + "/";
+      modalAction.value = action;
+
+      // Modal content setup
       if(action === 'deactivate'){
         modalTitle.innerText = "Deactivate Account?";
         modalBody.innerHTML = "<p>Deactivate account <strong>" + email + "</strong>.</p>"
-          + "<p class='text-danger small'>Warning: Misuse suspected.</p>"
-          + "<textarea id='modalReasonInputField' class='form-control' rows='3' placeholder='Optional reason...'></textarea>";
+          + "<p class='text-danger small'>Reason (optional):</p>"
+          + "<textarea id='modalReasonInputField' name='reason' class='form-control' rows='3'></textarea>";
         document.getElementById('confirmSubmitBtn').className = "btn btn-warning";
       } else if(action === 'activate'){
         modalTitle.innerText = "Activate Account?";
@@ -428,33 +474,10 @@
         modalBody.innerText = "Proceed?";
       }
 
-      form.onsubmit = function(e){
-        e.preventDefault();
-        var reasonText = document.getElementById('modalReasonInputField');
-        var r = reasonText ? reasonText.value : '';
-        document.getElementById('modalReasonInput').value = r;
-
-        var csrf = form.querySelector('input[name=csrfmiddlewaretoken]').value;
-        fetch(form.action, {
-          method: 'POST',
-          headers: {
-            'X-CSRFToken': csrf,
-            'Accept': 'application/json',
-            'X-Requested-With': 'XMLHttpRequest',
-            'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
-          },
-          body: new URLSearchParams({ action: modalAction.value, reason: r })
-        }).then(resp => resp.json()).then(data => {
-          confirmModal.hide();
-          alert(data.message || (data.ok ? "Action completed" : "Error"));
-          if(data.ok) location.reload();
-        }).catch(err => alert("Request failed: " + err));
-      };
-
       confirmModal.show();
     });
   });
-})();
+});
 </script>
 </body>
 </html>

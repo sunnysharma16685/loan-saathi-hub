@@ -31,7 +31,7 @@ urlpatterns = [
     path("dashboard/applicant/", views.dashboard_applicant, name="dashboard_applicant"),
     path("dashboard/lender/", views.dashboard_lender, name="dashboard_lender"),
     path("dashboard/", views.dashboard_router, name="dashboard_router"),  # auto redirect based on role
-    path("dashboard/lender/cibil/generate/<uuid:loan_id>/", main_views.generate_cibil_score, name="generate_cibil_score"),
+    path("dashboard/lender/cibil/generate/<uuid:loan_id>/", views.generate_cibil_score, name="generate_cibil_score"),
 
     # ---------------- Loan + Payment ----------------
     path("loan/request/", views.loan_request, name="loan_request"),
@@ -42,35 +42,27 @@ urlpatterns = [
 
     # ---------------- Applicant Loan Actions ----------------
     path("applicant/accept/<uuid:loan_id>/<uuid:lender_id>/", views.applicant_accept_loan, name="applicant_accept_loan"),
-    
 
-    # ---------------- Custom Admin ----------------
+    # ---------------- Custom Admin (app-level) ----------------
     path("admin_login/", views.admin_login, name="admin_login"),
-    path("dashboard_admin/", views.dashboard_admin, name="dashboard_admin"),
-    path("admin/user_action/<uuid:user_id>/", views.admin_user_action, name="admin_user_action"),
     path("admin_logout/", views.admin_logout, name="admin_logout"),
     path("admin/full_profile/<uuid:user_id>/", views.admin_view_profile, name="admin_full_profile"),
+    path("admin/user_action/<uuid:user_id>/", views.admin_user_action, name="admin_user_action"),
 
-
-    # -------Support, complaint, feedback routes------------------------
-    path("support/", main_views.support_view, name="support"),
-    path("complaint/", main_views.complaint_view, name="complaint"),
-    path("feedback/", main_views.feedback_view, name="feedback"),
+    # ------- Support / Complaint / Feedback (dynamic views) ----------------
+    path("support/", views.support_view, name="support"),
+    path("complaint/", views.complaint_view, name="complaint"),
+    path("feedback/", views.feedback_view, name="feedback"),
 
     # ---------------- Footer static pages ----------------
     path("about/", TemplateView.as_view(template_name="about.html"), name="about"),
     path("terms/", TemplateView.as_view(template_name="terms.html"), name="terms"),
     path("privacy/", TemplateView.as_view(template_name="privacy.html"), name="privacy"),
     path("faq/", TemplateView.as_view(template_name="faq.html"), name="faq"),
-    path("support/", TemplateView.as_view(template_name="support.html"), name="support"),
-    path("complaint/", TemplateView.as_view(template_name="complaint.html"), name="complaint"),
-    path("feedback/", TemplateView.as_view(template_name="feedback.html"), name="feedback"),
-    path("contact/", TemplateView.as_view(template_name="contact.html"), name="contact"),  # ✅ add this
-
+    path("contact/", TemplateView.as_view(template_name="contact.html"), name="contact"),
 ]
 
 # ---------------- Static & Media (development only) ----------------
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
     urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
-

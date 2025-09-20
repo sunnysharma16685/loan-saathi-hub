@@ -108,9 +108,31 @@ else:
     }
 
 # ---------------------------
-# CUSTOM USER MODEL
+# AUTHENTICATION
 # ---------------------------
-AUTH_USER_MODEL = "main.User"
+AUTH_USER_MODEL = "main.User"   # custom user model
+
+LOGIN_URL = "/login/"              # if not logged in → redirect here
+LOGIN_REDIRECT_URL = "/dashboard/" # after login success
+LOGOUT_REDIRECT_URL = "/"          # after logout
+
+# ---------------------------
+# PASSWORD VALIDATORS
+# ---------------------------
+AUTH_PASSWORD_VALIDATORS = [
+    {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
+    {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator", "OPTIONS": {"min_length": 8}},
+    {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator"},
+    {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
+]
+
+# ---------------------------
+# LANGUAGE & TIMEZONE
+# ---------------------------
+LANGUAGE_CODE = "en-us"
+TIME_ZONE = "Asia/Kolkata"
+USE_I18N = True
+USE_TZ = True
 
 # ---------------------------
 # STATIC & MEDIA

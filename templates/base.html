@@ -52,18 +52,24 @@
             <li class="nav-item"><a class="nav-link" href="{% url 'index' %}">Home</a></li>
             <li class="nav-item"><a class="nav-link" href="{% url 'login' %}">Login</a></li>
             <li class="nav-item"><a class="nav-link" href="{% url 'register' %}">Register</a></li>
+
           {% else %}
             <li class="nav-item"><a class="nav-link" href="{% url 'index' %}">Home</a></li>
 
-            {% if not PROFILE_COMPLETE %}
-              <li class="nav-item"><a class="nav-link" href="{% url 'profile_form' user_id=request.user.id %}">Profile Form</a></li>
+            {% if request.user.is_superuser %}
+              <li class="nav-item"><a class="nav-link" href="{% url 'dashboard_admin' %}">Admin Dashboard</a></li>
+
             {% else %}
-              {% if request.user.role == "applicant" %}
-                <li class="nav-item"><a class="nav-link" href="{% url 'dashboard_applicant' %}">Dashboard</a></li>
-              {% elif request.user.role == "lender" %}
-                <li class="nav-item"><a class="nav-link" href="{% url 'dashboard_lender' %}">Dashboard</a></li>
-              {% elif request.user.is_superuser %}
-                <li class="nav-item"><a class="nav-link" href="{% url 'dashboard_admin' %}">Admin Dashboard</a></li>
+              {% if request.user.profile and not request.user.profile.is_reviewed %}
+                <!-- Profile still under review -->
+                <li class="nav-item"><a class="nav-link" href="{% url 'profile_form' user_id=request.user.id %}">Profile Form</a></li>
+
+              {% else %}
+                {% if request.user.role == "applicant" %}
+                  <li class="nav-item"><a class="nav-link" href="{% url 'dashboard_applicant' %}">Dashboard</a></li>
+                {% elif request.user.role == "lender" %}
+                  <li class="nav-item"><a class="nav-link" href="{% url 'dashboard_lender' %}">Dashboard</a></li>
+                {% endif %}
               {% endif %}
             {% endif %}
 

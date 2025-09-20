@@ -8,21 +8,31 @@
     .login-container {
         max-width: 420px;
         margin: 60px auto;
-        background: #fff;
-        padding: 25px;
+        background: #ffffff;
+        padding: 30px;
         border-radius: 12px;
-        box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
     }
     .login-container h2 {
-        font-size: 24px;
-        font-weight: 600;
+        font-size: 26px;
+        font-weight: 700;
         text-align: center;
-        margin-bottom: 20px;
+        margin-bottom: 25px;
         color: #0d6efd;
+    }
+    .form-label {
+        font-weight: 500;
+        color: #333;
     }
     .form-control {
         border-radius: 8px;
-        padding: 10px;
+        padding: 10px 12px;
+        border: 1px solid #ced4da;
+        font-size: 15px;
+    }
+    .form-control:focus {
+        border-color: #0d6efd;
+        box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
     }
     .btn-login {
         background: #0d6efd;
@@ -30,14 +40,18 @@
         font-weight: 600;
         border-radius: 8px;
         padding: 10px;
-        transition: 0.3s ease;
+        font-size: 16px;
+        transition: all 0.3s ease;
     }
     .btn-login:hover {
         background: #0b5ed7;
+        transform: translateY(-1px);
     }
     .alert {
         border-radius: 8px;
         font-size: 14px;
+        padding: 10px 12px;
+        margin-bottom: 15px;
     }
 </style>
 {% endblock %}
@@ -56,12 +70,24 @@
         {% csrf_token %}
         <div class="mb-3">
             <label for="identifier" class="form-label">Email or Mobile</label>
-            <input type="text" name="identifier" id="identifier" class="form-control" required placeholder="Enter your admin email or mobile">
+            <input 
+                type="text" 
+                name="identifier" 
+                id="identifier" 
+                class="form-control" 
+                required 
+                placeholder="Enter your admin email or mobile">
         </div>
 
         <div class="mb-3">
             <label for="password" class="form-label">Password</label>
-            <input type="password" name="password" id="password" class="form-control" required placeholder="Enter your password">
+            <input 
+                type="password" 
+                name="password" 
+                id="password" 
+                class="form-control" 
+                required 
+                placeholder="Enter your password">
         </div>
 
         <button type="submit" class="btn btn-login w-100">Login</button>

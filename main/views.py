@@ -363,18 +363,23 @@ def edit_profile(request, user_id):
 def admin_login(request):
     if request.method == "POST":
         identifier = (request.POST.get("identifier") or "").strip()
-        password = request.POST.get("password") or ""
+        password = (request.POST.get("password") or "").strip()
 
         user = None
         if identifier:
-            user = User.objects.filter(email__iexact=identifier).first() or \
-                   User.objects.filter(profile__mobile=identifier).first()
+            # 🔎 Check by email OR mobile
+            user = (
+                User.objects.filter(email__iexact=identifier).first()
+                or User.objects.filter(profile__mobile=identifier).first()
+            )
 
         if user:
+            # 🔑 Authenticate using email as username
             auth_user = authenticate(request, username=user.email, password=password)
+
             if auth_user and auth_user.is_superuser:
                 login(request, auth_user)
-                return redirect("dashboard_admin")
+                return redirect("dashboard_admin")  # ✅ redirect after success
             else:
                 messages.error(request, "❌ Invalid password or not an admin user.")
         else:

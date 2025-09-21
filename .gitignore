@@ -64,7 +64,5 @@ yarn-error.log
 # ------------------------
 render.yaml
 
-# ------------------------
-# Admin
-# ------------------------
-createprodadmin.py
+
+

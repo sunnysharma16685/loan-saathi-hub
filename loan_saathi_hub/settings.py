@@ -127,6 +127,21 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 # ---------------------------
+# INSTALLED APPS
+# ---------------------------
+INSTALLED_APPS = [
+    'django.contrib.admin',
+    'django.contrib.auth',
+    'django.contrib.contenttypes',  # ⚠️ ye jaruri hai
+    'django.contrib.sessions',
+    'django.contrib.messages',
+    'django.contrib.staticfiles',
+
+    # aapka app
+    'main.apps.MainConfig',
+]
+
+# ---------------------------
 # LANGUAGE & TIMEZONE
 # ---------------------------
 LANGUAGE_CODE = "en-us"

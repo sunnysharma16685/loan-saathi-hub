@@ -3,6 +3,8 @@ from django.db import models
 from django.utils import timezone
 from django.conf import settings
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin, BaseUserManager
+from django.db.models.signals import post_save
+from django.dispatch import receiver
 
 # =====================================================
 # USER MANAGER
@@ -76,6 +78,25 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     def __str__(self):
         return f"{self.user_id} - {self.email} ({self.role})"
+
+# =====================================================
+# Create User Profile
+# =====================================================
+@receiver(post_save, sender=User)
+def create_user_profile(sender, instance, created, **kwargs):
+    """
+    Har naya User banne ke baad uske liye ek Profile automatic create ho.
+    """
+    if created:
+        from .models import Profile
+        # Agar profile already nahi hai to hi create kare
+        Profile.objects.get_or_create(
+            user=instance,
+            defaults={
+                "full_name": instance.email.split("@")[0],  # default naam
+                "status": "Hold"  # default profile status
+            }
+        )
 
 
 # =====================================================

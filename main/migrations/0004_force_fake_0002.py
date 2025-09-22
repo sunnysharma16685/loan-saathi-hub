@@ -18,7 +18,7 @@ def force_mark_0002(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('main', '0001_initial'),  # NOTE: depend only on 0001
+        ('main', '0003_auto_nullable_pan_aadhaar'),
     ]
 
     operations = [

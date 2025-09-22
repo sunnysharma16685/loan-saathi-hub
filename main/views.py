@@ -72,6 +72,7 @@ def is_profile_complete(user):
         return bool(details and (details.lender_type or details.bank_firm_name))
 
     return True
+
 # -------------------- Register --------------------
 def register_view(request):
     role = (request.GET.get("role") or "").lower()
@@ -99,11 +100,26 @@ def register_view(request):
             return redirect(f"/register/?role={form_role}")
 
         try:
+            # ✅ Create user
             user = User(email=email, role=form_role)
             user.set_password(password)
             user.save()
+
+            # ✅ Ensure profile exists (signal already banata hai, par double safety)
+            Profile.objects.get_or_create(
+                user=user,
+                defaults={
+                    "full_name": email.split("@")[0],
+                    "status": "Hold"
+                }
+            )
+
+            # ✅ Auto-login
             login(request, user, backend="django.contrib.auth.backends.ModelBackend")
+
+            # ✅ Redirect to profile form
             return redirect("profile_form", user_id=str(user.id))
+
         except Exception as e:
             messages.error(request, f"Registration error: {e}")
             return redirect(f"/register/?role={form_role}")
@@ -186,15 +202,24 @@ def logout_view(request):
 @login_required
 def profile_form(request, user_id):
     user = get_object_or_404(User, id=user_id)
+
+    # ✅ Prevent unauthorized edit
     if request.user.id != user.id and not request.user.is_superuser:
         messages.error(request, "You are not allowed to edit this profile.")
         return redirect("index")
 
     role = (user.role or "").lower()
-    profile = getattr(user, "profile", None) or Profile.objects.filter(user=user).first()
+
+    # ✅ Ensure profile exists (double safety with signal)
+    profile, _ = Profile.objects.get_or_create(
+        user=user,
+        defaults={"full_name": user.email.split("@")[0], "status": "Hold"}
+    )
+
     applicant_details = ApplicantDetails.objects.filter(user=user).first() if role == "applicant" else None
     lender_details = LenderDetails.objects.filter(user=user).first() if role == "lender" else None
 
+    # Helper to safely extract POST values
     def G(*keys):
         for k in keys:
             v = request.POST.get(k)
@@ -203,9 +228,6 @@ def profile_form(request, user_id):
         return None
 
     if request.method == "POST":
-        if not profile:
-            profile = Profile(user=user)
-
         # ✅ PAN validation
         pancard_number = G("pancard_number", "panCardNumber")
         if not pancard_number:
@@ -218,44 +240,46 @@ def profile_form(request, user_id):
             return render(request, "profile_form.html", {"user": user, "profile": profile, "role": role,
                 "applicant_details": applicant_details, "lender_details": lender_details})
 
-        # Aadhaar validation
+        # ✅ Aadhaar validation
         aadhaar_number = G("aadhaar_number", "aadhaarNumber")
         if aadhaar_number and Profile.objects.filter(aadhaar_number=aadhaar_number).exclude(user=user).exists():
             messages.error(request, f"Aadhaar {aadhaar_number} already exists.")
             return render(request, "profile_form.html", {"user": user, "profile": profile, "role": role,
                 "applicant_details": applicant_details, "lender_details": lender_details})
 
-        # 🔹 Save profile
-        profile.full_name = G("full_name", "fullName") or ""
-        profile.mobile = G("mobile") or ""
+        # ✅ Save profile fields
+        profile.full_name = G("full_name", "fullName") or profile.full_name
+        profile.mobile = G("mobile") or profile.mobile
         dob_val = G("dob")
-        profile.dob = parse_date(dob_val) if dob_val else None
-        profile.gender = G("gender")
-        profile.marital_status = G("marital_status", "maritalStatus")
-        profile.address = G("address")
-        profile.pincode = G("pincode")
-        profile.city = G("city")
-        profile.state = G("state")
+        profile.dob = parse_date(dob_val) if dob_val else profile.dob
+        profile.gender = G("gender") or profile.gender
+        profile.marital_status = G("marital_status", "maritalStatus") or profile.marital_status
+        profile.address = G("address") or profile.address
+        profile.pincode = G("pincode") or profile.pincode
+        profile.city = G("city") or profile.city
+        profile.state = G("state") or profile.state
         profile.pancard_number = pancard_number
         profile.aadhaar_number = aadhaar_number
         profile.save()
 
-        # Applicant / Lender details
+        # ✅ Applicant / Lender details
         if role == "applicant":
             details, _ = ApplicantDetails.objects.get_or_create(user=user)
-            details.employment_type = G("employment_type", "employmentType")
-            details.cibil_score = G("cibil_score")
-            # save job/business fields...
+            details.employment_type = G("employment_type", "employmentType") or details.employment_type
+            cibil_val = G("cibil_score")
+            details.cibil_score = int(cibil_val) if cibil_val and cibil_val.isdigit() else details.cibil_score
+            # TODO: Add other job/business fields if needed
             details.save()
             applicant_details = details
+
         elif role == "lender":
             l, _ = LenderDetails.objects.get_or_create(user=user)
-            l.lender_type = G("lender_type")
-            l.bank_firm_name = G("bank_firm_name", "bankfirmName")
-            l.branch_name = G("branch_name", "branchName")
-            l.dsa_code = G("dsa_code", "dsaCode")
-            l.designation = G("designation")
-            l.gst_number = G("gst_number", "gstNumber")
+            l.lender_type = G("lender_type") or l.lender_type
+            l.bank_firm_name = G("bank_firm_name", "bankfirmName") or l.bank_firm_name
+            l.branch_name = G("branch_name", "branchName") or l.branch_name
+            l.dsa_code = G("dsa_code", "dsaCode") or l.dsa_code
+            l.designation = G("designation") or l.designation
+            l.gst_number = G("gst_number", "gstNumber") or l.gst_number
             l.save()
             lender_details = l
 
@@ -269,7 +293,6 @@ def profile_form(request, user_id):
         "applicant_details": applicant_details,
         "lender_details": lender_details,
     })
-
 # -------------------- Edit Profile --------------------
 @login_required
 def edit_profile(request, user_id):

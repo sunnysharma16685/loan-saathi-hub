@@ -121,8 +121,8 @@ class Profile(models.Model):
     address = models.TextField(blank=True, null=True)
 
     # KYC
-    pancard_number = models.CharField(max_length=20, unique=True)
-    aadhaar_number = models.CharField(max_length=20, blank=True, null=True)
+    pancard_number = models.CharField(max_length=20, unique=True, null=True, blank=True)
+    aadhaar_number = models.CharField(max_length=20, unique=True, null=True, blank=True)
 
     # Location
     pincode = models.CharField(max_length=10, blank=True, null=True)

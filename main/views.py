@@ -105,19 +105,11 @@ def register_view(request):
             user.set_password(password)
             user.save()
 
-            # ✅ Ensure profile exists (signal already banata hai, par double safety)
-            Profile.objects.get_or_create(
-                user=user,
-                defaults={
-                    "full_name": email.split("@")[0],
-                    "status": "Hold"
-                }
-            )
-
-            # ✅ Auto-login
+            # ❌ Profile auto-create मत करो (PAN/Aadhaar missing होंगे तो error आएगा)
+            # ✅ सिर्फ़ auto-login करा दो
             login(request, user, backend="django.contrib.auth.backends.ModelBackend")
 
-            # ✅ Redirect to profile form
+            # ✅ Redirect to profile form (user यहाँ अपना PAN/Aadhaar fill करेगा)
             return redirect("profile_form", user_id=str(user.id))
 
         except Exception as e:

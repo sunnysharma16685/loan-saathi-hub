@@ -6,6 +6,7 @@ from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin, BaseU
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 
+
 # =====================================================
 # USER MANAGER
 # =====================================================
@@ -29,24 +30,6 @@ class UserManager(BaseUserManager):
 
 
 # =====================================================
-# SIGNAL: Disable auto profile creation
-# =====================================================
-from django.db.models.signals import post_save
-from django.dispatch import receiver
-
-@receiver(post_save, sender=User)
-def create_user_profile(sender, instance, created, **kwargs):
-    """
-    Har naya User banne ke baad Profile ab auto-create nahi hogi.
-    Profile PAN/Aadhaar ke saath sirf profile_form submit par create/update hogi.
-    """
-    if created:
-        # Pehle yahan Profile.objects.get_or_create hota tha
-        # ab ise disable kar diya hai taki NULL PAN/Aadhaar insert na ho
-        pass
-
-
-# =====================================================
 # CUSTOM USER MODEL
 # =====================================================
 class User(AbstractBaseUser, PermissionsMixin):
@@ -57,7 +40,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     ]
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    user_id = models.CharField(max_length=20, unique=True, editable=False, null=True, blank=True)  
+    user_id = models.CharField(max_length=20, unique=True, editable=False, null=True, blank=True)
     email = models.EmailField(unique=True)
     role = models.CharField(max_length=20, choices=ROLE_CHOICES)
 
@@ -97,33 +80,14 @@ class User(AbstractBaseUser, PermissionsMixin):
     def __str__(self):
         return f"{self.user_id} - {self.email} ({self.role})"
 
-# =====================================================
-# Create User Profile
-# =====================================================
-@receiver(post_save, sender=User)
-def create_user_profile(sender, instance, created, **kwargs):
-    """
-    Har naya User banne ke baad uske liye ek Profile automatic create ho.
-    """
-    if created:
-        from .models import Profile
-        # Agar profile already nahi hai to hi create kare
-        Profile.objects.get_or_create(
-            user=instance,
-            defaults={
-                "full_name": instance.email.split("@")[0],  # default naam
-                "status": "Hold"  # default profile status
-            }
-        )
-
 
 # =====================================================
 # PROFILE
 # =====================================================
 class Profile(models.Model):
     STATUS_CHOICES = [
-        ("Hold", "Hold"),             # Default on registration
-        ("Active", "Active"),         # After admin acceptance
+        ("Hold", "Hold"),
+        ("Active", "Active"),
         ("Deactivated", "Deactivated"),
         ("Deleted", "Deleted"),
     ]
@@ -233,14 +197,14 @@ class LoanRequest(models.Model):
             ("Hold", "Hold"),
             ("Accepted", "Accepted"),
         ],
-        default="Pending"
+        default="Pending",
     )
 
     accepted_lender = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
         null=True, blank=True,
-        related_name="accepted_loans"
+        related_name="accepted_loans",
     )
 
     created_at = models.DateTimeField(auto_now_add=True)
@@ -368,3 +332,16 @@ class CibilReport(models.Model):
 
     def __str__(self):
         return f"CIBIL-{self.loan.loan_id} by {self.lender.email} @ {self.created_at:%Y-%m-%d %H:%M}"
+
+
+# =====================================================
+# SIGNALS (LAST)
+# =====================================================
+@receiver(post_save, sender=User)
+def create_user_profile(sender, instance, created, **kwargs):
+    """
+    ⚠️ Auto profile creation disabled.
+    Profile will only be created/updated when user fills profile_form with PAN/Aadhaar.
+    """
+    if created:
+        pass

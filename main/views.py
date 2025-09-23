@@ -191,6 +191,14 @@ def logout_view(request):
 
 
 # -------------------- Profile Form --------------------
+from django.shortcuts import get_object_or_404, redirect, render
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from django.utils.dateparse import parse_date
+
+from .models import User, Profile, ApplicantDetails, LenderDetails
+
+
 @login_required
 def profile_form(request, user_id):
     user = get_object_or_404(User, id=user_id)
@@ -202,7 +210,7 @@ def profile_form(request, user_id):
 
     role = (user.role or "").lower()
 
-    # ✅ Ensure profile exists (double safety with signal)
+    # ✅ Ensure profile exists (safe creation)
     profile, _ = Profile.objects.get_or_create(
         user=user,
         defaults={"full_name": user.email.split("@")[0], "status": "Hold"}
@@ -224,20 +232,61 @@ def profile_form(request, user_id):
         pancard_number = G("pancard_number", "panCardNumber")
         if not pancard_number:
             messages.error(request, "PAN Card Number is required.")
-            return render(request, "profile_form.html", {"user": user, "profile": profile, "role": role,
-                "applicant_details": applicant_details, "lender_details": lender_details})
+            return render(
+                request,
+                "profile_form.html",
+                {
+                    "user": user,
+                    "profile": profile,
+                    "role": role,
+                    "applicant_details": applicant_details,
+                    "lender_details": lender_details,
+                },
+            )
 
         if Profile.objects.filter(pancard_number=pancard_number).exclude(user=user).exists():
             messages.error(request, f"PAN {pancard_number} already exists.")
-            return render(request, "profile_form.html", {"user": user, "profile": profile, "role": role,
-                "applicant_details": applicant_details, "lender_details": lender_details})
+            return render(
+                request,
+                "profile_form.html",
+                {
+                    "user": user,
+                    "profile": profile,
+                    "role": role,
+                    "applicant_details": applicant_details,
+                    "lender_details": lender_details,
+                },
+            )
 
         # ✅ Aadhaar validation
         aadhaar_number = G("aadhaar_number", "aadhaarNumber")
-        if aadhaar_number and Profile.objects.filter(aadhaar_number=aadhaar_number).exclude(user=user).exists():
+        if not aadhaar_number:
+            messages.error(request, "Aadhaar Number is required.")
+            return render(
+                request,
+                "profile_form.html",
+                {
+                    "user": user,
+                    "profile": profile,
+                    "role": role,
+                    "applicant_details": applicant_details,
+                    "lender_details": lender_details,
+                },
+            )
+
+        if Profile.objects.filter(aadhaar_number=aadhaar_number).exclude(user=user).exists():
             messages.error(request, f"Aadhaar {aadhaar_number} already exists.")
-            return render(request, "profile_form.html", {"user": user, "profile": profile, "role": role,
-                "applicant_details": applicant_details, "lender_details": lender_details})
+            return render(
+                request,
+                "profile_form.html",
+                {
+                    "user": user,
+                    "profile": profile,
+                    "role": role,
+                    "applicant_details": applicant_details,
+                    "lender_details": lender_details,
+                },
+            )
 
         # ✅ Save profile fields
         profile.full_name = G("full_name", "fullName") or profile.full_name
@@ -278,13 +327,17 @@ def profile_form(request, user_id):
         messages.success(request, "✅ Profile saved successfully.")
         return redirect("review_profile")
 
-    return render(request, "profile_form.html", {
-        "user": user,
-        "profile": profile,
-        "role": role.capitalize() if role else "",
-        "applicant_details": applicant_details,
-        "lender_details": lender_details,
-    })
+    return render(
+        request,
+        "profile_form.html",
+        {
+            "user": user,
+            "profile": profile,
+            "role": role.capitalize() if role else "",
+            "applicant_details": applicant_details,
+            "lender_details": lender_details,
+        },
+    )
 # -------------------- Edit Profile --------------------
 @login_required
 def edit_profile(request, user_id):

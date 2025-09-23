@@ -1,3 +1,4 @@
+import logging
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.contrib.auth import (
@@ -22,6 +23,8 @@ import uuid, random
 from django.db import migrations, models
 from datetime import date
 
+
+logger = logging.getLogger(__name__)
 
 # -------------------- Local Models --------------------
 from .models import (

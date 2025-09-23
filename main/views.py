@@ -191,16 +191,10 @@ def logout_view(request):
 
 
 # -------------------- Profile Form --------------------
-from django.shortcuts import get_object_or_404, redirect, render
-from django.contrib import messages
-from django.contrib.auth.decorators import login_required
-from django.utils.dateparse import parse_date
-
-from .models import User, Profile, ApplicantDetails, LenderDetails
-
-
 @login_required
 def profile_form(request, user_id):
+    logger.error("🔎 Entered profile_form for user_id=%s by %s", user_id, request.user.email)
+
     user = get_object_or_404(User, id=user_id)
 
     # ✅ Prevent unauthorized edit
@@ -210,10 +204,10 @@ def profile_form(request, user_id):
 
     role = (user.role or "").lower()
 
-    # ✅ Ensure profile exists (safe creation)
+    # ✅ Ensure profile exists
     profile, _ = Profile.objects.get_or_create(
         user=user,
-        defaults={"full_name": user.email.split("@")[0], "status": "Hold"}
+        defaults={"full_name": user.email.split("@")[0], "status": "Hold"},
     )
 
     applicant_details = ApplicantDetails.objects.filter(user=user).first() if role == "applicant" else None
@@ -228,65 +222,39 @@ def profile_form(request, user_id):
         return None
 
     if request.method == "POST":
+        logger.error("📥 Profile POST data = %s", request.POST.dict())
+
         # ✅ PAN validation
         pancard_number = G("pancard_number", "panCardNumber")
         if not pancard_number:
             messages.error(request, "PAN Card Number is required.")
-            return render(
-                request,
-                "profile_form.html",
-                {
-                    "user": user,
-                    "profile": profile,
-                    "role": role,
-                    "applicant_details": applicant_details,
-                    "lender_details": lender_details,
-                },
-            )
+            return render(request, "profile_form.html", {
+                "user": user, "profile": profile, "role": role,
+                "applicant_details": applicant_details, "lender_details": lender_details,
+            })
 
         if Profile.objects.filter(pancard_number=pancard_number).exclude(user=user).exists():
             messages.error(request, f"PAN {pancard_number} already exists.")
-            return render(
-                request,
-                "profile_form.html",
-                {
-                    "user": user,
-                    "profile": profile,
-                    "role": role,
-                    "applicant_details": applicant_details,
-                    "lender_details": lender_details,
-                },
-            )
+            return render(request, "profile_form.html", {
+                "user": user, "profile": profile, "role": role,
+                "applicant_details": applicant_details, "lender_details": lender_details,
+            })
 
         # ✅ Aadhaar validation
         aadhaar_number = G("aadhaar_number", "aadhaarNumber")
         if not aadhaar_number:
             messages.error(request, "Aadhaar Number is required.")
-            return render(
-                request,
-                "profile_form.html",
-                {
-                    "user": user,
-                    "profile": profile,
-                    "role": role,
-                    "applicant_details": applicant_details,
-                    "lender_details": lender_details,
-                },
-            )
+            return render(request, "profile_form.html", {
+                "user": user, "profile": profile, "role": role,
+                "applicant_details": applicant_details, "lender_details": lender_details,
+            })
 
         if Profile.objects.filter(aadhaar_number=aadhaar_number).exclude(user=user).exists():
             messages.error(request, f"Aadhaar {aadhaar_number} already exists.")
-            return render(
-                request,
-                "profile_form.html",
-                {
-                    "user": user,
-                    "profile": profile,
-                    "role": role,
-                    "applicant_details": applicant_details,
-                    "lender_details": lender_details,
-                },
-            )
+            return render(request, "profile_form.html", {
+                "user": user, "profile": profile, "role": role,
+                "applicant_details": applicant_details, "lender_details": lender_details,
+            })
 
         # ✅ Save profile fields
         profile.full_name = G("full_name", "fullName") or profile.full_name
@@ -303,13 +271,14 @@ def profile_form(request, user_id):
         profile.aadhaar_number = aadhaar_number
         profile.save()
 
+        logger.error("✅ Profile saved for %s", user.email)
+
         # ✅ Applicant / Lender details
         if role == "applicant":
             details, _ = ApplicantDetails.objects.get_or_create(user=user)
             details.employment_type = G("employment_type", "employmentType") or details.employment_type
             cibil_val = G("cibil_score")
             details.cibil_score = int(cibil_val) if cibil_val and cibil_val.isdigit() else details.cibil_score
-            # TODO: Add other job/business fields if needed
             details.save()
             applicant_details = details
 
@@ -327,17 +296,13 @@ def profile_form(request, user_id):
         messages.success(request, "✅ Profile saved successfully.")
         return redirect("review_profile")
 
-    return render(
-        request,
-        "profile_form.html",
-        {
-            "user": user,
-            "profile": profile,
-            "role": role.capitalize() if role else "",
-            "applicant_details": applicant_details,
-            "lender_details": lender_details,
-        },
-    )
+    return render(request, "profile_form.html", {
+        "user": user,
+        "profile": profile,
+        "role": role.capitalize() if role else "",
+        "applicant_details": applicant_details,
+        "lender_details": lender_details,
+    })
 # -------------------- Edit Profile --------------------
 @login_required
 def edit_profile(request, user_id):

@@ -29,6 +29,24 @@ class UserManager(BaseUserManager):
 
 
 # =====================================================
+# SIGNAL: Disable auto profile creation
+# =====================================================
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+
+@receiver(post_save, sender=User)
+def create_user_profile(sender, instance, created, **kwargs):
+    """
+    Har naya User banne ke baad Profile ab auto-create nahi hogi.
+    Profile PAN/Aadhaar ke saath sirf profile_form submit par create/update hogi.
+    """
+    if created:
+        # Pehle yahan Profile.objects.get_or_create hota tha
+        # ab ise disable kar diya hai taki NULL PAN/Aadhaar insert na ho
+        pass
+
+
+# =====================================================
 # CUSTOM USER MODEL
 # =====================================================
 class User(AbstractBaseUser, PermissionsMixin):

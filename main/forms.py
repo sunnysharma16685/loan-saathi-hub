@@ -111,8 +111,8 @@ class LenderRegistrationForm(forms.ModelForm):
     pincode = forms.CharField(max_length=10, required=True)
     city = forms.CharField(max_length=100, required=True)
     state = forms.CharField(max_length=100, required=True)
-    pancard_number = forms.CharField(max_length=20, required=False)
-    aadhaar_number = forms.CharField(max_length=20, required=False)
+    pancard_number = forms.CharField(max_length=20, required=True)
+    aadhaar_number = forms.CharField(max_length=20, required=True)
 
     # LenderDetails fields
     lender_type = forms.CharField(max_length=100, required=False)

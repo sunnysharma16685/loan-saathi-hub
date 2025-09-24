@@ -219,7 +219,7 @@
           </div>
         </div>
 
-        <!-- KYC -->
+       <!-- KYC -->
 <div class="form-section">
   <h4 class="mb-3">KYC</h4>
   <div class="row g-3 mb-3">
@@ -231,7 +231,7 @@
       </label>
       <input
         type="text"
-        class="form-control"
+        class="form-control {% if errors.pancard_number %}is-invalid{% endif %}"
         name="pancard_number"
         id="pancard_number"
         maxlength="10"
@@ -241,10 +241,14 @@
         value="{{ profile.pancard_number|default:'' }}"
         required
       >
-      <small class="text-muted">
-        Example: <span style="filter: blur(2px);">QWERT6789Z</span> <br>
-        Format: 5 letters, 4 digits, 1 letter
-      </small>
+      {% if errors.pancard_number %}
+        <div class="invalid-feedback">{{ errors.pancard_number }}</div>
+      {% else %}
+        <small class="text-muted">
+          Example: <span style="filter: blur(2px);">QWERT6789Z</span> <br>
+          Format: 5 letters, 4 digits, 1 letter
+        </small>
+      {% endif %}
     </div>
 
     <!-- Aadhaar Number -->
@@ -254,25 +258,30 @@
       </label>
       <input
         type="text"
-        class="form-control"
+        class="form-control {% if errors.aadhaar_number %}is-invalid{% endif %}"
         name="aadhaar_number"
         id="aadhaar_number"
         maxlength="12"
         inputmode="numeric"
         pattern="\d{12}"
-        placeholder="e.g., 1234 5678 9123"
+        placeholder="e.g., 123456789012"
         value="{{ profile.aadhaar_number|default:'' }}"
         required
       >
-      <small class="text-muted">
-        Example: <span style="filter: blur(2px);">5678 9123 4567</span> (12 digits)
-      </small>
-      <br>
-      <small class="text-danger fw-semibold">⚠️ Aadhaar must match UIDAI format</small>
+      {% if errors.aadhaar_number %}
+        <div class="invalid-feedback">{{ errors.aadhaar_number }}</div>
+      {% else %}
+        <small class="text-muted">
+          Example: <span style="filter: blur(2px);">567891234567</span> (12 digits)
+        </small>
+        <br>
+        <small class="text-danger fw-semibold">⚠️ Aadhaar must match UIDAI format</small>
+      {% endif %}
     </div>
 
   </div>
 </div>
+
 
 
         <!-- Applicant Only -->

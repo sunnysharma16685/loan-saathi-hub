@@ -227,36 +227,36 @@ def profile_form(request, user_id):
     if request.method == "POST":
         logger.error("📥 Profile POST data = %s", request.POST.dict())
 
+        errors = {}
+
         # ✅ PAN validation
         pancard_number = G("pancard_number", "panCardNumber")
         if not pancard_number:
-            messages.error(request, "PAN Card Number is required.")
-            return render(request, "profile_form.html", {
-                "user": user, "profile": profile, "role": role,
-                "applicant_details": applicant_details, "lender_details": lender_details,
-            })
-
-        if Profile.objects.filter(pancard_number=pancard_number).exclude(user=user).exists():
-            messages.error(request, f"PAN {pancard_number} already exists.")
-            return render(request, "profile_form.html", {
-                "user": user, "profile": profile, "role": role,
-                "applicant_details": applicant_details, "lender_details": lender_details,
-            })
+            errors["pancard_number"] = "PAN Card Number is required."
+        elif not re.match(r"^[A-Z]{5}[0-9]{4}[A-Z]$", pancard_number.upper()):
+            errors["pancard_number"] = "Invalid PAN format. Example: ABCDE1234F"
+        elif Profile.objects.filter(pancard_number=pancard_number.upper()).exclude(user=user).exists():
+            errors["pancard_number"] = f"PAN {pancard_number} already exists."
 
         # ✅ Aadhaar validation
         aadhaar_number = G("aadhaar_number", "aadhaarNumber")
         if not aadhaar_number:
-            messages.error(request, "Aadhaar Number is required.")
-            return render(request, "profile_form.html", {
-                "user": user, "profile": profile, "role": role,
-                "applicant_details": applicant_details, "lender_details": lender_details,
-            })
+            errors["aadhaar_number"] = "Aadhaar Number is required."
+        elif not re.match(r"^\d{12}$", aadhaar_number):
+            errors["aadhaar_number"] = "Invalid Aadhaar format. Must be 12 digits."
+        elif Profile.objects.filter(aadhaar_number=aadhaar_number).exclude(user=user).exists():
+            errors["aadhaar_number"] = f"Aadhaar {aadhaar_number} already exists."
 
-        if Profile.objects.filter(aadhaar_number=aadhaar_number).exclude(user=user).exists():
-            messages.error(request, f"Aadhaar {aadhaar_number} already exists.")
+        if errors:
+            for field, msg in errors.items():
+                messages.error(request, msg)
             return render(request, "profile_form.html", {
-                "user": user, "profile": profile, "role": role,
-                "applicant_details": applicant_details, "lender_details": lender_details,
+                "user": user,
+                "profile": profile,
+                "role": role.capitalize() if role else "",
+                "applicant_details": applicant_details,
+                "lender_details": lender_details,
+                "errors": errors,
             })
 
         # ✅ Save profile fields
@@ -270,7 +270,7 @@ def profile_form(request, user_id):
         profile.pincode = G("pincode") or profile.pincode
         profile.city = G("city") or profile.city
         profile.state = G("state") or profile.state
-        profile.pancard_number = pancard_number
+        profile.pancard_number = pancard_number.upper()
         profile.aadhaar_number = aadhaar_number
         profile.save()
 
@@ -306,6 +306,7 @@ def profile_form(request, user_id):
         "applicant_details": applicant_details,
         "lender_details": lender_details,
     })
+
 # -------------------- Edit Profile --------------------
 @login_required
 def edit_profile(request, user_id):

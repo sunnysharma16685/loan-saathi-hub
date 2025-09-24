@@ -10,6 +10,10 @@ from .models import (
     Feedback,
 )
 from django.contrib.auth import get_user_model
+from django.core.exceptions import ValidationError
+import re
+
+
 
 
 # -----------------------------
@@ -26,8 +30,10 @@ class ApplicantRegistrationForm(forms.ModelForm):
     pincode = forms.CharField(max_length=10, required=True)
     city = forms.CharField(max_length=100, required=True)
     state = forms.CharField(max_length=100, required=True)
-    pancard_number = forms.CharField(max_length=20, required=False)
-    aadhaar_number = forms.CharField(max_length=20, required=False)
+
+    pancard_number = forms.CharField(max_length=10, required=True)
+    aadhaar_number = forms.CharField(max_length=12, required=True)
+
     dob = forms.DateField(required=False)
 
     # ApplicantDetails fields
@@ -53,6 +59,25 @@ class ApplicantRegistrationForm(forms.ModelForm):
     class Meta:
         model = User
         fields = ["email", "password"]
+
+    # -----------------------------
+    # Custom Validation
+    # -----------------------------
+    def clean_pancard_number(self):
+        pancard = self.cleaned_data.get("pancard_number", "").upper()
+        if not re.match(r"^[A-Z]{5}[0-9]{4}[A-Z]$", pancard):
+            raise ValidationError("Invalid PAN format. Example: ABCDE1234F")
+        if Profile.objects.filter(pancard_number=pancard).exists():
+            raise ValidationError(f"PAN {pancard} already exists.")
+        return pancard
+
+    def clean_aadhaar_number(self):
+        aadhaar = self.cleaned_data.get("aadhaar_number", "")
+        if not re.match(r"^\d{12}$", aadhaar):
+            raise ValidationError("Invalid Aadhaar format. Must be 12 digits.")
+        if Profile.objects.filter(aadhaar_number=aadhaar).exists():
+            raise ValidationError(f"Aadhaar {aadhaar} already exists.")
+        return aadhaar
 
     def save(self, commit=True):
         user = super().save(commit=False)
@@ -111,8 +136,9 @@ class LenderRegistrationForm(forms.ModelForm):
     pincode = forms.CharField(max_length=10, required=True)
     city = forms.CharField(max_length=100, required=True)
     state = forms.CharField(max_length=100, required=True)
-    pancard_number = forms.CharField(max_length=20, required=True)
-    aadhaar_number = forms.CharField(max_length=20, required=True)
+
+    pancard_number = forms.CharField(max_length=10, required=True)
+    aadhaar_number = forms.CharField(max_length=12, required=True)
 
     # LenderDetails fields
     lender_type = forms.CharField(max_length=100, required=False)
@@ -125,6 +151,22 @@ class LenderRegistrationForm(forms.ModelForm):
     class Meta:
         model = User
         fields = ["email", "password"]
+
+    def clean_pancard_number(self):
+        pancard = self.cleaned_data.get("pancard_number", "").upper()
+        if not re.match(r"^[A-Z]{5}[0-9]{4}[A-Z]$", pancard):
+            raise ValidationError("Invalid PAN format. Example: ABCDE1234F")
+        if Profile.objects.filter(pancard_number=pancard).exists():
+            raise ValidationError(f"PAN {pancard} already exists.")
+        return pancard
+
+    def clean_aadhaar_number(self):
+        aadhaar = self.cleaned_data.get("aadhaar_number", "")
+        if not re.match(r"^\d{12}$", aadhaar):
+            raise ValidationError("Invalid Aadhaar format. Must be 12 digits.")
+        if Profile.objects.filter(aadhaar_number=aadhaar).exists():
+            raise ValidationError(f"Aadhaar {aadhaar} already exists.")
+        return aadhaar
 
     def save(self, commit=True):
         user = super().save(commit=False)
@@ -158,7 +200,6 @@ class LenderRegistrationForm(forms.ModelForm):
                 designation=self.cleaned_data.get("designation"),
             )
         return user
-
 
 # -----------------------------
 # LOGIN FORM

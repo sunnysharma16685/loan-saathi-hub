@@ -22,6 +22,7 @@ from django.db.models import Q
 import uuid, random
 from django.db import migrations, models
 from datetime import date
+import re, uuid, random
 
 
 logger = logging.getLogger(__name__)
@@ -194,6 +195,7 @@ def logout_view(request):
 
 
 # -------------------- Profile Form --------------------
+
 @login_required
 def profile_form(request, user_id):
     logger.error("🔎 Entered profile_form for user_id=%s by %s", user_id, request.user.email)
@@ -207,10 +209,15 @@ def profile_form(request, user_id):
 
     role = (user.role or "").lower()
 
-    # ✅ Ensure profile exists
-    profile, _ = Profile.objects.get_or_create(
+    # ✅ Ensure profile exists with dummy KYC defaults if created
+    profile, created = Profile.objects.get_or_create(
         user=user,
-        defaults={"full_name": user.email.split("@")[0], "status": "Hold"},
+        defaults={
+            "full_name": user.email.split("@")[0],
+            "status": "Hold",
+            "pancard_number": f"DUMMY{uuid.uuid4().hex[:4].upper()}X",
+            "aadhaar_number": str(random.randint(10**11, 10**12 - 1)),
+        },
     )
 
     applicant_details = ApplicantDetails.objects.filter(user=user).first() if role == "applicant" else None
@@ -306,6 +313,7 @@ def profile_form(request, user_id):
         "applicant_details": applicant_details,
         "lender_details": lender_details,
     })
+
 
 # -------------------- Edit Profile --------------------
 @login_required

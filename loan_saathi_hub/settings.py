@@ -2,6 +2,8 @@ import os
 from pathlib import Path
 from dotenv import load_dotenv
 import dj_database_url
+import logging
+import traceback
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -21,7 +23,10 @@ DEBUG = os.getenv("DJANGO_DEBUG", "0").strip().lower() in ("1", "true", "yes")
 
 ALLOWED_HOSTS = [
     h.strip()
-    for h in os.getenv("DJANGO_ALLOWED_HOSTS", "127.0.0.1,localhost,loansaathihub.in,www.loansaathihub.in").split(",")
+    for h in os.getenv(
+        "DJANGO_ALLOWED_HOSTS",
+        "127.0.0.1,localhost,loansaathihub.in,www.loansaathihub.in"
+    ).split(",")
     if h.strip()
 ]
 
@@ -39,7 +44,9 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    "main",
+
+    # aapka app
+    "main.apps.MainConfig",
 ]
 
 MIDDLEWARE = [
@@ -52,7 +59,7 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 
-    # 🔥 Custom middleware last में add करो
+    # 🔥 Custom exception logging middleware (last)
     "loan_saathi_hub.middleware.ExceptionLoggingMiddleware",
 ]
 
@@ -113,11 +120,11 @@ else:
 # ---------------------------
 # AUTHENTICATION
 # ---------------------------
-AUTH_USER_MODEL = "main.User"   # custom user model
+AUTH_USER_MODEL = "main.User"
 
-LOGIN_URL = "/login/"              # if not logged in → redirect here
-LOGIN_REDIRECT_URL = "/dashboard/" # after login success
-LOGOUT_REDIRECT_URL = "/"          # after logout
+LOGIN_URL = "/login/"
+LOGIN_REDIRECT_URL = "/dashboard/"
+LOGOUT_REDIRECT_URL = "/"
 
 # ---------------------------
 # PASSWORD VALIDATORS
@@ -127,21 +134,6 @@ AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator", "OPTIONS": {"min_length": 8}},
     {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator"},
     {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
-]
-
-# ---------------------------
-# INSTALLED APPS
-# ---------------------------
-INSTALLED_APPS = [
-    'django.contrib.admin',
-    'django.contrib.auth',
-    'django.contrib.contenttypes',  # ⚠️ ye jaruri hai
-    'django.contrib.sessions',
-    'django.contrib.messages',
-    'django.contrib.staticfiles',
-
-    # aapka app
-    'main.apps.MainConfig',
 ]
 
 # ---------------------------
@@ -189,7 +181,7 @@ if not DEBUG:
     SECURE_SSL_REDIRECT = True
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
-    SECURE_HSTS_SECONDS = 31536000  # 1 year
+    SECURE_HSTS_SECONDS = 31536000
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SECURE_HSTS_PRELOAD = True
 else:
@@ -220,6 +212,22 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 # AUTHENTICATION BACKENDS
 # ---------------------------
 AUTHENTICATION_BACKENDS = [
-    "django.contrib.auth.backends.ModelBackend",  # default
+    "django.contrib.auth.backends.ModelBackend",
 ]
 
+# ---------------------------
+# LOGGING (🔥 Important for catching 500 errors)
+# ---------------------------
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+        },
+    },
+    "root": {
+        "handlers": ["console"],
+        "level": "DEBUG" if DEBUG else "ERROR",
+    },
+}

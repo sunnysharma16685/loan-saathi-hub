@@ -226,7 +226,9 @@
     
     <!-- PAN Card -->
     <div class="col-md-6">
-      <label class="form-label" for="pancard_number">PAN Card Number <span class="text-danger">*</span></label>
+      <label class="form-label" for="pancard_number">
+        PAN Card Number <span class="text-danger">*</span>
+      </label>
       <input
         type="text"
         class="form-control"
@@ -234,17 +236,22 @@
         id="pancard_number"
         maxlength="10"
         pattern="[A-Z]{5}[0-9]{4}[A-Z]"
-        placeholder="e.g., AEFED4785K"
+        placeholder="e.g., ABCDE1234F"
         oninput="this.value = this.value.toUpperCase();"
         value="{{ profile.pancard_number|default:'' }}"
         required
       >
-      <small class="text-muted">Format: 5 letters, 4 digits, 1 letter</small>
+      <small class="text-muted">
+        Example: <span style="filter: blur(2px);">QWERT6789Z</span> <br>
+        Format: 5 letters, 4 digits, 1 letter
+      </small>
     </div>
 
     <!-- Aadhaar Number -->
     <div class="col-md-6">
-      <label class="form-label" for="aadhaar_number">Aadhaar Number <span class="text-danger">*</span></label>
+      <label class="form-label" for="aadhaar_number">
+        Aadhaar Number <span class="text-danger">*</span>
+      </label>
       <input
         type="text"
         class="form-control"
@@ -253,15 +260,20 @@
         maxlength="12"
         inputmode="numeric"
         pattern="\d{12}"
-        placeholder="12-digit Aadhaar"
+        placeholder="e.g., 1234 5678 9123"
         value="{{ profile.aadhaar_number|default:'' }}"
         required
       >
-      <small class="text-danger fw-semibold">⚠️ Aadhaar must match UIDAI records</small>
+      <small class="text-muted">
+        Example: <span style="filter: blur(2px);">5678 9123 4567</span> (12 digits)
+      </small>
+      <br>
+      <small class="text-danger fw-semibold">⚠️ Aadhaar must match UIDAI format</small>
     </div>
 
   </div>
 </div>
+
 
         <!-- Applicant Only -->
         <div id="applicantFields" {% if user.role|lower != "applicant" %}style="display:none;"{% endif %}>

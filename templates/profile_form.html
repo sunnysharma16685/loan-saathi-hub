@@ -244,8 +244,8 @@
       {% if errors.pancard_number %}
         <div class="invalid-feedback">{{ errors.pancard_number }}</div>
       {% else %}
-        <small class="text-muted">
-          Example: <span style="filter: blur(2px);">QWERT6789Z</span> <br>
+        <small class="text-success">
+          Example: <span style="filter: blur(0.5px);">DUMMY9735X</span> <br>
           Format: 5 letters, 4 digits, 1 letter
         </small>
       {% endif %}
@@ -271,11 +271,11 @@
       {% if errors.aadhaar_number %}
         <div class="invalid-feedback">{{ errors.aadhaar_number }}</div>
       {% else %}
-        <small class="text-muted">
-          Example: <span style="filter: blur(2px);">567891234567</span> (12 digits)
+        <small class="text-success">
+          Example: <span style="filter: blur(0.5px);">472370392518</span> (12 digits)
         </small>
         <br>
-        <small class="text-danger fw-semibold">⚠️ Aadhaar must match UIDAI format</small>
+        <small class="text-danger fw-semibold">⚠️ Aadhaar must match with UIDAI</small>
       {% endif %}
     </div>
 

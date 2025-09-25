@@ -7,6 +7,20 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
   <style>
     body { font-family: 'Poppins', sans-serif; background:#f8fafc; }
+    .btn-home {
+      background: #0d6efd;
+      color: #fff;
+      font-weight: 600;
+      border-radius: 8px;
+      padding: 10px 18px;
+      font-size: 16px;
+      transition: all 0.3s ease;
+    }
+    .btn-home:hover {
+      background: #0b5ed7;
+      transform: translateY(-1px);
+      color: #fff;
+    }
   </style>
 </head>
 <body>
@@ -25,6 +39,11 @@
       ⏳ It will take <strong>1 - 2 days</strong> to get your dashboard.  
       If we see any issue in your profile, we will get back to you via your registered phone number or email.
     </p>
+
+    <!-- 🏠 Home Button -->
+    <div class="mt-4">
+      <a href="{% url 'index' %}" class="btn btn-home">🏠 Home</a>
+    </div>
   </div>
 </body>
 </html>

@@ -132,7 +132,7 @@ def login_view(request):
         password = request.POST.get("password") or ""
         form_role = (request.POST.get("role") or role).lower()
 
-        # Try authentication with email or username fallback
+        # ✅ Try authentication with email or username fallback
         user = authenticate(request, email=email, password=password) or \
                authenticate(request, username=email, password=password)
 
@@ -151,10 +151,12 @@ def login_view(request):
 
             # ✅ Handle profile statuses
             if profile.status == "Hold":
+                # Keep user logged in so review_profile works
+                login(request, user, backend="django.contrib.auth.backends.ModelBackend")
                 messages.warning(request, "⚠️ Your profile is pending admin approval.")
                 return redirect("review_profile")
 
-            elif profile.status == "Deactivated":
+            if profile.status == "Deactivated":
                 messages.error(
                     request,
                     "🚫 Your profile has been deactivated. "
@@ -162,11 +164,12 @@ def login_view(request):
                 )
                 return redirect("login")
 
-            elif profile.status == "Deleted":
+            if profile.status == "Deleted":
                 messages.error(request, "❌ This account has been permanently deleted.")
                 return redirect("login")
 
-            elif profile.status != "Active":
+            if profile.status != "Active":
+                logger.error("Unknown profile.status for user %s: %s", getattr(user, "id", None), profile.status)
                 messages.error(request, "⚠️ Your profile is not active. Please contact support.")
                 return redirect("login")
 
@@ -451,9 +454,26 @@ def admin_view_profile(request, user_id):
     })
 
 
+# -------------------- Review Profile (Applicant & Lender)--------------------
 @login_required
 def review_profile(request):
     return render(request, "review_profile.html")
+
+
+# -------------------- Redirect After Login Review Page--------------------
+def redirect_after_login(user):
+    if not hasattr(user, "profile"):
+        return "profile_form"
+
+    if user.profile.status != "Active":
+        return "review_profile"
+
+    if user.role == "applicant":
+        return "dashboard_applicant"
+    elif user.role == "lender":
+        return "dashboard_lender"
+    return "index"
+
 
 
 # -------------------- Admin Dashboard --------------------
@@ -606,6 +626,7 @@ def dashboard_router(request):
     role = getattr(request.user, "role", None)
     profile = getattr(request.user, "profile", None)
 
+    # 🚨 If profile under review → redirect to review page
     if profile and not profile.is_reviewed:
         return render(request, "review_profile.html", {"profile": profile})
 
@@ -613,12 +634,18 @@ def dashboard_router(request):
         return redirect("dashboard_lender")
     elif role == "applicant":
         return redirect("dashboard_applicant")
+
     return redirect("index")
 
 
 # -------------------- Applicant Dashboard --------------------
 @login_required
 def dashboard_applicant(request):
+    profile = getattr(request.user, "profile", None)
+    if profile and not profile.is_reviewed:
+        # 🚨 Block until admin approves
+        return render(request, "review_profile.html", {"profile": profile})
+
     loans = LoanRequest.objects.filter(applicant=request.user).prefetch_related("lender_statuses").order_by("-created_at")
     today = date.today()
 
@@ -651,6 +678,10 @@ def dashboard_applicant(request):
 @login_required
 def dashboard_lender(request):
     profile = getattr(request.user, "profile", None)
+    if profile and not profile.is_reviewed:
+        # 🚨 Block until admin approves
+        return render(request, "review_profile.html", {"profile": profile})
+
     lender_feedbacks = LoanLenderStatus.objects.filter(lender=request.user).select_related("loan", "loan__applicant").order_by("-updated_at")
 
     for fb in lender_feedbacks:
@@ -683,6 +714,8 @@ def dashboard_lender(request):
         "finalised_loans": finalised_loans,
     }
     return render(request, "dashboard_lender.html", context)
+
+
 # -------------------- Applicant Accept Loan --------------------
 @login_required
 def applicant_accept_loan(request, loan_id, lender_id):

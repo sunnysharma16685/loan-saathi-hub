@@ -49,30 +49,33 @@
         {% block navbar %}
         <ul class="navbar-nav ms-auto align-items-center">
           {% if not request.user.is_authenticated %}
+            <!-- Guest -->
             <li class="nav-item"><a class="nav-link" href="{% url 'index' %}">Home</a></li>
             <li class="nav-item"><a class="nav-link" href="{% url 'login' %}">Login</a></li>
             <li class="nav-item"><a class="nav-link" href="{% url 'register' %}">Register</a></li>
 
           {% else %}
+            <!-- Always show Home -->
             <li class="nav-item"><a class="nav-link" href="{% url 'index' %}">Home</a></li>
 
             {% if request.user.is_superuser %}
+              <!-- Admin -->
               <li class="nav-item"><a class="nav-link" href="{% url 'dashboard_admin' %}">Admin Dashboard</a></li>
 
             {% else %}
-              {% if request.user.profile and not request.user.profile.is_reviewed %}
-                <!-- Profile still under review -->
-                <li class="nav-item"><a class="nav-link" href="{% url 'profile_form' user_id=request.user.id %}">Profile Form</a></li>
-
-              {% else %}
+              {% if request.user.profile and request.user.profile.is_reviewed %}
+                <!-- Normal user, approved -->
                 {% if request.user.role == "applicant" %}
                   <li class="nav-item"><a class="nav-link" href="{% url 'dashboard_applicant' %}">Dashboard</a></li>
                 {% elif request.user.role == "lender" %}
                   <li class="nav-item"><a class="nav-link" href="{% url 'dashboard_lender' %}">Dashboard</a></li>
                 {% endif %}
+              {% else %}
+                <!-- Normal user, under review (no dashboard link) -->
               {% endif %}
             {% endif %}
 
+            <!-- Logout -->
             <li class="nav-item"><a class="nav-link text-danger" href="{% url 'logout' %}">Logout</a></li>
           {% endif %}
         </ul>

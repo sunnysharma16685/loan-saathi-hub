@@ -1,127 +1,118 @@
+
 {% extends "base.html" %}
 {% load static %}
 
+{% block title %}Complete Profile — Loan Saathi Hub{% endblock %}
+
 {% block extra_head %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
 <style>
-  /* Page-specific styles (kept compact & responsive) */
-  .profile-card { border-radius:12px; box-shadow:0 10px 30px rgba(15,23,42,0.06); background:#ffffff; }
-  .page-header { border-radius:8px; padding:28px 20px; }
-  .role-badge { font-weight:700; letter-spacing:0.2px; }
-  .action-bar { gap:10px; }
-  .form-section h4 { margin-top:18px; margin-bottom:10px; font-weight:700; color:#222; }
-  .small-muted { color:#6c757d; font-size:.9rem; }
-  @media (max-width:575px) {
-    .page-header { padding:18px 12px; }
-    .profile-card { padding:16px; }
+  .profile-card {
+    border-radius: 14px;
+    box-shadow: 0 10px 28px rgba(0,0,0,0.08);
+    background:#fff;
+    padding: 2rem;
   }
+  .page-header {
+    border-radius: 10px;
+    padding: 2rem;
+    background: linear-gradient(135deg, #0d6efd, #2563eb);
+  }
+  .page-header h2 { font-weight: 700; color: #fff; }
+  .form-section h4 {
+    font-weight: 600; color:#212529; margin: 20px 0 12px;
+  }
+  label.form-label { font-weight: 500; }
+  .btn-gradient {
+    background: linear-gradient(135deg, #16a34a, #22c55e);
+    color:#fff; font-weight:600;
+    border:none;
+    transition:all .3s ease;
+  }
+  .btn-gradient:hover { background: linear-gradient(135deg,#15803d,#16a34a); }
+  small.text-danger { font-size: 0.85rem; }
+  textarea, input, select { border-radius:8px !important; }
 </style>
 {% endblock %}
 
 {% block content %}
-{# wrapper holds role so JS can read safely (we can't modify <body> from here because base.html owns it) #}
 <div class="page-wrapper" data-role="{{ user.role|default:''|lower }}">
-
-   <!-- Header -->
-  <header class="container container-max mt-3 page-header bg-primary text-white text-center shadow-sm">
+  <!-- Header -->
+  <header class="container container-max mt-3 page-header text-center shadow-sm animate__animated animate__fadeInDown">
     <h2 class="mb-1">Complete Your Profile</h2>
-    <p class="mb-0 text-white">
-      Fill in your all necessary details so we can match you with the right lenders & offers.
+    <p class="mb-0 text-white opacity-90">
+      Fill in all required details so we can match you with the right lenders & offers.
     </p>
   </header>
 
   <!-- Form Section -->
-  <main class="container container-max my-4">
-    <div class="card profile-card shadow-lg p-4">
-
+  <main class="container container-max my-4 animate__animated animate__fadeInUp">
+    <div class="profile-card">
       <!-- Role Title -->
       <div class="text-center mb-4">
         {% if user.role|lower == "applicant" %}
-           <h3 class="text-primary mb-0">Applicant Form</h3>
+          <h3 class="text-primary fw-bold">Applicant Form</h3>
         {% elif user.role|lower == "lender" %}
-           <h3 class="text-success mb-0">Lender Form</h3>
+          <h3 class="text-success fw-bold">Lender Form</h3>
         {% else %}
-           <h3 class="text-secondary mb-0">Complete Profile</h3>
+          <h3 class="text-secondary fw-bold">Complete Profile</h3>
         {% endif %}
       </div>
 
       <form method="POST" novalidate>
         {% csrf_token %}
 
-        <!-- Basic Profile -->
+        <!-- ✅ Basic Profile -->
         <div class="form-section">
-          <h4 class="mb-3">Basic Details</h4>
-          <div class="row g-3 mb-3">
-            <!-- Full Name -->
-            <div class="col-md-6 mb-3">
+          <h4>Basic Details</h4>
+          <div class="row g-3">
+            <div class="col-md-6">
               <label class="form-label">Full Name</label>
-              <input 
-                type="text" 
-                class="form-control" 
-                id="full_name"
-                name="full_name" 
-                required 
-                value="{{ profile.full_name|default:'' }}">
-              <small class="text-danger fw-semibold">⚠️ Full Name as per Pan Card</small>
+              <input type="text" class="form-control" name="full_name"
+                     required value="{{ profile.full_name|default:'' }}">
+              <small class="text-danger">⚠️ Full Name as per PAN Card</small>
             </div>
-
-            <!-- Date of Birth -->
-            <div class="col-md-6 mb-3">
+            <div class="col-md-6">
               <label class="form-label">Date of Birth</label>
-              <input 
-                type="date" 
-                class="form-control" 
-                id="dob"
-                name="dob" 
-                placeholder="dd-mm-yyyy" 
-                required 
-                value="{{ profile.dob|date:'Y-m-d'|default:'' }}">
-              <small class="text-danger fw-semibold">⚠️ DOB as per Pan Card</small>
+              <input type="date" class="form-control" name="dob"
+                     required value="{{ profile.dob|date:'Y-m-d'|default:'' }}">
+              <small class="text-danger">⚠️ DOB as per PAN Card</small>
             </div>
           </div>
         </div>
-        <!-- Mobile + OTP -->
+
+        <!-- ✅ Mobile + OTP -->
         <div class="form-section">
-          <div class="row g-3 mb-3">
+          <h4>Mobile Verification</h4>
+          <div class="row g-3">
             <div class="col-md-6">
               <label class="form-label">Mobile Number</label>
               <div class="input-group">
                 <span class="input-group-text">+91</span>
-                <input
-                  type="text"
-                  class="form-control"
-                  name="mobile"
-                  id="mobile"
-                  maxlength="10"
-                  inputmode="numeric"
-                  pattern="\d{10}"
-                  placeholder="10-digit mobile"
-                  required
-                  value="{{ profile.mobile|default:'' }}"
-                >
+                <input type="text" class="form-control" name="mobile" id="mobile"
+                       maxlength="10" inputmode="numeric" pattern="\d{10}"
+                       placeholder="10-digit mobile" required
+                       value="{{ profile.mobile|default:'' }}">
                 <button type="button" class="btn btn-outline-primary" id="sendOtpBtn" onclick="sendOTP()">Send OTP</button>
               </div>
               <small id="otpSentMsg" class="text-success d-none">OTP sent successfully!</small>
             </div>
-
             <div class="col-md-6" id="otpSection" style="display:none;">
-              <div class="row g-2">
-                <div class="col-sm-6">
-                  <label class="form-label">Enter OTP</label>
-                  <input type="text" class="form-control" id="otpInput" maxlength="6" inputmode="numeric" placeholder="Enter OTP">
-                </div>
-                <div class="col-sm-6 d-flex align-items-end gap-2">
-                  <button type="button" class="btn btn-success" id="verifyBtn" onclick="verifyOTP()">Verify OTP</button>
-                  <button type="button" class="btn btn-outline-secondary" id="resendBtn" onclick="sendOTP()" disabled>Resend OTP (30s)</button>
-                </div>
-                <small id="otpVerifyMsg" class="mt-1"></small>
+              <label class="form-label">Enter OTP</label>
+              <div class="d-flex gap-2">
+                <input type="text" class="form-control" id="otpInput" maxlength="6" inputmode="numeric" placeholder="Enter OTP">
+                <button type="button" class="btn btn-success" id="verifyBtn" onclick="verifyOTP()">Verify</button>
+                <button type="button" class="btn btn-outline-secondary" id="resendBtn" onclick="sendOTP()" disabled>Resend (30s)</button>
               </div>
+              <small id="otpVerifyMsg"></small>
             </div>
           </div>
         </div>
 
-        <!-- Gender + Marital -->
+        <!-- ✅ Gender + Marital -->
         <div class="form-section">
-          <div class="row g-3 mb-3">
+          <h4>Personal Info</h4>
+          <div class="row g-3">
             <div class="col-md-6">
               <label class="form-label">Gender</label>
               <select class="form-select" name="gender" required>
@@ -131,7 +122,6 @@
                 <option value="Other" {% if profile.gender == "Other" %}selected{% endif %}>Other</option>
               </select>
             </div>
-
             <div class="col-md-6">
               <label class="form-label">Marital Status</label>
               <select class="form-select" name="marital_status" required>
@@ -245,7 +235,7 @@
         <div class="invalid-feedback">{{ errors.pancard_number }}</div>
       {% else %}
         <small class="text-success">
-          Example: <span style="filter: blur(0.5px);">DUMMY9735X</span> <br>
+        <span style="filter: blur(0.2px);">Example Pancard number, just replace it.</span> <br>
           Format: 5 letters, 4 digits, 1 letter
         </small>
       {% endif %}
@@ -272,10 +262,10 @@
         <div class="invalid-feedback">{{ errors.aadhaar_number }}</div>
       {% else %}
         <small class="text-success">
-          Example: <span style="filter: blur(0.5px);">472370392518</span> (12 digits)
+        <span style="filter: blur(0.2px);">Example Aadhar number, just replace it.</span> 
         </small>
         <br>
-        <small class="text-danger fw-semibold">⚠️ Aadhaar must match with UIDAI</small>
+        <small class="text-danger fw-semibold">⚠️ Aadhaar must match with UIDAI</small> (12 digits)
       {% endif %}
     </div>
 
@@ -451,14 +441,17 @@
         </div>
 
         <!-- Submit -->
-        <div class="d-flex justify-content-end">
-          <button type="submit" class="btn btn-success mt-3" id="submitBtn">Save Profile</button>
+        <div class="d-flex justify-content-end mt-4">
+          <button type="submit" class="btn btn-gradient px-4 py-2" id="submitBtn">
+            Save Profile
+          </button>
         </div>
       </form>
     </div>
   </main>
-</div> {# .page-wrapper end #}
+</div>
 {% endblock %}
+
 {% block extra_js %}
 <script>
   const ROLE_FROM_INDEX = document.querySelector('.page-wrapper')?.dataset.role || '';
@@ -466,7 +459,10 @@
 
   function sendOTP() {
     const mobile = document.getElementById("mobile").value.trim();
-    if (!/^\d{10}$/.test(mobile)) { alert(33e4"Please enter a valid 10-digit mobile number."); return; }
+    if (!/^\d{10}$/.test(mobile)) { 
+      alert("Please enter a valid 10-digit mobile number."); 
+      return; 
+    }
     generatedOTP = Math.floor(1000 + Math.random() * 9000).toString();
     document.getElementById("otpSection").style.display = "block";
     document.getElementById("otpSentMsg").classList.remove("d-none");
@@ -477,33 +473,55 @@
 
   function startResendCountdown() {
     const resendBtn = document.getElementById("resendBtn");
-    resendRemaining = 30; resendBtn.disabled = true; resendBtn.textContent = "Resend OTP (30s)";
+    resendRemaining = 30; 
+    resendBtn.disabled = true; 
+    resendBtn.textContent = "Resend OTP (30s)";
     clearInterval(resendTimer);
     resendTimer = setInterval(() => {
       resendRemaining -= 1;
       resendBtn.textContent = `Resend OTP (${resendRemaining}s)`;
-      if (resendRemaining <= 0) { clearInterval(resendTimer); resendBtn.disabled = false; resendBtn.textContent = "Resend OTP"; }
+      if (resendRemaining <= 0) { 
+        clearInterval(resendTimer); 
+        resendBtn.disabled = false; 
+        resendBtn.textContent = "Resend OTP"; 
+      }
     }, 1000);
   }
 
   function verifyOTP() {
     const userOTP = document.getElementById("otpInput").value.trim();
-    const msg = document.getElementById("otpVerifyMsg"); const submitBtn = document.getElementById("submitBtn");
-    if (generatedOTP && userOTP === generatedOTP) { msg.innerHTML = "<span class='text-success'>✅ OTP Verified!</span>"; submitBtn.disabled = false; }
-    else { msg.innerHTML = "<span class='text-danger'>❌ Invalid OTP</span>"; submitBtn.disabled = true; }
+    const msg = document.getElementById("otpVerifyMsg"); 
+    const submitBtn = document.getElementById("submitBtn");
+    if (generatedOTP && userOTP === generatedOTP) { 
+      msg.innerHTML = "<span class='text-success'>✅ OTP Verified!</span>"; 
+      submitBtn.disabled = false; 
+    }
+    else { 
+      msg.innerHTML = "<span class='text-danger'>❌ Invalid OTP</span>"; 
+      submitBtn.disabled = true; 
+    }
   }
 
   function toggleApplicantType() {
     const type = document.querySelector("input[name='employment_type']:checked")?.value;
-    document.getElementById("jobFields").style.display = (type === "Job") ? "block" : "none";
-    document.getElementById("businessFields").style.display = (type === "Business") ? "block" : "none";
+    const jobFields = document.getElementById("jobFields");
+    const businessFields = document.getElementById("businessFields");
+
+    if (jobFields) jobFields.style.display = (type === "Job") ? "block" : "none";
+    if (businessFields) businessFields.style.display = (type === "Business") ? "block" : "none";
   }
 
   function applyRoleVisibility() {
-    const applicant = document.getElementById("applicantFields"), lender = document.getElementById("lenderFields");
+    const applicant = document.getElementById("applicantFields");
+    const lender = document.getElementById("lenderFields");
+
     if (applicant) applicant.style.display = (ROLE_FROM_INDEX === "applicant") ? "block" : "none";
     if (lender) lender.style.display = (ROLE_FROM_INDEX === "lender") ? "block" : "none";
-    toggleApplicantType();
+
+    // ✅ Run toggle only for applicants
+    if (ROLE_FROM_INDEX === "applicant") {
+      toggleApplicantType();
+    }
   }
 
   window.addEventListener('load', function () {
@@ -515,7 +533,20 @@
     if (!/^\d{6}$/.test(pin)) return;
     let cityField = document.querySelector("input[name='city']");
     let stateSelect = document.querySelector("select[name='state']");
-    if (pin.startsWith('11')) { if (cityField) cityField.value = 'New Delhi'; if (stateSelect) stateSelect.value = 'Delhi'; }
+    if (pin.startsWith('11')) { 
+      if (cityField) cityField.value = 'New Delhi'; 
+      if (stateSelect) stateSelect.value = 'Delhi'; 
+    }
   }
 </script>
 {% endblock %}
+
+       
+
+       
+
+       
+
+       
+
+      

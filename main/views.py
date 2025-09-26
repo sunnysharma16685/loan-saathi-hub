@@ -23,6 +23,8 @@ import uuid, random
 from django.db import migrations, models
 from datetime import date
 import re, uuid, random
+from django.views.decorators.http import require_http_methods
+from django.db import transaction
 
 
 logger = logging.getLogger(__name__)
@@ -260,7 +262,7 @@ def profile_form(request, user_id):
         if not aadhaar_number:
             errors["aadhaar_number"] = "Aadhaar Number is required."
         elif not re.match(r"^\d{12}$", aadhaar_number):
-            errors["aadhaar_number"] = "Invalid Aadhaar format. Must be 12 digits."
+            errors["aadhaar_number"] = "Invalid Aadhaar format. Example: 123456789012"
         elif Profile.objects.filter(aadhaar_number=aadhaar_number).exclude(user=user).exists():
             errors["aadhaar_number"] = f"Aadhaar {aadhaar_number} already exists."
 
@@ -502,117 +504,140 @@ def dashboard_admin(request):
 
 # -------------------- Admin: User Actions --------------------
 @login_required
-@require_POST
+@require_http_methods(["GET", "POST", "HEAD"])
 @csrf_protect
 def admin_user_action(request, user_id):
+    """
+    POST -> perform admin actions (accept / deactivate / activate / delete)
+    GET/HEAD -> friendly redirect to dashboard (prevents 405 HEAD/GET spam in logs)
+    """
+    # Only superusers may proceed
     if not request.user.is_superuser:
         messages.error(request, "🚫 Access denied.")
         return redirect("dashboard_admin")
 
+    # Handle safe GET / HEAD: no action, just redirect back
+    if request.method in ("GET", "HEAD"):
+        return redirect("dashboard_admin")
+
+    # At this point it's POST
     action = (request.POST.get("action") or "").lower()
     reason = (request.POST.get("reason") or "").strip()[:1000]
 
     try:
-        target = User.objects.get(id=user_id)
+        # ✅ Optimized: load profile in one query
+        target = User.objects.select_related("profile").get(id=user_id)
     except User.DoesNotExist:
         messages.error(request, "❌ User not found.")
         return redirect("dashboard_admin")
 
     profile = getattr(target, "profile", None)
-    support_from = getattr(settings, "DEFAULT_FROM_EMAIL", "support@loansaathihub.in")
+    support_from = getattr(settings, "DEFAULT_FROM_EMAIL", "loansaathihub@gmail.com")
     orig_email = target.email
     full_name = getattr(profile, "full_name", orig_email)
 
     try:
-        if action == "accept":
-            # --- Accept & Approve Profile ---
-            if profile:
-                profile.status = "Active"
-                profile.is_reviewed = True
-                profile.is_blocked = False
-                profile.save()
-            target.is_active = True
-            target.save()
+        # Use a DB transaction to keep updates atomic
+        with transaction.atomic():
+            if action == "accept":
+                if profile:
+                    profile.status = "Active"
+                    profile.is_reviewed = True
+                    profile.is_blocked = False
+                    profile.save(update_fields=["status", "is_reviewed", "is_blocked"])
+                target.is_active = True
+                target.save(update_fields=["is_active"])
 
-            send_mail(
-                "✅ Profile Approved — Loan Saathi Hub",
-                f"Dear {full_name},\n\nYour profile has been approved successfully. "
-                f"You can now login and access all services.\n\nRegards,\nLoan Saathi Hub",
-                support_from,
-                [orig_email],
-                fail_silently=True,
-            )
-            messages.success(request, "✅ User profile approved successfully.")
+                try:
+                    send_mail(
+                        "✅ Profile Approved — Loan Saathi Hub",
+                        f"Dear {full_name},\n\nYour profile has been approved successfully. You can now login.\n\nRegards,\nLoan Saathi Hub",
+                        support_from,
+                        [orig_email],
+                        fail_silently=True,
+                    )
+                except Exception as e:
+                    logger.exception("Error sending approval email for user %s: %s", user_id, e)
 
-        elif action == "deactivate":
-            # --- Deactivate User ---
-            target.is_active = False
-            target.save()
-            if profile:
-                profile.status = "Deactivated"
-                profile.is_blocked = True
-                profile.save()
+                messages.success(request, "✅ User profile approved successfully.")
 
-            send_mail(
-                "⚠️ Account Deactivated — Loan Saathi Hub",
-                f"Dear {full_name},\n\nYour account has been deactivated.\n"
-                f"Reason: {reason or 'Policy violation'}\n\n"
-                f"Please contact support if you think this is a mistake.\n\nRegards,\nLoan Saathi Hub",
-                support_from,
-                [orig_email],
-                fail_silently=True,
-            )
-            messages.warning(request, "⚠️ User profile deactivated.")
+            elif action == "deactivate":
+                target.is_active = False
+                target.save(update_fields=["is_active"])
+                if profile:
+                    profile.status = "Deactivated"
+                    profile.is_blocked = True
+                    profile.save(update_fields=["status", "is_blocked"])
 
-        elif action == "activate":
-            # --- Reactivate User ---
-            target.is_active = True
-            target.save()
-            if profile:
-                profile.status = "Active"
-                profile.is_blocked = False
-                profile.save()
+                try:
+                    send_mail(
+                        "⚠️ Account Deactivated — Loan Saathi Hub",
+                        f"Dear {full_name},\n\nYour account has been deactivated.\nReason: {reason or 'Policy violation'}\n\nRegards,\nLoan Saathi Hub",
+                        support_from,
+                        [orig_email],
+                        fail_silently=True,
+                    )
+                except Exception as e:
+                    logger.exception("Error sending deactivation email for user %s: %s", user_id, e)
 
-            send_mail(
-                "✅ Account Reactivated — Loan Saathi Hub",
-                f"Dear {full_name},\n\nGood news! Your account has been re-activated. "
-                f"You can now login and continue using our platform.\n\nRegards,\nLoan Saathi Hub",
-                support_from,
-                [orig_email],
-                fail_silently=True,
-            )
-            messages.success(request, "✅ User profile re-activated.")
+                messages.warning(request, "⚠️ User profile deactivated.")
 
-        elif action == "delete":
-            # --- Permanently Disable User ---
-            target.is_active = False
-            target.email = f"disabled+{target.id}@blocked.loansaathihub"
-            if hasattr(target, "username"):
-                target.username = f"disabled_{target.id}"
-            target.save()
-            if profile:
-                profile.status = "Deleted"
-                profile.is_blocked = True
-                profile.save()
+            elif action == "activate":
+                target.is_active = True
+                target.save(update_fields=["is_active"])
+                if profile:
+                    profile.status = "Active"
+                    profile.is_blocked = False
+                    profile.save(update_fields=["status", "is_blocked"])
 
-            send_mail(
-                "🗑️ Account Deleted — Loan Saathi Hub",
-                f"Dear {full_name},\n\nYour account has been permanently deleted from Loan Saathi Hub. "
-                f"If this was unexpected, please reach out to support immediately.\n\nRegards,\nLoan Saathi Hub",
-                support_from,
-                [orig_email],
-                fail_silently=True,
-            )
-            messages.success(request, "🗑️ User profile deleted permanently.")
+                try:
+                    send_mail(
+                        "✅ Account Reactivated — Loan Saathi Hub",
+                        f"Dear {full_name},\n\nGood news! Your account has been re-activated.\n\nRegards,\nLoan Saathi Hub",
+                        support_from,
+                        [orig_email],
+                        fail_silently=True,
+                    )
+                except Exception as e:
+                    logger.exception("Error sending reactivate email for user %s: %s", user_id, e)
 
-        else:
-            messages.error(request, "❌ Unknown action requested.")
+                messages.success(request, "✅ User profile re-activated.")
+
+            elif action == "delete":
+                target.is_active = False
+                target.email = f"disabled+{target.id}@blocked.loansaathihub"
+                if hasattr(target, "username"):
+                    target.username = f"disabled_{target.id}"
+                    target.save(update_fields=["is_active", "email", "username"])
+                else:
+                    target.save(update_fields=["is_active", "email"])
+
+                if profile:
+                    profile.status = "Deleted"
+                    profile.is_blocked = True
+                    profile.save(update_fields=["status", "is_blocked"])
+
+                try:
+                    send_mail(
+                        "🗑️ Account Deleted — Loan Saathi Hub",
+                        f"Dear {full_name},\n\nYour account has been permanently deleted from Loan Saathi Hub.\n\nRegards,\nLoan Saathi Hub",
+                        support_from,
+                        [orig_email],
+                        fail_silently=True,
+                    )
+                except Exception as e:
+                    logger.exception("Error sending delete email for user %s: %s", user_id, e)
+
+                messages.success(request, "🗑️ User profile deleted permanently.")
+
+            else:
+                messages.error(request, "❌ Unknown action requested.")
 
     except Exception as e:
+        logger.exception("Error processing admin_user_action for user %s, action=%s: %s", user_id, action, e)
         messages.error(request, f"⚠️ Error processing action: {e}")
 
     return redirect("dashboard_admin")
-
 
 # -------------------- Dashboard Logout---------------
 

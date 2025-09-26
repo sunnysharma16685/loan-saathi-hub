@@ -5,14 +5,10 @@
 
 {% block navbar %}
 <ul class="navbar-nav ms-auto align-items-center">
-
-  {# Guest users --- #}
   {% if not request.user.is_authenticated %}
     <li class="nav-item"><a class="nav-link" href="{% url 'index' %}">Home</a></li>
     <li class="nav-item"><a class="nav-link" href="{% url 'login' %}">Login</a></li>
     <li class="nav-item"><a class="nav-link" href="{% url 'register' %}">Register</a></li>
-
-  {# Logged-in users --- #}
   {% else %}
     {% if not PROFILE_COMPLETE %}
       <li class="nav-item"><a class="nav-link" href="{% url 'index' %}">Home</a></li>
@@ -27,71 +23,95 @@
       <li class="nav-item"><a class="nav-link text-danger" href="{% url 'logout' %}">Logout</a></li>
     {% endif %}
   {% endif %}
-
 </ul>
 {% endblock %}
 
 {% block extra_head %}
 <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
 <style>
-  /* small helper styles used by the page */
-  .btn-gradient { background: linear-gradient(90deg,#ffd54a,#ffb74d); border: none; color: #111827; font-weight:600; border-radius:8px; padding:10px 18px; }
-  .glass-card { background: rgba(255,255,255,0.9); padding:22px; border-radius:12px; box-shadow:0 8px 24px rgba(15,23,42,0.06); height:100%; }
-  .hero { padding:80px 0; border-radius:12px; overflow:hidden; }
-  .lead { font-size:1.1rem; }
+  .btn-gradient {
+    background: linear-gradient(90deg,#2563eb,#0ea5e9);
+    border: none; color: #fff; font-weight:600;
+    border-radius:8px; padding:10px 20px;
+    transition: all .3s ease;
+  }
+  .btn-gradient:hover { opacity: 0.9; transform: translateY(-2px); }
+
+  .btn-outline-light:hover { background:rgba(255,255,255,0.15); }
+
+  .glass-card {
+    background: rgba(255,255,255,0.85);
+    padding:22px; border-radius:14px;
+    box-shadow:0 8px 28px rgba(0,0,0,0.08);
+    transition: all .3s ease;
+  }
+  .glass-card:hover { transform: translateY(-4px); }
+
+  .hero {
+    padding:90px 0;
+    border-radius:12px;
+    background:
+      linear-gradient(135deg, rgba(0,0,0,0.65), rgba(0,0,0,0.65)),
+      url({% static 'images/loan-bg.jpg' %}) center/cover no-repeat;
+  }
+  .hero h1 { text-shadow:0 6px 24px rgba(0,0,0,0.75); }
+  .hero p { text-shadow:0 4px 16px rgba(0,0,0,0.6); }
+
+  .card { border: none; border-radius:12px; }
+  .card-body { padding:1.5rem; }
+
+  .offers .card { border:1px solid #f1f5f9; transition:all .3s ease; }
+  .offers .card:hover { box-shadow:0 8px 24px rgba(0,0,0,0.1); transform:translateY(-3px); }
+
+  .accordion-button:focus { box-shadow:none; }
 </style>
 {% endblock %}
 
 {% block content %}
 
-<!-- HERO -->
-<section class="hero text-center mb-5" role="region" aria-label="Hero"
-         style="background:
-           linear-gradient(135deg, rgba(0,0,0,0.6), rgba(0,0,0,0.6)),
-           url({% static 'images/loan-bg.jpg' %}) center/cover no-repeat;">
+<!-- ✅ HERO -->
+<section class="hero text-center mb-5" aria-label="Hero">
   <div class="container container-max">
-    <h1 class="display-4 fw-bold" data-aos="fade-down" style="color:#fffef6; text-shadow: 0 6px 28px rgba(0,0,0,0.75);">
+    <h1 class="display-4 fw-bold mb-3 text-white" data-aos="fade-down">
       Smart Loans, Smarter Choices
     </h1>
-    <p class="lead mb-4" data-aos="fade-up" style="color:#fffef6; text-shadow: 0 4px 20px rgba(0,0,0,0.6);">
+    <p class="lead mb-4 text-white opacity-90" data-aos="fade-up">
       Your all-in-one platform to compare, calculate and apply for loans.
     </p>
-
     <div class="d-flex justify-content-center gap-3" data-aos="zoom-in">
       <a href="{% url 'register' %}?role=applicant" class="btn btn-gradient btn-lg">
         <i class="bi bi-person-fill me-2"></i> Register as Applicant
       </a>
-      <a href="{% url 'register' %}?role=lender" class="btn btn-outline-light btn-lg"
-         style="color:#fffef6; border-color: rgba(255,255,255,0.6);">
+      <a href="{% url 'register' %}?role=lender" class="btn btn-outline-light btn-lg">
         <i class="bi bi-bank me-2"></i> Register as Lender
       </a>
     </div>
   </div>
 </section>
 
-<!-- FEATURES -->
-<section class="py-5" aria-label="Features">
+<!-- ✅ FEATURES -->
+<section class="py-5">
   <div class="container container-max text-center">
     <div class="row g-4">
-      <div class="col-md-4" data-aos="fade-up" data-aos-delay="100">
-        <div class="glass-card">
+      <div class="col-md-4" data-aos="fade-up">
+        <div class="glass-card h-100">
           <i class="bi bi-speedometer2 fs-1 text-info"></i>
           <h5 class="mt-3">Fast Approvals</h5>
-          <p class="mb-0 text-muted">Get quick responses from trusted banks & NBFCs.</p>
+          <p class="text-muted mb-0">Get quick responses from trusted banks & NBFCs.</p>
         </div>
       </div>
-      <div class="col-md-4" data-aos="fade-up" data-aos-delay="200">
-        <div class="glass-card">
+      <div class="col-md-4" data-aos="fade-up" data-aos-delay="150">
+        <div class="glass-card h-100">
           <i class="bi bi-shield-lock fs-1 text-success"></i>
           <h5 class="mt-3">Secure Process</h5>
-          <p class="mb-0 text-muted">Bank-grade security & encryption for your data.</p>
+          <p class="text-muted mb-0">Bank-grade security & encryption for your data.</p>
         </div>
       </div>
       <div class="col-md-4" data-aos="fade-up" data-aos-delay="300">
-        <div class="glass-card">
+        <div class="glass-card h-100">
           <i class="bi bi-bar-chart-line fs-1 text-warning"></i>
           <h5 class="mt-3">Compare Offers</h5>
-          <p class="mb-0 text-muted">Choose the best loan offer with side-by-side comparisons.</p>
+          <p class="text-muted mb-0">Choose the best loan offer with side-by-side comparisons.</p>
         </div>
       </div>
     </div>

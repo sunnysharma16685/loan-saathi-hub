@@ -1,10 +1,10 @@
-services:
+services: 
   - type: web
     name: loan-saathi-hub
     env: python
     plan: free
     buildCommand: "./build.sh"
-    startCommand: "gunicorn loan_saathi_hub.wsgi:application --bind 0.0.0.0:$PORT"
+    startCommand: "gunicorn -c gunicorn.conf.py loan_saathi_hub.wsgi:application"
     envVars:
       - key: DJANGO_SECRET_KEY
         generateValue: true
@@ -32,6 +32,7 @@ services:
         fromDatabase:
           name: loan-saathi-db
           property: port
+
 databases:
   - name: loan-saathi-db
     plan: free

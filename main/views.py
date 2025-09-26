@@ -525,7 +525,8 @@ def admin_user_action(request, user_id):
     reason = (request.POST.get("reason") or "").strip()[:1000]
 
     try:
-        target = User.objects.get(id=user_id)
+        # ✅ Optimized: load profile in one query
+        target = User.objects.select_related("profile").get(id=user_id)
     except User.DoesNotExist:
         messages.error(request, "❌ User not found.")
         return redirect("dashboard_admin")

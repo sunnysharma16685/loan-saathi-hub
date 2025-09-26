@@ -124,6 +124,13 @@ def register_view(request):
 
 
 # -------------------- Login --------------------
+from django.contrib import messages
+from django.contrib.auth import authenticate, login
+from django.shortcuts import redirect, render
+import logging
+
+logger = logging.getLogger(__name__)
+
 def login_view(request):
     role = (request.GET.get("role") or "").lower()
 
@@ -337,62 +344,58 @@ def edit_profile(request, user_id):
         lender_details, _ = LenderDetails.objects.get_or_create(user=user)
 
     if request.method == "POST":
-        # Common Profile
-        profile.full_name = request.POST.get("fullName")
-        profile.mobile = request.POST.get("mobile")
+        # 🔒 Locked fields (always from DB, not from form)
+        profile.full_name = profile.full_name or request.POST.get("full_name")
+        profile.dob = profile.dob
+        profile.mobile = profile.mobile
+        profile.pancard_number = profile.pancard_number
+        profile.aadhaar_number = profile.aadhaar_number
+
+        # Editable fields
         profile.gender = request.POST.get("gender")
-        profile.marital_status = request.POST.get("maritalStatus")
+        profile.marital_status = request.POST.get("marital_status")
         profile.address = request.POST.get("address")
         profile.pincode = request.POST.get("pincode")
         profile.city = request.POST.get("city")
         profile.state = request.POST.get("state")
 
-        pancard_number = request.POST.get("pancardNumber")
-        if pancard_number:
-            profile.pancard_number = pancard_number
-        profile.aadhaar_number = request.POST.get("aadhaarNumber")
-        profile.dob = request.POST.get("dob") or None
         profile.save()
 
         # Applicant details
         if user.role == "applicant":
-            applicant_details.job_type = request.POST.get("jobType")
-            applicant_details.cibil_score = request.POST.get("cibilScore")
-            applicant_details.employment_type = request.POST.get("employmentType")
-
-            # Job fields
-            applicant_details.company_name = request.POST.get("companyName")
-            applicant_details.company_type = request.POST.get("companyType")
+            applicant_details.employment_type = request.POST.get("employment_type")
+            applicant_details.company_name = request.POST.get("company_name")
+            applicant_details.company_type = request.POST.get("company_type")
             applicant_details.designation = request.POST.get("designation")
-            applicant_details.itr = request.POST.get("itrJob")
-            applicant_details.current_salary = request.POST.get("currentSalary") or None
-            applicant_details.other_income = request.POST.get("otherIncome") or None
-            applicant_details.total_emi = request.POST.get("totalEmiJob") or None
+            applicant_details.itr = request.POST.get("itr")
+            applicant_details.current_salary = request.POST.get("current_salary") or None
+            applicant_details.other_income = request.POST.get("other_income") or None
+            applicant_details.total_emi = request.POST.get("total_emi") or None
 
             # Business fields
-            applicant_details.business_name = request.POST.get("businessName")
-            applicant_details.business_type = request.POST.get("businessType")
-            applicant_details.business_sector = request.POST.get("businessSector")
-            applicant_details.total_turnover = request.POST.get("turnover3y") or None
-            applicant_details.last_year_turnover = request.POST.get("turnover1y") or None
-            applicant_details.business_total_emi = request.POST.get("totalEmiBusiness") or None
-            applicant_details.business_itr_status = request.POST.get("itrBusiness")
+            applicant_details.business_name = request.POST.get("business_name")
+            applicant_details.business_type = request.POST.get("business_type")
+            applicant_details.business_sector = request.POST.get("business_sector")
+            applicant_details.total_turnover = request.POST.get("total_turnover") or None
+            applicant_details.last_year_turnover = request.POST.get("last_year_turnover") or None
+            applicant_details.business_total_emi = request.POST.get("business_total_emi") or None
+            applicant_details.business_itr_status = request.POST.get("business_itr_status")
 
             applicant_details.save()
-            messages.success(request, "✅ Applicant profile updated successfully")
-            return redirect("dashboard_applicant")
+            messages.success(request, "✅ Applicant profile updated successfully!")
+            return redirect("edit_profile", user_id=user.id)  # same page reload
 
         # Lender details
         elif user.role == "lender":
-            lender_details.lender_type = request.POST.get("lenderType")
-            lender_details.dsa_code = request.POST.get("dsaCode")
-            lender_details.bank_firm_name = request.POST.get("firmName")
-            lender_details.gst_number = request.POST.get("gstNumber")
-            lender_details.branch_name = request.POST.get("branchName")
+            lender_details.lender_type = request.POST.get("lender_type")
+            lender_details.dsa_code = request.POST.get("dsa_code")
+            lender_details.bank_firm_name = request.POST.get("bank_firm_name")
+            lender_details.gst_number = request.POST.get("gst_number")
+            lender_details.branch_name = request.POST.get("branch_name")
             lender_details.designation = request.POST.get("designation")
             lender_details.save()
-            messages.success(request, "✅ Lender profile updated successfully")
-            return redirect("dashboard_lender")
+            messages.success(request, "✅ Lender profile updated successfully!")
+            return redirect("edit_profile", user_id=user.id)  # same page reload
 
     return render(
         request,
@@ -403,8 +406,10 @@ def edit_profile(request, user_id):
             "role": user.role.capitalize(),
             "applicant_details": applicant_details,
             "lender_details": lender_details,
+            "dashboard_url": reverse("dashboard_applicant") if user.role == "applicant" else reverse("dashboard_lender"),
         },
     )
+
 
 
 # -------------------- Admin Login --------------------

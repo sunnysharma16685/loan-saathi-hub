@@ -70,53 +70,64 @@
             </td>
             <td>{{ u.role|default:"-"|capfirst }}</td>
             <td>
-              {% if u.profile %}
-                {% if u.profile.status == "Active" %}
-                  <span class="badge bg-success">Active</span>
-                {% elif u.profile.status == "Hold" %}
-                  <span class="badge bg-warning text-dark">Hold</span>
-                {% elif u.profile.status == "Deactivated" %}
-                  <span class="badge bg-secondary">Deactivated</span>
-                {% elif u.profile.status == "Deleted" %}
-                  <span class="badge bg-danger">Deleted</span>
-                {% else %}
-                  <span class="badge bg-light text-dark">Pending</span>
-                {% endif %}
-              {% else %}
-                <span class="badge bg-light text-dark">No Profile</span>
-              {% endif %}
-            </td>
-            <td class="text-end actions-btns">
-              {% if u.profile and u.profile.status == "Hold" %}
-                <button class="btn btn-sm btn-primary js-action-btn"
-                        data-action="accept" data-user="{{ u.id }}">
-                  Accept
-                </button>
-              {% endif %}
-              {% if u.profile and u.profile.status == "Active" %}
-                <button class="btn btn-sm btn-warning js-action-btn"
-                        data-action="deactivate" data-user="{{ u.id }}">
-                  Deactivate
-                </button>
-              {% elif u.profile and u.profile.status == "Deactivated" %}
-                <button class="btn btn-sm btn-success js-action-btn"
-                        data-action="activate" data-user="{{ u.id }}">
-                  Activate
-                </button>
-              {% endif %}
-              {% if u.profile and u.profile.status != "Deleted" %}
-                <button class="btn btn-sm btn-danger js-action-btn"
-                        data-action="delete" data-user="{{ u.id }}">
-                  Delete
-                </button>
-              {% endif %}
-              {% if u.profile %}
-                <a href="{% url 'admin_full_profile' u.id %}"
-                   class="btn btn-sm btn-info">
-                  Full Profile
-                </a>
-              {% endif %}
-            </td>
+  {% if u.profile %}
+    {% if not u.profile.is_reviewed and not u.profile.full_name %}
+      <span class="badge bg-dark">Incomplete</span>
+    {% elif u.profile.status == "Active" %}
+      <span class="badge bg-success">Active</span>
+    {% elif u.profile.status == "Hold" %}
+      <span class="badge bg-warning text-dark">Hold</span>
+    {% elif u.profile.status == "Deactivated" %}
+      <span class="badge bg-secondary">Deactivated</span>
+    {% elif u.profile.status == "Deleted" %}
+      <span class="badge bg-danger">Deleted</span>
+    {% else %}
+      <span class="badge bg-light text-dark">Pending</span>
+    {% endif %}
+  {% else %}
+    <span class="badge bg-light text-dark">No Profile</span>
+  {% endif %}
+</td>
+<td class="text-end actions-btns">
+  {% if u.profile %}
+    {% if not u.profile.full_name %}
+      <!-- 🚨 Incomplete users: only delete allowed -->
+      <button class="btn btn-sm btn-danger js-action-btn"
+              data-action="delete" data-user="{{ u.id }}">
+        Delete
+      </button>
+    {% else %}
+      {% if u.profile.status == "Hold" %}
+        <button class="btn btn-sm btn-primary js-action-btn"
+                data-action="accept" data-user="{{ u.id }}">
+          Accept
+        </button>
+      {% endif %}
+      {% if u.profile.status == "Active" %}
+        <button class="btn btn-sm btn-warning js-action-btn"
+                data-action="deactivate" data-user="{{ u.id }}">
+          Deactivate
+        </button>
+      {% elif u.profile.status == "Deactivated" %}
+        <button class="btn btn-sm btn-success js-action-btn"
+                data-action="activate" data-user="{{ u.id }}">
+          Activate
+        </button>
+      {% endif %}
+      {% if u.profile.status != "Deleted" %}
+        <button class="btn btn-sm btn-danger js-action-btn"
+                data-action="delete" data-user="{{ u.id }}">
+          Delete
+        </button>
+      {% endif %}
+      <a href="{% url 'admin_full_profile' u.id %}"
+         class="btn btn-sm btn-info">
+        Full Profile
+      </a>
+    {% endif %}
+  {% endif %}
+</td>
+
           </tr>
           {% empty %}
           <tr><td colspan="6">No users registered.</td></tr>
@@ -229,39 +240,56 @@
             <td>{{ l.user.email }}</td>
             <td>{{ l.user.profile.mobile|default:"N/A" }}</td>
             <td>
-              {% if l.user.profile %}
-                {% if l.user.profile.status == "Active" %}
-                  <span class="badge bg-success">Active</span>
-                {% elif l.user.profile.status == "Hold" %}
-                  <span class="badge bg-warning text-dark">Hold</span>
-                {% elif l.user.profile.status == "Deactivated" %}
-                  <span class="badge bg-secondary">Deactivated</span>
-                {% elif l.user.profile.status == "Deleted" %}
-                  <span class="badge bg-danger">Deleted</span>
-                {% else %}
-                  <span class="badge bg-light text-dark">Pending</span>
-                {% endif %}
-              {% endif %}
-            </td>
-            <td class="text-end">
-              {% if l.user.profile and l.user.profile.status == "Active" %}
-                <button class="btn btn-sm btn-warning js-action-btn"
-                        data-action="deactivate" data-user="{{ l.user.id }}">
-                  Deactivate
-                </button>
-              {% elif l.user.profile and l.user.profile.status == "Deactivated" %}
-                <button class="btn btn-sm btn-success js-action-btn"
-                        data-action="activate" data-user="{{ l.user.id }}">
-                  Activate
-                </button>
-              {% endif %}
-              {% if l.user.profile and l.user.profile.status != "Deleted" %}
-                <button class="btn btn-sm btn-danger js-action-btn"
-                        data-action="delete" data-user="{{ l.user.id }}">
-                  Delete
-                </button>
-              {% endif %}
-            </td>
+  {% if l.user.profile %}
+    {% if not l.user.profile.full_name or not l.user.profile.mobile %}
+      <span class="badge bg-secondary">Incomplete</span>
+    {% elif l.user.profile.status == "Active" %}
+      <span class="badge bg-success">Active</span>
+    {% elif l.user.profile.status == "Hold" %}
+      <span class="badge bg-warning text-dark">Hold</span>
+    {% elif l.user.profile.status == "Deactivated" %}
+      <span class="badge bg-secondary">Deactivated</span>
+    {% elif l.user.profile.status == "Deleted" %}
+      <span class="badge bg-danger">Deleted</span>
+    {% else %}
+      <span class="badge bg-light text-dark">Pending</span>
+    {% endif %}
+  {% else %}
+    <span class="badge bg-light text-dark">No Profile</span>
+  {% endif %}
+</td>
+
+<td class="text-end">
+  {% if l.user.profile %}
+    {% if not l.user.profile.full_name or not l.user.profile.mobile %}
+      <!-- ✅ Incomplete profile → sirf Delete -->
+      <button class="btn btn-sm btn-danger js-action-btn"
+              data-action="delete" data-user="{{ l.user.id }}">
+        Delete
+      </button>
+    {% else %}
+      <!-- ✅ Normal active/deactivated users -->
+      {% if l.user.profile.status == "Active" %}
+        <button class="btn btn-sm btn-warning js-action-btn"
+                data-action="deactivate" data-user="{{ l.user.id }}">
+          Deactivate
+        </button>
+      {% elif l.user.profile.status == "Deactivated" %}
+        <button class="btn btn-sm btn-success js-action-btn"
+                data-action="activate" data-user="{{ l.user.id }}">
+          Activate
+        </button>
+      {% endif %}
+      {% if l.user.profile.status != "Deleted" %}
+        <button class="btn btn-sm btn-danger js-action-btn"
+                data-action="delete" data-user="{{ l.user.id }}">
+          Delete
+        </button>
+      {% endif %}
+    {% endif %}
+  {% endif %}
+</td>
+
           </tr>
           {% empty %}
           <tr><td colspan="7">No lenders found.</td></tr>

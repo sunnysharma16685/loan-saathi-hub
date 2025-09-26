@@ -1,153 +1,354 @@
 {% extends "base.html" %}
-{% block content %}
-{% if request.user.role == 'applicant' %}
-  {% url 'dashboard_applicant' as dashboard_url %}
-{% elif request.user.role == 'lender' %}
-  {% url 'dashboard_lender' as dashboard_url %}
-{% else %}
-  {% url 'index' as dashboard_url %}
-{% endif %}
+{% load static %}
 
+{% block extra_head %}
 <style>
-  body { font-family: 'Poppins', sans-serif; background: #f5f8fa; }
-  .container { max-width: 1000px; margin-top: 30px; }
-  h2, h4, h5 { color:#333; margin-top: 20px; }
-  form { background:#fff; padding:25px; border-radius:12px; box-shadow:0 8px 16px rgba(0,0,0,0.06); }
-  label { font-weight:600; color:#555; margin-top:10px; display:block; }
-  input, select, textarea { width:100%; padding:10px; border:1px solid #ddd; border-radius:6px; margin-top:5px; transition:0.2s; }
-  input:focus, select:focus, textarea:focus { border-color:#0d6efd; outline:none; box-shadow:0 6px 18px rgba(13,110,253,0.08); }
-  .readonly-field { background-color:#f8f9fa; border:1px solid #e9ecef; color:#6c757d; pointer-events:none; }
-  .btn-primary { background:#0d6efd; color:#fff; border:none; padding:12px 16px; border-radius:8px; font-weight:600; }
-  .btn-primary:hover { background:#084298; }
-  .btn-secondary { background:#6c757d; color:#fff; padding:12px 16px; border-radius:8px; text-decoration:none; }
-  .btn-secondary:hover { background:#495057; }
-  .form-actions { display:flex; gap:12px; margin-top:18px; }
-  @media (max-width:575px){ .form-actions{ flex-direction:column; } }
+  .profile-card { border-radius:12px; box-shadow:0 10px 30px rgba(15,23,42,0.06); background:#ffffff; }
+  .page-header { border-radius:8px; padding:28px 20px; }
+  .form-section h4 { margin-top:18px; margin-bottom:10px; font-weight:700; color:#222; }
+  @media (max-width:575px) {
+    .page-header { padding:18px 12px; }
+    .profile-card { padding:16px; }
+  }
 </style>
-
-
-  <h2>Edit Profile</h2>
-  <form method="POST" action="">
-    {% csrf_token %}
-    <input type="hidden" name="next" value="{{ dashboard_url }}">
-
-    <!-- Common Profile -->
-    <h4>Basic Information</h4>
-    <div class="row g-3">
-      <div class="col-md-6">
-        <label>Full Name</label>
-        <input type="text" name="full_name" class="form-control readonly-field" value="{{ profile.full_name }}" readonly>
-      </div>
-      <div class="col-md-6">
-        <label>Mobile</label>
-        <input type="text" name="mobile" class="form-control readonly-field" value="{{ profile.mobile }}" readonly>
-      </div>
-      <div class="col-md-6">
-        <label>Gender</label>
-        <input type="text" name="gender" class="form-control" value="{{ profile.gender }}">
-      </div>
-      <div class="col-md-6">
-        <label>Marital Status</label>
-        <input type="text" name="marital_status" class="form-control" value="{{ profile.marital_status }}">
-      </div>
-      <div class="col-md-6">
-        <label>Address</label>
-        <textarea name="address" class="form-control">{{ profile.address }}</textarea>
-      </div>
-      <div class="col-md-3">
-        <label>Pincode</label>
-        <input type="text" name="pincode" class="form-control" value="{{ profile.pincode }}">
-      </div>
-      <div class="col-md-3">
-        <label>City</label>
-        <input type="text" name="city" class="form-control" value="{{ profile.city }}">
-      </div>
-      <div class="col-md-3">
-        <label>State</label>
-        <input type="text" name="state" class="form-control" value="{{ profile.state }}">
-      </div>
-      <div class="col-md-3">
-        <label>PANCARD Number</label>
-        <input type="text" name="pancard_number" class="form-control readonly-field" value="{{ profile.pancard_number }}" readonly>
-      </div>
-      <div class="col-md-3">
-        <label>Aadhaar Number</label>
-        <input type="text" name="aadhaar_number" class="form-control readonly-field" value="{{ profile.aadhaar_number }}" readonly>
-      </div>
-      <div class="col-md-3">
-        <label>Date of Birth</label>
-        <input type="date" name="dob" class="form-control readonly-field" value="{{ profile.dob|date:'Y-m-d' }}" readonly>
-      </div>
-    </div>
-
-    {% if user.role == "applicant" %}
-      <hr>
-      <h4>Applicant Details</h4>
-      <div class="row g-3">
-        <div class="col-md-4"><label>Job Type</label><input type="text" name="job_type" class="form-control" value="{{ applicant_details.job_type }}"></div>
-        <div class="col-md-4"><label>Employment Type</label><input type="text" name="employment_type" class="form-control" value="{{ applicant_details.employment_type }}"></div>
-        
-<!-- CIBIL Score (readonly) -->
-<div class="mb-3">
-  <label class="form-label">CIBIL Score (300-900)</label>
-
-  {% if applicant_details.cibil_score %}
-    <input type="number" class="form-control"
-           value="{{ applicant_details.cibil_score }}"
-           readonly style="background:#f8f9fa; cursor:not-allowed;">
-    <small class="text-muted">
-      Generated on {{ applicant_details.cibil_generated_at|date:"d M Y, H:i" }}
-    </small>
-  {% else %}
-    <input type="text" class="form-control"
-           value="Not generated yet"
-           readonly style="background:#f8f9fa; cursor:not-allowed;">
-    <small class="text-muted">
-      A lender will generate your CIBIL score during loan review.
-    </small>
-  {% endif %}
-</div>
-
-
-      <h5>Job Information</h5>
-      <div class="row g-3">
-        <div class="col-md-4"><label>Company Name</label><input type="text" name="company_name" class="form-control" value="{{ applicant_details.company_name }}"></div>
-        <div class="col-md-4"><label>Company Type</label><input type="text" name="company_type" class="form-control" value="{{ applicant_details.company_type }}"></div>
-        <div class="col-md-4"><label>Designation</label><input type="text" name="designation" class="form-control" value="{{ applicant_details.designation }}"></div>
-        <div class="col-md-4"><label>ITR</label><input type="text" name="itr_job" class="form-control" value="{{ applicant_details.itr }}"></div>
-        <div class="col-md-4"><label>Current Salary</label><input type="number" step="0.01" name="current_salary" class="form-control" value="{{ applicant_details.current_salary }}"></div>
-        <div class="col-md-4"><label>Other Income</label><input type="number" step="0.01" name="other_income" class="form-control" value="{{ applicant_details.other_income }}"></div>
-        <div class="col-md-4"><label>Total EMI (Job)</label><input type="number" step="0.01" name="total_emi" class="form-control" value="{{ applicant_details.total_emi }}"></div>
-      </div>
-
-      <h5>Business Information</h5>
-      <div class="row g-3">
-        <div class="col-md-4"><label>Business Name</label><input type="text" name="business_name" class="form-control" value="{{ applicant_details.business_name }}"></div>
-        <div class="col-md-4"><label>Business Type</label><input type="text" name="business_type" class="form-control" value="{{ applicant_details.business_type }}"></div>
-        <div class="col-md-4"><label>Business Sector</label><input type="text" name="business_sector" class="form-control" value="{{ applicant_details.business_sector }}"></div>
-        <div class="col-md-4"><label>Total Turnover (3Y)</label><input type="number" step="0.01" name="total_turnover" class="form-control" value="{{ applicant_details.total_turnover }}"></div>
-        <div class="col-md-4"><label>Last Year Turnover</label><input type="number" step="0.01" name="last_year_turnover" class="form-control" value="{{ applicant_details.last_year_turnover }}"></div>
-        <div class="col-md-4"><label>Total EMI (Business)</label><input type="number" step="0.01" name="business_total_emi" class="form-control" value="{{ applicant_details.business_total_emi }}"></div>
-        <div class="col-md-4"><label>Business ITR Status</label><input type="text" name="business_itr_status" class="form-control" value="{{ applicant_details.business_itr_status }}"></div>
-      </div>
-
-    {% elif user.role == "lender" %}
-      <hr>
-      <h4>Lender Details</h4>
-      <div class="row g-3">
-        <div class="col-md-4"><label>Lender Type</label><input type="text" name="lender_type" class="form-control" value="{{ lender_details.lender_type }}"></div>
-        <div class="col-md-4"><label>DSA Code</label><input type="text" name="dsa_code" class="form-control" value="{{ lender_details.dsa_code }}"></div>
-        <div class="col-md-4"><label>Bank/Firm Name</label><input type="text" name="bank_firm_name" class="form-control" value="{{ lender_details.bank_firm_name }}"></div>
-        <div class="col-md-4"><label>GST Number</label><input type="text" name="gst_number" class="form-control" value="{{ lender_details.gst_number }}"></div>
-        <div class="col-md-4"><label>Branch Name</label><input type="text" name="branch_name" class="form-control" value="{{ lender_details.branch_name }}"></div>
-        <div class="col-md-4"><label>Designation</label><input type="text" name="designation" class="form-control" value="{{ lender_details.designation }}"></div>
-      </div>
-    {% endif %}
-
-    <div class="form-actions">
-      <button type="submit" class="btn-primary">Save Changes</button>
-      <a href="{{ dashboard_url }}" class="btn-secondary">Back to Dashboard</a>
-    </div>
-  </form>
-</div>
 {% endblock %}
+
+{% block content %}
+<div class="page-wrapper" data-role="{{ user.role|default:''|lower }}">
+
+  <!-- Header -->
+  <header class="container container-max mt-3 page-header bg-primary text-white text-center shadow-sm">
+    <h2 class="mb-1">Edit Profile</h2>
+    <p class="mb-0 text-white">Update your profile details if required.</p>
+  </header>
+
+  <!-- Form Section -->
+  <main class="container container-max my-4">
+    <div class="card profile-card shadow-lg p-4">
+      <form method="POST">
+        {% csrf_token %}
+        <input type="hidden" name="next" value="{{ dashboard_url }}">
+
+        <!-- Basic Profile -->
+        <div class="form-section">
+          <h4 class="mb-3">Basic Details</h4>
+          <div class="row g-3 mb-3">
+            <div class="col-md-6">
+              <label>Full Name</label>
+              <input type="text" class="form-control" value="{{ profile.full_name }}" readonly>
+              <input type="hidden" name="full_name" value="{{ profile.full_name }}">
+            </div>
+            <div class="col-md-6">
+              <label>Date of Birth</label>
+              <input type="date" class="form-control" value="{{ profile.dob|date:'Y-m-d' }}" readonly>
+              <input type="hidden" name="dob" value="{{ profile.dob|date:'Y-m-d' }}">
+            </div>
+            <div class="col-md-6">
+              <label>Mobile</label>
+              <input type="text" class="form-control" value="{{ profile.mobile }}" readonly>
+              <input type="hidden" name="mobile" value="{{ profile.mobile }}">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Gender</label>
+              <select class="form-select" name="gender">
+                <option value="">-- Select Gender --</option>
+                <option value="Male" {% if profile.gender == "Male" %}selected{% endif %}>Male</option>
+                <option value="Female" {% if profile.gender == "Female" %}selected{% endif %}>Female</option>
+                <option value="Other" {% if profile.gender == "Other" %}selected{% endif %}>Other</option>
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Marital Status</label>
+              <select class="form-select" name="marital_status">
+                <option value="">-- Select Status --</option>
+                <option value="Single" {% if profile.marital_status == "Single" %}selected{% endif %}>Single</option>
+                <option value="Married" {% if profile.marital_status == "Married" %}selected{% endif %}>Married</option>
+                <option value="Other" {% if profile.marital_status == "Other" %}selected{% endif %}>Other</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+
+       <!-- Location -->
+        <div class="form-section">
+          <h4 class="mb-3">Location</h4>
+          <div class="mb-3">
+            <label class="form-label">Full Address</label>
+            <textarea class="form-control" name="address" rows="2">{{ profile.address|default:'' }}</textarea>
+          </div>
+          <div class="row g-3 mb-3">
+            <div class="col-md-4">
+              <label class="form-label">Pin Code</label>
+              <input type="text" class="form-control" name="pincode" value="{{ profile.pincode|default:'' }}">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">City</label>
+              <input type="text" class="form-control" name="city" value="{{ profile.city|default:'' }}">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">State</label>
+              <select class="form-select" name="state" required>
+                <option value="">-- Select State --</option>
+                <option {% if profile.state == "Andhra Pradesh" %}selected{% endif %}>Andhra Pradesh</option>
+                <option {% if profile.state == "Arunachal Pradesh" %}selected{% endif %}>Arunachal Pradesh</option>
+                <option {% if profile.state == "Assam" %}selected{% endif %}>Assam</option>
+                <option {% if profile.state == "Bihar" %}selected{% endif %}>Bihar</option>
+                <option {% if profile.state == "Chhattisgarh" %}selected{% endif %}>Chhattisgarh</option>
+                <option {% if profile.state == "Goa" %}selected{% endif %}>Goa</option>
+                <option {% if profile.state == "Gujarat" %}selected{% endif %}>Gujarat</option>
+                <option {% if profile.state == "Haryana" %}selected{% endif %}>Haryana</option>
+                <option {% if profile.state == "Himachal Pradesh" %}selected{% endif %}>Himachal Pradesh</option>
+                <option {% if profile.state == "Jharkhand" %}selected{% endif %}>Jharkhand</option>
+                <option {% if profile.state == "Karnataka" %}selected{% endif %}>Karnataka</option>
+                <option {% if profile.state == "Kerala" %}selected{% endif %}>Kerala</option>
+                <option {% if profile.state == "Madhya Pradesh" %}selected{% endif %}>Madhya Pradesh</option>
+                <option {% if profile.state == "Maharashtra" %}selected{% endif %}>Maharashtra</option>
+                <option {% if profile.state == "Manipur" %}selected{% endif %}>Manipur</option>
+                <option {% if profile.state == "Meghalaya" %}selected{% endif %}>Meghalaya</option>
+                <option {% if profile.state == "Mizoram" %}selected{% endif %}>Mizoram</option>
+                <option {% if profile.state == "Nagaland" %}selected{% endif %}>Nagaland</option>
+                <option {% if profile.state == "Odisha" %}selected{% endif %}>Odisha</option>
+                <option {% if profile.state == "Punjab" %}selected{% endif %}>Punjab</option>
+                <option {% if profile.state == "Rajasthan" %}selected{% endif %}>Rajasthan</option>
+                <option {% if profile.state == "Sikkim" %}selected{% endif %}>Sikkim</option>
+                <option {% if profile.state == "Tamil Nadu" %}selected{% endif %}>Tamil Nadu</option>
+                <option {% if profile.state == "Telangana" %}selected{% endif %}>Telangana</option>
+                <option {% if profile.state == "Tripura" %}selected{% endif %}>Tripura</option>
+                <option {% if profile.state == "Uttar Pradesh" %}selected{% endif %}>Uttar Pradesh</option>
+                <option {% if profile.state == "Uttarakhand" %}selected{% endif %}>Uttarakhand</option>
+                <option {% if profile.state == "West Bengal" %}selected{% endif %}>West Bengal</option>
+                <option {% if profile.state == "Andaman and Nicobar Islands" %}selected{% endif %}>Andaman and Nicobar Islands</option>
+                <option {% if profile.state == "Chandigarh" %}selected{% endif %}>Chandigarh</option>
+                <option {% if profile.state == "Dadra and Nagar Haveli and Daman and Diu" %}selected{% endif %}>Dadra and Nagar Haveli and Daman and Diu</option>
+                <option {% if profile.state == "Delhi" %}selected{% endif %}>Delhi</option>
+                <option {% if profile.state == "Jammu and Kashmir" %}selected{% endif %}>Jammu and Kashmir</option>
+                <option {% if profile.state == "Ladakh" %}selected{% endif %}>Ladakh</option>
+                <option {% if profile.state == "Lakshadweep" %}selected{% endif %}>Lakshadweep</option>
+                <option {% if profile.state == "Puducherry" %}selected{% endif %}>Puducherry</option>
+              </select>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- KYC -->
+        <div class="form-section">
+          <h4 class="mb-3">KYC</h4>
+          <div class="row g-3 mb-3">
+            <div class="col-md-6">
+              <label>PANCARD Number</label>
+              <input type="text" class="form-control" value="{{ profile.pancard_number }}" readonly>
+              <input type="hidden" name="pancard_number" value="{{ profile.pancard_number }}">
+            </div>
+            <div class="col-md-6">
+              <label>Aadhaar Number</label>
+              <input type="text" class="form-control" value="{{ profile.aadhaar_number }}" readonly>
+              <input type="hidden" name="aadhaar_number" value="{{ profile.aadhaar_number }}">
+            </div>
+          </div>
+        </div>
+                <!-- Applicant Only -->
+        {% if user.role|lower == "applicant" %}
+        <div id="applicantFields" class="form-section">
+          <h4 class="mb-3">Applicant Details</h4>
+
+          <!-- Toggle -->
+          <div class="mb-3">
+            <label class="form-label d-block">Select Type</label>
+            <div class="btn-group" role="group">
+              <input type="radio" class="btn-check" name="employment_type" id="typeJob" value="Job"
+                     {% if applicant_details and applicant_details.employment_type == "Job" %}checked{% elif not applicant_details %}checked{% endif %}
+                     onchange="toggleApplicantType()">
+              <label class="btn btn-outline-primary" for="typeJob">Job</label>
+
+              <input type="radio" class="btn-check" name="employment_type" id="typeBusiness" value="Business"
+                     {% if applicant_details and applicant_details.employment_type == "Business" %}checked{% endif %}
+                     onchange="toggleApplicantType()">
+              <label class="btn btn-outline-success" for="typeBusiness">Business</label>
+            </div>
+          </div>
+
+          <!-- CIBIL Score -->
+          <div class="mb-3">
+            <label class="form-label">CIBIL Score (300-900)</label>
+            {% if applicant_details.cibil_score %}
+              <input type="number" class="form-control" value="{{ applicant_details.cibil_score }}" readonly style="background:#f8f9fa;">
+              <small class="text-muted">Generated on {{ applicant_details.cibil_generated_at|date:"d M Y, H:i" }}</small>
+            {% else %}
+              <input type="text" class="form-control" value="Not generated yet" readonly style="background:#f8f9fa;">
+              <small class="text-muted">A lender will generate your CIBIL score during loan review.</small>
+            {% endif %}
+          </div>
+
+          <!-- Job Fields -->
+          <div id="jobFields" class="row g-3 mb-3">
+            <div class="col-md-6">
+              <label class="form-label">Company Name</label>
+              <input type="text" class="form-control" name="company_name" value="{{ applicant_details.company_name|default:'' }}">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Company Type</label>
+              <select class="form-select" name="company_type">
+                <option value="">-- Select --</option>
+                <option {% if applicant_details.company_type == "Limited" %}selected{% endif %}>Limited</option>
+                <option {% if applicant_details.company_type == "Pvt. Limited" %}selected{% endif %}>Pvt. Limited</option>
+                <option {% if applicant_details.company_type == "LLP" %}selected{% endif %}>LLP</option>
+                <option {% if applicant_details.company_type == "Govt." %}selected{% endif %}>Govt.</option>
+                <option {% if applicant_details.company_type == "Proprietor" %}selected{% endif %}>Proprietor</option>
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Designation</label>
+              <select class="form-select" name="designation">
+                <option value="">-- Select --</option>
+                <option {% if applicant_details.designation == "Junior" %}selected{% endif %}>Junior</option>
+                <option {% if applicant_details.designation == "Senior" %}selected{% endif %}>Senior</option>
+                <option {% if applicant_details.designation == "Manager" %}selected{% endif %}>Manager</option>
+                <option {% if applicant_details.designation == "Executive" %}selected{% endif %}>Executive</option>
+                <option {% if applicant_details.designation == "Director" %}selected{% endif %}>Director</option>
+                <option {% if applicant_details.designation == "Partner" %}selected{% endif %}>Partner</option>
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">ITR</label>
+              <select class="form-select" name="itr">
+                <option value="">-- Select --</option>
+                <option {% if applicant_details.itr == "Last 3 Years" %}selected{% endif %}>Last 3 Years</option>
+                <option {% if applicant_details.itr == "Last 2 Years" %}selected{% endif %}>Last 2 Years</option>
+                <option {% if applicant_details.itr == "Last 1 Year" %}selected{% endif %}>Last 1 Year</option>
+                <option {% if applicant_details.itr == "No ITR" %}selected{% endif %}>No ITR</option>
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Current Salary (Monthly)</label>
+              <input type="number" class="form-control" name="current_salary" min="0" step="1" value="{{ applicant_details.current_salary|default:'' }}">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Other Income</label>
+              <input type="text" class="form-control" name="other_income" value="{{ applicant_details.other_income|default:'' }}">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Total EMI (Job)</label>
+              <input type="number" class="form-control" name="total_emi" min="0" step="1" value="{{ applicant_details.total_emi|default:'' }}">
+            </div>
+          </div>
+
+          <!-- Business Fields -->
+          <div id="businessFields" class="row g-3 mb-3" style="display:none;">
+            <div class="col-md-6">
+              <label class="form-label">Business Name</label>
+              <input type="text" class="form-control" name="business_name" value="{{ applicant_details.business_name|default:'' }}">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Business Type</label>
+              <select class="form-select" name="business_type">
+                <option value="">-- Select --</option>
+                <option {% if applicant_details.business_type == "Limited" %}selected{% endif %}>Limited</option>
+                <option {% if applicant_details.business_type == "Pvt. Limited" %}selected{% endif %}>Pvt. Limited</option>
+                <option {% if applicant_details.business_type == "LLP" %}selected{% endif %}>LLP</option>
+                <option {% if applicant_details.business_type == "Govt." %}selected{% endif %}>Govt.</option>
+                <option {% if applicant_details.business_type == "Proprietor" %}selected{% endif %}>Proprietor</option>
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Business Sector</label>
+              <input type="text" class="form-control" name="business_sector" value="{{ applicant_details.business_sector|default:'' }}">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Total Turnover (3Y)</label>
+              <input type="number" class="form-control" name="total_turnover" min="0" step="1" value="{{ applicant_details.total_turnover|default:'' }}">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Last Year Turnover</label>
+              <input type="number" class="form-control" name="last_year_turnover" min="0" step="1" value="{{ applicant_details.last_year_turnover|default:'' }}">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Total EMI (Business)</label>
+              <input type="number" class="form-control" name="business_total_emi" min="0" step="1" value="{{ applicant_details.business_total_emi|default:'' }}">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Business ITR Status</label>
+              <select class="form-select" name="business_itr_status">
+                <option value="">-- Select --</option>
+                <option {% if applicant_details.business_itr_status == "Last 3 Years" %}selected{% endif %}>Last 3 Years</option>
+                <option {% if applicant_details.business_itr_status == "Last 2 Years" %}selected{% endif %}>Last 2 Years</option>
+                <option {% if applicant_details.business_itr_status == "Last 1 Year" %}selected{% endif %}>Last 1 Year</option>
+                <option {% if applicant_details.business_itr_status == "No ITR" %}selected{% endif %}>No ITR</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        {% endif %}
+
+               <!-- Lender Only -->
+        {% if user.role|lower == "lender" %}
+        <div id="lenderFields" class="form-section">
+          <h4 class="mb-3">Lender Details</h4>
+          <div class="row g-3 mb-3">
+            <div class="col-md-6">
+              <label class="form-label">Lender Type</label>
+              <select class="form-select" name="lender_type" required>
+                <option value="">-- Select Lender Type --</option>
+                <option {% if lender_details.lender_type == "DSA" %}selected{% endif %}>DSA</option>
+                <option {% if lender_details.lender_type == "NBFC" %}selected{% endif %}>NBFC</option>
+                <option {% if lender_details.lender_type == "PSU Bank" %}selected{% endif %}>PSU Bank</option>
+                <option {% if lender_details.lender_type == "Private Bank" %}selected{% endif %}>Private Bank</option>
+                <option {% if lender_details.lender_type == "Pvt. Firm" %}selected{% endif %}>Pvt. Firm</option>
+                <option {% if lender_details.lender_type == "Limited Firm" %}selected{% endif %}>Limited Firm</option>
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Bank / Firm Name</label>
+              <input type="text" class="form-control" name="bank_firm_name" required value="{{ lender_details.bank_firm_name|default:'' }}">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Branch Name</label>
+              <input type="text" class="form-control" name="branch_name" required value="{{ lender_details.branch_name|default:'' }}">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">GST Number</label>
+              <input type="text" class="form-control" name="gst_number" value="{{ lender_details.gst_number|default:'' }}">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">DSA Code</label>
+              <input type="text" class="form-control" name="dsa_code" value="{{ lender_details.dsa_code|default:'' }}">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Designation</label>
+              <input type="text" class="form-control" name="designation" value="{{ lender_details.designation|default:'' }}">
+            </div>
+          </div>
+        </div>
+        {% endif %}
+
+        <!-- Submit + Back -->
+        <div class="d-flex justify-content-between mt-4">
+          <a href="{{ dashboard_url }}" class="btn btn-secondary">Back to Dashboard</a>
+          <button type="submit" class="btn btn-success" id="submitBtn">Save Profile</button>
+        </div>
+      </form>
+    </div>
+  </main>
+</div> {# .page-wrapper end #}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  // Toggle Job vs Business fields
+  function toggleApplicantType() {
+    const type = document.querySelector("input[name='employment_type']:checked")?.value;
+    document.getElementById("jobFields").style.display = (type === "Job") ? "flex" : "none";
+    document.getElementById("businessFields").style.display = (type === "Business") ? "flex" : "none";
+  }
+
+  // Apply role visibility on load
+  function applyRoleVisibility() {
+    const role = "{{ user.role|lower }}";
+    if (role === "applicant") toggleApplicantType();
+  }
+
+  window.addEventListener('load', applyRoleVisibility);
+</script>
+{% endblock %}
+

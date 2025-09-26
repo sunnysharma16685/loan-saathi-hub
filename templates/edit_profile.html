@@ -3,12 +3,39 @@
 
 {% block extra_head %}
 <style>
-  .profile-card { border-radius:12px; box-shadow:0 10px 30px rgba(15,23,42,0.06); background:#ffffff; }
-  .page-header { border-radius:8px; padding:28px 20px; }
-  .form-section h4 { margin-top:18px; margin-bottom:10px; font-weight:700; color:#222; }
+  .profile-card {
+    border-radius: 12px;
+    box-shadow: 0 8px 24px rgba(15,23,42,0.08);
+    background: #fff;
+    padding: 24px;
+  }
+  .page-header {
+    border-radius: 8px;
+    padding: 28px 20px;
+  }
+  .form-section h4 {
+    margin-top: 22px;
+    margin-bottom: 14px;
+    font-weight: 700;
+    color: #0d6efd;
+    border-bottom: 2px solid #e9ecef;
+    padding-bottom: 6px;
+  }
+  label { font-weight: 500; }
+  .form-control, .form-select {
+    border-radius: 8px;
+    box-shadow: none !important;
+  }
+  .btn-success {
+    background: linear-gradient(90deg,#198754,#20c997);
+    border: none;
+    font-weight: 600;
+  }
+  .btn-success:hover { opacity: 0.9; }
+  .btn-secondary { font-weight: 500; }
   @media (max-width:575px) {
-    .page-header { padding:18px 12px; }
-    .profile-card { padding:16px; }
+    .profile-card { padding: 16px; }
+    .page-header { padding: 18px 12px; }
   }
 </style>
 {% endblock %}
@@ -19,20 +46,20 @@
   <!-- Header -->
   <header class="container container-max mt-3 page-header bg-primary text-white text-center shadow-sm">
     <h2 class="mb-1">Edit Profile</h2>
-    <p class="mb-0 text-white">Update your profile details if required.</p>
+    <p class="mb-0">Update your profile details if required</p>
   </header>
 
-  <!-- Form Section -->
+  <!-- Form -->
   <main class="container container-max my-4">
-    <div class="card profile-card shadow-lg p-4">
+    <div class="profile-card">
       <form method="POST">
         {% csrf_token %}
         <input type="hidden" name="next" value="{{ dashboard_url }}">
 
         <!-- Basic Profile -->
         <div class="form-section">
-          <h4 class="mb-3">Basic Details</h4>
-          <div class="row g-3 mb-3">
+          <h4>Basic Details</h4>
+          <div class="row g-3">
             <div class="col-md-6">
               <label>Full Name</label>
               <input type="text" class="form-control" value="{{ profile.full_name }}" readonly>
@@ -51,7 +78,7 @@
             <div class="col-md-6">
               <label class="form-label">Gender</label>
               <select class="form-select" name="gender">
-                <option value="">-- Select Gender --</option>
+                <option value="">-- Select --</option>
                 <option value="Male" {% if profile.gender == "Male" %}selected{% endif %}>Male</option>
                 <option value="Female" {% if profile.gender == "Female" %}selected{% endif %}>Female</option>
                 <option value="Other" {% if profile.gender == "Other" %}selected{% endif %}>Other</option>
@@ -60,7 +87,7 @@
             <div class="col-md-6">
               <label class="form-label">Marital Status</label>
               <select class="form-select" name="marital_status">
-                <option value="">-- Select Status --</option>
+                <option value="">-- Select --</option>
                 <option value="Single" {% if profile.marital_status == "Single" %}selected{% endif %}>Single</option>
                 <option value="Married" {% if profile.marital_status == "Married" %}selected{% endif %}>Married</option>
                 <option value="Other" {% if profile.marital_status == "Other" %}selected{% endif %}>Other</option>
@@ -69,15 +96,14 @@
           </div>
         </div>
 
-
-       <!-- Location -->
+        <!-- Location -->
         <div class="form-section">
-          <h4 class="mb-3">Location</h4>
+          <h4>Location</h4>
           <div class="mb-3">
             <label class="form-label">Full Address</label>
             <textarea class="form-control" name="address" rows="2">{{ profile.address|default:'' }}</textarea>
           </div>
-          <div class="row g-3 mb-3">
+          <div class="row g-3">
             <div class="col-md-4">
               <label class="form-label">Pin Code</label>
               <input type="text" class="form-control" name="pincode" value="{{ profile.pincode|default:'' }}">
@@ -169,15 +195,15 @@
             </div>
           </div>
 
-          <!-- CIBIL Score -->
+          <!-- CIBIL -->
           <div class="mb-3">
-            <label class="form-label">CIBIL Score (300-900)</label>
+            <label class="form-label">CIBIL Score</label>
             {% if applicant_details.cibil_score %}
-              <input type="number" class="form-control" value="{{ applicant_details.cibil_score }}" readonly style="background:#f8f9fa;">
+              <input type="number" class="form-control" value="{{ applicant_details.cibil_score }}" readonly>
               <small class="text-muted">Generated on {{ applicant_details.cibil_generated_at|date:"d M Y, H:i" }}</small>
             {% else %}
-              <input type="text" class="form-control" value="Not generated yet" readonly style="background:#f8f9fa;">
-              <small class="text-muted">A lender will generate your CIBIL score during loan review.</small>
+              <input type="text" class="form-control" value="Not generated yet" readonly>
+              <small class="text-muted">Will be generated during loan review.</small>
             {% endif %}
           </div>
 
@@ -281,15 +307,15 @@
         </div>
         {% endif %}
 
-               <!-- Lender Only -->
+        <!-- Lender -->
         {% if user.role|lower == "lender" %}
-        <div id="lenderFields" class="form-section">
-          <h4 class="mb-3">Lender Details</h4>
-          <div class="row g-3 mb-3">
+        <div class="form-section">
+          <h4>Lender Details</h4>
+          <div class="row g-3">
             <div class="col-md-6">
               <label class="form-label">Lender Type</label>
-              <select class="form-select" name="lender_type" required>
-                <option value="">-- Select Lender Type --</option>
+              <select class="form-select" name="lender_type">
+                <option value="">-- Select --</option>
                 <option {% if lender_details.lender_type == "DSA" %}selected{% endif %}>DSA</option>
                 <option {% if lender_details.lender_type == "NBFC" %}selected{% endif %}>NBFC</option>
                 <option {% if lender_details.lender_type == "PSU Bank" %}selected{% endif %}>PSU Bank</option>
@@ -300,55 +326,41 @@
             </div>
             <div class="col-md-6">
               <label class="form-label">Bank / Firm Name</label>
-              <input type="text" class="form-control" name="bank_firm_name" required value="{{ lender_details.bank_firm_name|default:'' }}">
+              <input type="text" class="form-control" name="bank_firm_name" value="{{ lender_details.bank_firm_name|default:'' }}">
             </div>
             <div class="col-md-6">
-              <label class="form-label">Branch Name</label>
-              <input type="text" class="form-control" name="branch_name" required value="{{ lender_details.branch_name|default:'' }}">
+              <label class="form-label">Branch</label>
+              <input type="text" class="form-control" name="branch_name" value="{{ lender_details.branch_name|default:'' }}">
             </div>
             <div class="col-md-6">
               <label class="form-label">GST Number</label>
               <input type="text" class="form-control" name="gst_number" value="{{ lender_details.gst_number|default:'' }}">
             </div>
-            <div class="col-md-6">
-              <label class="form-label">DSA Code</label>
-              <input type="text" class="form-control" name="dsa_code" value="{{ lender_details.dsa_code|default:'' }}">
-            </div>
-            <div class="col-md-6">
-              <label class="form-label">Designation</label>
-              <input type="text" class="form-control" name="designation" value="{{ lender_details.designation|default:'' }}">
-            </div>
           </div>
         </div>
         {% endif %}
 
-        <!-- Submit + Back -->
+        <!-- Submit -->
         <div class="d-flex justify-content-between mt-4">
-          <a href="{{ dashboard_url }}" class="btn btn-secondary">Back to Dashboard</a>
-          <button type="submit" class="btn btn-success" id="submitBtn">Save Profile</button>
+          <a href="{{ dashboard_url }}" class="btn btn-secondary">Back</a>
+          <button type="submit" class="btn btn-success">Save Profile</button>
         </div>
       </form>
     </div>
   </main>
-</div> {# .page-wrapper end #}
+</div>
 {% endblock %}
 
 {% block extra_js %}
 <script>
-  // Toggle Job vs Business fields
   function toggleApplicantType() {
     const type = document.querySelector("input[name='employment_type']:checked")?.value;
     document.getElementById("jobFields").style.display = (type === "Job") ? "flex" : "none";
     document.getElementById("businessFields").style.display = (type === "Business") ? "flex" : "none";
   }
-
-  // Apply role visibility on load
-  function applyRoleVisibility() {
-    const role = "{{ user.role|lower }}";
-    if (role === "applicant") toggleApplicantType();
-  }
-
-  window.addEventListener('load', applyRoleVisibility);
+  window.addEventListener('load', () => {
+    if ("{{ user.role|lower }}" === "applicant") toggleApplicantType();
+  });
 </script>
 {% endblock %}
 

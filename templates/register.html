@@ -6,45 +6,77 @@
 {% block content %}
 <div class="row justify-content-center">
   <div class="col-md-7 col-lg-6">
-    <div class="card card-soft p-4">
-      <h3 class="mb-1 text-center">Create Your Account</h3>
-      <p class="text-muted text-center mb-4">Register as an applicant or lender to get started</p>
+    <div class="card shadow-lg border-0 rounded-4 p-4">
+      <!-- Header -->
+      <div class="text-center mb-4">
+        <div class="rounded-circle bg-light d-inline-flex align-items-center justify-content-center mb-3" style="width:60px;height:60px;">
+          <i class="bi bi-person-plus text-success fs-3"></i>
+        </div>
+        <h3 class="fw-bold mb-1">Create Your Account</h3>
+        <p class="text-muted mb-0">Register as an applicant or lender to get started</p>
+      </div>
 
       <!-- Django messages -->
       {% if messages %}
         <div class="mb-3">
           {% for message in messages %}
-            <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+            <div class="alert 
+                        {% if 'error' in message.tags %}alert-danger
+                        {% elif 'warning' in message.tags %}alert-warning
+                        {% elif 'success' in message.tags %}alert-success
+                        {% else %}alert-info{% endif %}
+                        alert-dismissible fade show small shadow-sm" role="alert">
+              {{ message }}
+              <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
           {% endfor %}
         </div>
       {% endif %}
 
+      <!-- Form -->
       <form method="POST" id="registerForm" novalidate>
         {% csrf_token %}
 
         <div class="row g-3">
+          <!-- Role -->
           <div class="col-md-6">
-            <label class="form-label">Register as</label>
+            <label class="form-label fw-semibold">Register as</label>
             <select name="role" id="role" class="form-select" required>
+              <option value="">-- Select Role --</option>
               <option value="applicant" {% if role == "applicant" %}selected{% endif %}>Applicant</option>
               <option value="lender" {% if role == "lender" %}selected{% endif %}>Lender</option>
             </select>
           </div>
 
+          <!-- Email -->
           <div class="col-md-6">
-            <label class="form-label">Email</label>
-            <input type="email" name="email" id="email" class="form-control" value="{{ request.POST.email|default:'' }}" required>
+            <label class="form-label fw-semibold">Email</label>
+            <input type="email" name="email" id="email" class="form-control" 
+                   value="{{ request.POST.email|default:'' }}" required>
           </div>
 
+          <!-- Password -->
           <div class="col-md-6">
-            <label class="form-label">Password</label>
-            <input type="password" name="password" id="password" class="form-control" required minlength="8" aria-describedby="passwordHelp">
+            <label class="form-label fw-semibold">Password</label>
+            <div class="input-group">
+              <input type="password" name="password" id="password" class="form-control" 
+                     required minlength="8" aria-describedby="passwordHelp">
+              <button type="button" class="btn btn-outline-secondary" id="togglePassword">
+                <i class="bi bi-eye"></i>
+              </button>
+            </div>
             <div id="passwordHelp" class="form-text">At least 8 characters recommended</div>
           </div>
 
+          <!-- Confirm Password -->
           <div class="col-md-6">
-            <label class="form-label">Confirm Password</label>
-            <input type="password" name="confirm_password" id="confirm_password" class="form-control" required>
+            <label class="form-label fw-semibold">Confirm Password</label>
+            <div class="input-group">
+              <input type="password" name="confirm_password" id="confirm_password" class="form-control" required>
+              <button type="button" class="btn btn-outline-secondary" id="toggleConfirmPassword">
+                <i class="bi bi-eye"></i>
+              </button>
+            </div>
           </div>
         </div>
 
@@ -56,12 +88,17 @@
           </label>
         </div>
 
+        <!-- Submit -->
         <div class="d-grid mt-4">
-          <button class="btn btn-gradient" type="submit">Create Account</button>
+          <button class="btn btn-success btn-lg rounded-3 shadow-sm" type="submit">
+            <i class="bi bi-person-check me-1"></i> Create Account
+          </button>
         </div>
 
-        <div class="text-center mt-3">
-          <small class="text-muted">Already have an account? <a href="{% url 'login' %}">Login here</a></small>
+        <!-- Link -->
+        <div class="text-center mt-3 small">
+          <span class="text-muted">Already have an account?</span> 
+          <a href="{% url 'login' %}" class="fw-semibold text-decoration-none">Login here</a>
         </div>
       </form>
     </div>
@@ -78,30 +115,45 @@
   form.addEventListener('submit', function(e){
     const pass = document.getElementById('password').value || '';
     const confirm = document.getElementById('confirm_password').value || '';
+
+    // Password match check
     if (pass !== confirm) {
       e.preventDefault();
       const existing = form.querySelector('.alert.alert-danger');
       if (existing) existing.remove();
+
       const div = document.createElement('div');
       div.className = 'alert alert-danger mt-3';
       div.role = 'alert';
-      div.textContent = 'Passwords do not match. Please check and try again.';
+      div.textContent = '❌ Passwords do not match. Please check and try again.';
       form.appendChild(div);
       div.scrollIntoView({ behavior: 'smooth', block: 'center' });
       return false;
     }
-    if (pass.length < 8) {
-      // optional hint; don't block submission
-      const existingWarn = form.querySelector('.alert.alert-warning');
-      if (!existingWarn) {
-        const warn = document.createElement('div');
-        warn.className = 'alert alert-warning mt-3';
-        warn.role = 'alert';
-        warn.textContent = 'Consider using a stronger password (8+ characters).';
-        form.appendChild(warn);
-      }
-    }
   }, { passive: false });
+
+  // Toggle password show/hide
+  const togglePassword = document.getElementById('togglePassword');
+  const toggleConfirmPassword = document.getElementById('toggleConfirmPassword');
+
+  function toggleVisibility(btn, inputId) {
+    btn.addEventListener('click', function(){
+      const input = document.getElementById(inputId);
+      const icon = this.querySelector('i');
+      if (input.type === 'password') {
+        input.type = 'text';
+        icon.classList.remove('bi-eye');
+        icon.classList.add('bi-eye-slash');
+      } else {
+        input.type = 'password';
+        icon.classList.remove('bi-eye-slash');
+        icon.classList.add('bi-eye');
+      }
+    });
+  }
+
+  if (togglePassword) toggleVisibility(togglePassword, 'password');
+  if (toggleConfirmPassword) toggleVisibility(toggleConfirmPassword, 'confirm_password');
 })();
 </script>
 {% endblock %}

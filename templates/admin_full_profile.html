@@ -1,59 +1,97 @@
 {% extends "base.html" %}
-{% block content %}
-<div class="container mt-4">
-  <h2>Full Profile - {{ user.email }}</h2>
-  <p><strong>Role:</strong> {{ user.role|capfirst }}</p>
-  <p><strong>Joined:</strong> {{ user.date_joined|date:"d-m-Y H:i" }}</p>
-  <hr>
+{% block title %}Full Profile — Loan Saathi Hub{% endblock %}
 
-  <!-- Profile (from profile_form) -->
+{% block extra_head %}
+<style>
+  body { background:#f6f8fb; font-family:'Poppins',sans-serif; }
+  .profile-wrapper { max-width:960px; margin:30px auto; }
+  h2 { font-size:26px; font-weight:700; margin-bottom:10px; }
+  h4 { font-size:20px; font-weight:600; margin-top:20px; border-bottom:2px solid #f1f3f5; padding-bottom:6px; }
+  h5 { font-size:18px; font-weight:600; margin-top:14px; }
+  p { margin-bottom:6px; color:#444; }
+  .card {
+    background:#fff; border-radius:12px; padding:20px;
+    box-shadow:0 6px 18px rgba(0,0,0,0.06); margin-bottom:22px;
+  }
+  .btn-back {
+    display:inline-block; background:#6c757d; color:#fff;
+    padding:10px 18px; border-radius:8px; text-decoration:none;
+    font-weight:600; transition:0.3s;
+  }
+  .btn-back:hover { background:#5a6268; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="profile-wrapper">
+
+  <!-- Header -->
+  <div class="mb-4">
+    <h2>Full Profile — {{ user.email }}</h2>
+    <p><strong>Role:</strong> {{ user.role|capfirst }}</p>
+    <p><strong>Joined:</strong> {{ user.date_joined|date:"d-m-Y H:i" }}</p>
+  </div>
+
+  <!-- Profile -->
   {% if profile %}
-  <h4>Basic Profile</h4>
-  <p><strong>Full Name:</strong> {{ profile.full_name }}</p>
-  <p><strong>Mobile:</strong> {{ profile.mobile }}</p>
-  <p><strong>Date of Birth:</strong> {{ profile.dob|date:"d-m-Y" }}</p>
-  <p><strong>Gender:</strong> {{ profile.gender }}</p>
-  <p><strong>Marital Status:</strong> {{ profile.marital_status }}</p>
-  <p><strong>PAN:</strong> {{ profile.pancard_number }}</p>
-  <p><strong>Aadhaar:</strong> {{ profile.aadhaar_number }}</p>
-  <p><strong>Address:</strong> {{ profile.address }}, {{ profile.city }}, {{ profile.state }} - {{ profile.pincode }}</p>
-  <hr>
+  <div class="card">
+    <h4>Basic Profile</h4>
+    <p><strong>Full Name:</strong> {{ profile.full_name }}</p>
+    <p><strong>Mobile:</strong> {{ profile.mobile }}</p>
+    <p><strong>Date of Birth:</strong> {{ profile.dob|date:"d-m-Y" }}</p>
+    <p><strong>Gender:</strong> {{ profile.gender }}</p>
+    <p><strong>Marital Status:</strong> {{ profile.marital_status }}</p>
+    <p><strong>PAN:</strong> {{ profile.pancard_number }}</p>
+    <p><strong>Aadhaar:</strong> {{ profile.aadhaar_number }}</p>
+    <p><strong>Address:</strong>
+      {{ profile.address }}, {{ profile.city }}, {{ profile.state }} - {{ profile.pincode }}
+    </p>
+  </div>
   {% endif %}
 
   <!-- Applicant Details -->
   {% if applicant_details %}
-  <h4>Applicant Details</h4>
-  <p><strong>Employment Type:</strong> {{ applicant_details.employment_type }}</p>
-  <p><strong>CIBIL Score:</strong> {{ applicant_details.cibil_score }}</p>
-  <p><strong>Company Name:</strong> {{ applicant_details.company_name }}</p>
-  <p><strong>Company Type:</strong> {{ applicant_details.company_type }}</p>
-  <p><strong>Designation:</strong> {{ applicant_details.designation }}</p>
-  <p><strong>Current Salary:</strong> {{ applicant_details.current_salary }}</p>
-  <p><strong>Other Income:</strong> {{ applicant_details.other_income }}</p>
-  <p><strong>Total EMI:</strong> {{ applicant_details.total_emi }}</p>
-  <p><strong>ITR:</strong> {{ applicant_details.itr }}</p>
-  <hr>
-  <h5>Business</h5>
-  <p><strong>Business Name:</strong> {{ applicant_details.business_name }}</p>
-  <p><strong>Business Type:</strong> {{ applicant_details.business_type }}</p>
-  <p><strong>Business Sector:</strong> {{ applicant_details.business_sector }}</p>
-  <p><strong>Total Turnover:</strong> {{ applicant_details.total_turnover }}</p>
-  <p><strong>Last Year Turnover:</strong> {{ applicant_details.last_year_turnover }}</p>
-  <p><strong>Business Total EMI:</strong> {{ applicant_details.business_total_emi }}</p>
-  <p><strong>Business ITR Status:</strong> {{ applicant_details.business_itr_status }}</p>
+  <div class="card">
+    <h4>Applicant Details</h4>
+    <p><strong>Employment Type:</strong> {{ applicant_details.employment_type }}</p>
+    <p><strong>CIBIL Score:</strong> {{ applicant_details.cibil_score }}</p>
+
+    <h5 class="mt-3">Job</h5>
+    <p><strong>Company Name:</strong> {{ applicant_details.company_name }}</p>
+    <p><strong>Company Type:</strong> {{ applicant_details.company_type }}</p>
+    <p><strong>Designation:</strong> {{ applicant_details.designation }}</p>
+    <p><strong>Current Salary:</strong> ₹{{ applicant_details.current_salary }}</p>
+    <p><strong>Other Income:</strong> ₹{{ applicant_details.other_income }}</p>
+    <p><strong>Total EMI:</strong> ₹{{ applicant_details.total_emi }}</p>
+    <p><strong>ITR:</strong> {{ applicant_details.itr }}</p>
+
+    <h5 class="mt-3">Business</h5>
+    <p><strong>Business Name:</strong> {{ applicant_details.business_name }}</p>
+    <p><strong>Business Type:</strong> {{ applicant_details.business_type }}</p>
+    <p><strong>Business Sector:</strong> {{ applicant_details.business_sector }}</p>
+    <p><strong>Total Turnover:</strong> ₹{{ applicant_details.total_turnover }}</p>
+    <p><strong>Last Year Turnover:</strong> ₹{{ applicant_details.last_year_turnover }}</p>
+    <p><strong>Business Total EMI:</strong> ₹{{ applicant_details.business_total_emi }}</p>
+    <p><strong>Business ITR Status:</strong> {{ applicant_details.business_itr_status }}</p>
+  </div>
   {% endif %}
 
   <!-- Lender Details -->
   {% if lender_details %}
-  <h4>Lender Details</h4>
-  <p><strong>Lender Type:</strong> {{ lender_details.lender_type }}</p>
-  <p><strong>Bank / Firm:</strong> {{ lender_details.bank_firm_name }}</p>
-  <p><strong>Branch:</strong> {{ lender_details.branch_name }}</p>
-  <p><strong>DSA Code:</strong> {{ lender_details.dsa_code }}</p>
-  <p><strong>Designation:</strong> {{ lender_details.designation }}</p>
-  <p><strong>GST Number:</strong> {{ lender_details.gst_number }}</p>
+  <div class="card">
+    <h4>Lender Details</h4>
+    <p><strong>Lender Type:</strong> {{ lender_details.lender_type }}</p>
+    <p><strong>Bank / Firm:</strong> {{ lender_details.bank_firm_name }}</p>
+    <p><strong>Branch:</strong> {{ lender_details.branch_name }}</p>
+    <p><strong>DSA Code:</strong> {{ lender_details.dsa_code }}</p>
+    <p><strong>Designation:</strong> {{ lender_details.designation }}</p>
+    <p><strong>GST Number:</strong> {{ lender_details.gst_number }}</p>
+  </div>
   {% endif %}
 
-  <a href="{% url 'dashboard_admin' %}" class="btn btn-secondary mt-3">⬅ Back to Admin Dashboard</a>
+  <!-- Back -->
+  <div class="text-center mt-3">
+    <a href="{% url 'dashboard_admin' %}" class="btn-back">← Back to Admin Dashboard</a>
+  </div>
 </div>
 {% endblock %}

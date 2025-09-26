@@ -1,86 +1,80 @@
 {% extends "base.html" %}
 {% load static %}
 
-{% block title %}Loan Saathi Hub - Applicant Dashboard{% endblock %}
+{% block title %}Applicant Dashboard — Loan Saathi Hub{% endblock %}
 
 {% block extra_head %}
 <style>
-    h1 { 
-        margin: 20px; 
-        font-size: 28px; 
-        color: #212529; 
-        text-align: center; 
-    }
+  h1 {
+    margin: 20px;
+    font-size: 28px;
+    color: #212529;
+    text-align: center;
+    font-weight: 700;
+  }
 
-    /* Buttons */
-    .btn-request {
-        display: inline-block;
-        border: 2px solid #0d6efd;      /* Blue border */
-        background-color: #ff9933;      /* Saffron background */
-        color: #000;                    /* Black text */
-        font-weight: 600;
-        border-radius: 8px;
-        padding: 10px 18px;
-        text-decoration: none;
-        transition: all 0.3s ease-in-out;
-    }
-    .btn-request:hover {
-        background-color: #e68a00;      /* Dark saffron hover */
-        border-color: #0b5ed7;          /* Darker blue border */
-        color: #fff;                    /* White text on hover */
-    }
+  /* Buttons */
+  .btn-request {
+    border: 2px solid #0d6efd;
+    background: linear-gradient(90deg,#ff9933,#ffb84d);
+    color: #111;
+    font-weight: 600;
+    border-radius: 8px;
+    padding: 10px 18px;
+    text-decoration: none;
+    transition: all 0.3s ease-in-out;
+  }
+  .btn-request:hover {
+    background: #e68a00;
+    color: #fff;
+    border-color: #0b5ed7;
+  }
+  .btn-accept { background: #28a745; color:#fff; }
+  .btn-accept:hover { background:#218838; }
+  .btn-info { background:#0dcaf0; color:#212529; }
+  .btn-info:hover { background:#31d2f2; }
 
-    .btn-accept { background: #28a745; color: #fff; }
-    .btn-accept:hover { background: #218838; }
-    .btn-info { background: #0dcaf0; color: #212529; }
-    .btn-info:hover { background: #31d2f2; }
+  /* Cards */
+  .card {
+    border-radius: 12px;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+    transition: transform .2s ease;
+  }
+  .card:hover { transform: translateY(-3px); }
+  .filter-box { cursor:pointer; }
+  .card-body h5 { font-weight:600; }
+  .card-body h3 { font-weight:700; margin:0; }
 
-    /* Cards */
-    .card { 
-        border-radius: 12px; 
-        box-shadow: 0 8px 20px rgba(0,0,0,0.08); 
-        transition: transform 0.2s ease; 
-    }
-    .card:hover { transform: translateY(-4px); }
-    .card-body h5 { font-weight: 600; margin-bottom: 8px; }
-    .card-body h3 { font-weight: 700; margin: 0; }
-
-    /* Tables */
-    table { 
-        width:95%; 
-        margin:20px auto; 
-        border-collapse:collapse; 
-        background:#fff; 
-        border-radius:8px; 
-        overflow:hidden; 
-        box-shadow:0 8px 16px rgba(0,0,0,0.08); 
-    }
-    table th, table td { 
-        padding:12px 10px; 
-        text-align:center; 
-        vertical-align:middle; 
-    }
-    table th { 
-        background:#0d6efd; 
-        color:#fff; 
-        font-weight:600; 
-    }
-    table tbody tr:hover { 
-        background:#f1f3f5; 
-        transition:0.3s; 
-    }
-
-    .collapse table th { background:#e9ecef; }
-    .collapse table td { background:#f8f9fa; }
-
-    .filter-box { cursor:pointer; }
+  /* Tables */
+  table {
+    width:95%;
+    margin:20px auto;
+    border-collapse:collapse;
+    background:#fff;
+    border-radius:8px;
+    overflow:hidden;
+    box-shadow:0 6px 18px rgba(0,0,0,0.08);
+  }
+  table th, table td {
+    padding:12px 10px;
+    text-align:center;
+    vertical-align:middle;
+  }
+  table th {
+    background:#0d6efd;
+    color:#fff;
+    font-weight:600;
+  }
+  table tbody tr:hover { background:#f9fafb; transition:.3s; }
+  .collapse table th { background:#e9ecef; }
+  .collapse table td { background:#f8f9fa; }
 </style>
 {% endblock %}
 
 {% block content %}
 <h1>Applicant Dashboard</h1>
 
-<!-- ✅ Messages Block -->
+<!-- ✅ Messages -->
 {% if messages %}
   {% for message in messages %}
     <div class="alert alert-{{ message.tags }} alert-dismissible fade show">
@@ -90,226 +84,204 @@
   {% endfor %}
 {% endif %}
 
-<!-- Top Action Row -->
+<!-- ✅ Action Row -->
 <div class="d-flex justify-content-between align-items-center mb-3 px-3">
-    <a href="{% url 'loan_request' %}" class="btn btn-request">+ New Loan Request</a>
-    <div>
-        <a href="{% url 'dashboard_applicant' %}" class="btn btn-secondary me-2">All Loans</a>
-        <a href="{% url 'edit_profile' user.id %}" class="btn btn-warning">Edit Profile</a>
-    </div>
+  <a href="{% url 'loan_request' %}" class="btn btn-request">+ New Loan Request</a>
+  <div>
+    <a href="{% url 'dashboard_applicant' %}" class="btn btn-outline-secondary me-2">All Loans</a>
+    <a href="{% url 'edit_profile' user.id %}" class="btn btn-warning">Edit Profile</a>
+  </div>
 </div>
 
-<!-- Loan Stats -->
-<div class="row mb-3 px-3">
-    <div class="col-md-3 mb-3">
-        <div class="card text-center bg-primary text-white filter-box" data-filter="today">
-            <div class="card-body"><h5>Total Loan - Today</h5><h3>{{ total_today }}</h3></div>
-        </div>
+<!-- ✅ Stats -->
+<div class="row mb-4 px-3 g-3">
+  <div class="col-md-3">
+    <div class="card text-center bg-primary text-white filter-box" data-filter="today">
+      <div class="card-body">
+        <h5>Total Loans Today</h5><h3>{{ total_today }}</h3>
+      </div>
     </div>
-    <div class="col-md-3 mb-3">
-        <div class="card text-center bg-success text-white filter-box" data-filter="approved">
-            <div class="card-body"><h5>Total Approved</h5><h3>{{ total_approved }}</h3></div>
-        </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card text-center bg-success text-white filter-box" data-filter="approved">
+      <div class="card-body">
+        <h5>Total Approved</h5><h3>{{ total_approved }}</h3>
+      </div>
     </div>
-    <div class="col-md-3 mb-3">
-        <div class="card text-center bg-danger text-white filter-box" data-filter="rejected">
-            <div class="card-body"><h5>Total Rejected</h5><h3>{{ total_rejected }}</h3></div>
-        </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card text-center bg-danger text-white filter-box" data-filter="rejected">
+      <div class="card-body">
+        <h5>Total Rejected</h5><h3>{{ total_rejected }}</h3>
+      </div>
     </div>
-    <div class="col-md-3 mb-3">
-        <div class="card text-center bg-warning text-dark filter-box" data-filter="pending">
-            <div class="card-body"><h5>Total Pending</h5><h3>{{ total_pending }}</h3></div>
-        </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card text-center bg-warning text-dark filter-box" data-filter="pending">
+      <div class="card-body">
+        <h5>Total Pending</h5><h3>{{ total_pending }}</h3>
+      </div>
     </div>
+  </div>
 </div>
 
-<!-- Loan Table -->
+<!-- ✅ Loan Table -->
 <table class="table table-striped rounded">
-    <thead>
-        <tr>
-            <th>Sl No.</th>
-            <th>Created Date</th>
-            <th>Loan ID</th>
-            <th>Loan Type</th>
-            <th>Amount Requested ₹</th>
-            <th>Duration (Months)</th>
-            <th>Interest Rate</th>
-            <th>Status</th>
-            <th>Reason for Loan</th>
-            <th>Action</th>
-        </tr>
-    </thead>
-    <tbody>
+  <thead>
+    <tr>
+      <th>Sl No.</th>
+      <th>Created Date</th>
+      <th>Loan ID</th>
+      <th>Loan Type</th>
+      <th>Amount Requested ₹</th>
+      <th>Duration (Months)</th>
+      <th>Interest Rate</th>
+      <th>Status</th>
+      <th>Reason</th>
+      <th>Action</th>
+    </tr>
+  </thead>
+  <tbody>
     {% for loan in loans %}
     <tr data-status="{{ loan.global_status|lower }}" data-created="{{ loan.created_at|date:'Y-m-d' }}">
-        <td>{{ forloop.counter }}</td>
-        <td>{{ loan.created_at|date:"d-m-Y" }}</td>
-        <td>{{ loan.loan_id }}</td>
-        <td>{{ loan.loan_type }}</td>
-        <td>₹{{ loan.amount_requested }}</td>
-        <td>{{ loan.duration_months }} months</td>
-        <td>{{ loan.interest_rate }}%</td>
-        <td>
-            {% if loan.global_status == "Approved" %}
-                <span class="badge bg-success">Approved</span>
-            {% elif loan.global_status == "Rejected" %}
-                <span class="badge bg-danger">Rejected</span>
-            {% elif loan.global_status == "Pending" %}
-                <span class="badge bg-warning text-dark">Pending</span>
-            {% endif %}
-        </td>
-        <td>{{ loan.reason_for_loan }}</td>
-        <td>
-            <button class="btn btn-link" data-bs-toggle="collapse" data-bs-target="#lenderFeedback{{loan.id}}">
-                View Lenders Feedback
-            </button>
-        </td>
+      <td>{{ forloop.counter }}</td>
+      <td>{{ loan.created_at|date:"d-m-Y" }}</td>
+      <td>{{ loan.loan_id }}</td>
+      <td>{{ loan.loan_type }}</td>
+      <td>₹{{ loan.amount_requested }}</td>
+      <td>{{ loan.duration_months }} months</td>
+      <td>{{ loan.interest_rate }}%</td>
+      <td>
+        {% if loan.global_status == "Approved" %}
+          <span class="badge bg-success">Approved</span>
+        {% elif loan.global_status == "Rejected" %}
+          <span class="badge bg-danger">Rejected</span>
+        {% elif loan.global_status == "Pending" %}
+          <span class="badge bg-warning text-dark">Pending</span>
+        {% endif %}
+      </td>
+      <td>{{ loan.reason_for_loan }}</td>
+      <td>
+        <button class="btn btn-sm btn-outline-primary" data-bs-toggle="collapse"
+                data-bs-target="#lenderFeedback{{loan.id}}">
+          View Feedback
+        </button>
+      </td>
     </tr>
 
+    <!-- ✅ Feedback Row -->
+    <tr class="collapse" id="lenderFeedback{{loan.id}}">
+      <td colspan="10">
+        <table class="table table-sm table-bordered mb-0">
+          <thead class="table-light">
+            <tr>
+              <th>Sl. No.</th>
+              <th>Date</th>
+              <th>Lender</th>
+              <th>Status</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for fb in loan.lender_statuses.all %}
+              {% if fb.status == "Approved" or fb.status == "Rejected" %}
+              <tr>
+                <td>{{ forloop.counter }}</td>
+                <td>{{ fb.updated_at|date:"d-m-Y H:i" }}</td>
+                <td>{{ fb.lender.lender_details.lender_type|default:"N/A" }}</td>
+                <td>
+                  {% if fb.status == "Rejected" %}
+                    <span class="badge bg-danger">Rejected</span>
+                  {% elif fb.status == "Approved" %}
+                    <span class="badge bg-success">Approved</span>
+                  {% endif %}
+                </td>
+                <td>
+                  {% if fb.status == "Rejected" %}
+                    {{ fb.remarks|default:"Reason not provided" }}
+                  {% elif fb.status == "Approved" %}
+                    <button class="btn btn-sm btn-outline-info {% if loan.status == 'Accepted' and loan.accepted_lender.id == fb.lender.id %}active{% endif %}"
+                            data-bs-toggle="modal" data-bs-target="#lenderContacts{{fb.id}}">
+                      Lender Contacts
+                    </button>
+                  {% endif %}
+                </td>
+              </tr>
 
-        <!-- Feedback Row -->
-        <tr class="collapse" id="lenderFeedback{{loan.id}}">
-            <td colspan="10">
-                <table class="table table-sm table-bordered mb-0">
-                    <thead>
-                        <tr>
-                            <th>Sl. No.</th>
-                            <th>Date</th>
-                            <th>Lender</th>
-                            <th>Status</th>
-                            <th>Action</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for fb in loan.lender_statuses.all %}
-                        {% if fb.status == "Approved" or fb.status == "Rejected" %}
-                        <tr>
-                            <td>{{ forloop.counter }}</td>
-                            <td>{{ fb.updated_at|date:"d-m-Y H:i" }}</td>
-                            <td>{{ fb.lender.lender_details.lender_type|default:"N/A" }}</td>
-                            <td>
-                                {% if fb.status == "Rejected" %}
-                                    <span class="badge bg-danger">Rejected</span>
-                                {% elif fb.status == "Approved" %}
-                                    <span class="badge bg-success">Approved</span>
-                                {% endif %}
-                            </td>
-                            <td>
-                                {% if fb.status == "Rejected" %}
-                                    {{ fb.remarks|default:"Reason not provided" }}
-                                {% elif fb.status == "Approved" %}
-                                    <button 
-                                        class="btn btn-sm {% if loan.status == 'Accepted' and loan.accepted_lender.id == fb.lender.id %}btn-info{% else %}btn-secondary{% if loan.status == 'Accepted' %} disabled{% endif %}{% endif %}" 
-                                        data-bs-toggle="modal" data-bs-target="#lenderContacts{{fb.id}}">
-                                        Lender Contacts
-                                    </button>
-                                {% endif %}
-                            </td>
-                        </tr>
-
-                        {% if fb.status == "Approved" %}
-                        <!-- Modal -->
-                        <div class="modal fade" id="lenderContacts{{fb.id}}" tabindex="-1" aria-hidden="true">
-                            <div class="modal-dialog modal-md modal-dialog-scrollable">
-                                <div class="modal-content">
-                                    <div class="modal-header {% if loan.status == 'Accepted' and loan.accepted_lender.id == fb.lender.id %}bg-info text-white{% else %}bg-light text-muted{% endif %}">
-                                        <h5 class="modal-title">Lender Contacts</h5>
-                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                                    </div>
-                                    <div class="modal-body text-start">
-                                        {% if loan.status == "Accepted" %}
-                                            {% if loan.accepted_lender.id == fb.lender.id %}
-                                                <div class="alert alert-success">
-                                                    🎉 Congratulations! Your Profile has been Approved by Lender.
-                                                </div>
-                                                <p><strong>Full Name:</strong> {{ fb.lender.profile.full_name|default:"N/A" }}</p>
-                                                <p><strong>Mobile:</strong> {{ fb.lender.profile.mobile|default:"N/A" }}</p>
-                                                <p><strong>Bank / Firm Name:</strong> {{ fb.lender.lender_details.bank_firm_name|default:"N/A" }}</p>
-                                                <p><strong>Branch Name:</strong> {{ fb.lender.lender_details.branch_name|default:"N/A" }}</p>
-                                                <hr>
-                                                <button class="btn btn-secondary w-100" disabled style="opacity:0.7;cursor:not-allowed;">
-                                                    You have already selected this Lender for further loan communication
-                                                </button>
-                                            {% else %}
-                                                <div class="alert alert-warning">
-                                                    Applicant has already selected another lender. This option is disabled.
-                                                </div>
-                                                <button class="btn btn-secondary w-100" disabled style="opacity:0.5;cursor:not-allowed;">
-                                                    Contact Disabled
-                                                </button>
-                                            {% endif %}
-                                        {% else %}
-                                            <!-- Case: loan still Pending -->
-                                            <p><strong>Full Name:</strong> {{ fb.lender.profile.full_name|default:"N/A" }}</p>
-                                            <p><strong>Mobile:</strong> {{ fb.lender.profile.mobile|default:"N/A" }}</p>
-                                            <p><strong>Bank / Firm Name:</strong> {{ fb.lender.lender_details.bank_firm_name|default:"N/A" }}</p>
-                                            <p><strong>Branch Name:</strong> {{ fb.lender.lender_details.branch_name|default:"N/A" }}</p>
-                                            <hr>
-                                            <form method="post" action="{% url 'applicant_accept_loan' loan.id fb.lender.id %}">
-                                                {% csrf_token %}
-                                                <button type="submit" class="btn btn-accept">Accept</button>
-                                                
-                                                <p class="text-muted mt-2">After accepted this loan, it will no more be available for any Lenders</p>
-                                            </form>
-                                        {% endif %}
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+              {% if fb.status == "Approved" %}
+              <!-- ✅ Modal -->
+              <div class="modal fade" id="lenderContacts{{fb.id}}" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog modal-md modal-dialog-scrollable">
+                  <div class="modal-content">
+                    <div class="modal-header {% if loan.status == 'Accepted' and loan.accepted_lender.id == fb.lender.id %}bg-info text-white{% else %}bg-light{% endif %}">
+                      <h5 class="modal-title">Lender Contacts</h5>
+                      <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body text-start">
+                      {% if loan.status == "Accepted" %}
+                        {% if loan.accepted_lender.id == fb.lender.id %}
+                          <div class="alert alert-success">🎉 Congratulations! This lender is selected.</div>
+                          <p><strong>Name:</strong> {{ fb.lender.profile.full_name|default:"N/A" }}</p>
+                          <p><strong>Mobile:</strong> {{ fb.lender.profile.mobile|default:"N/A" }}</p>
+                          <p><strong>Bank/Firm:</strong> {{ fb.lender.lender_details.bank_firm_name|default:"N/A" }}</p>
+                          <p><strong>Branch:</strong> {{ fb.lender.lender_details.branch_name|default:"N/A" }}</p>
+                          <button class="btn btn-secondary w-100 mt-3" disabled>Already Selected</button>
+                        {% else %}
+                          <div class="alert alert-warning">Another lender already selected.</div>
+                          <button class="btn btn-secondary w-100 mt-2" disabled>Contact Disabled</button>
                         {% endif %}
-                        {% endif %}
-                        {% empty %}
-                        <tr><td colspan="6">No lender feedback yet.</td></tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </td>
-        </tr>
-        {% empty %}
-        <tr><td colspan="10">No loan requests found.</td></tr>
-        {% endfor %}
-    </tbody>
+                      {% else %}
+                        <p><strong>Name:</strong> {{ fb.lender.profile.full_name|default:"N/A" }}</p>
+                        <p><strong>Mobile:</strong> {{ fb.lender.profile.mobile|default:"N/A" }}</p>
+                        <p><strong>Bank/Firm:</strong> {{ fb.lender.lender_details.bank_firm_name|default:"N/A" }}</p>
+                        <p><strong>Branch:</strong> {{ fb.lender.lender_details.branch_name|default:"N/A" }}</p>
+                        <form method="post" action="{% url 'applicant_accept_loan' loan.id fb.lender.id %}">
+                          {% csrf_token %}
+                          <button type="submit" class="btn btn-accept w-100 mt-3">Accept</button>
+                        </form>
+                        <p class="text-muted mt-2 small">⚠ Once accepted, other lenders will be disabled.</p>
+                      {% endif %}
+                    </div>
+                  </div>
+                </div>
+              </div>
+              {% endif %}
+              {% endif %}
+            {% empty %}
+            <tr><td colspan="5" class="text-center text-muted">No lender feedback yet.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </td>
+    </tr>
+    {% empty %}
+    <tr><td colspan="10" class="text-center text-muted">No loan requests found.</td></tr>
+    {% endfor %}
+  </tbody>
 </table>
 {% endblock %}
 
 {% block extra_js %}
 <script>
 document.addEventListener("DOMContentLoaded", function () {
-    const filterBoxes = document.querySelectorAll(".filter-box");
-    const mainRows = document.querySelectorAll("table tbody tr[data-status]");
+  const filterBoxes = document.querySelectorAll(".filter-box");
+  const rows = document.querySelectorAll("table tbody tr[data-status]");
 
-    function hideSubRow(row) {
-        const sib = row.nextElementSibling;
-        if (sib && sib.classList.contains("collapse")) {
-            sib.classList.remove("show");
-            sib.style.display = "none";
-        }
-    }
-
-    function showSubRow(row) {
-        const sib = row.nextElementSibling;
-        if (sib && sib.classList.contains("collapse")) {
-            sib.style.display = "";
-        }
-    }
-
-    function applyFilter(kind) {
-        const todayISO = new Date().toISOString().split("T")[0];
-        mainRows.forEach(row => {
-            const status = (row.dataset.status || "").toLowerCase();
-            const created = row.dataset.created;
-            let show = true;
-            if (kind === "today") show = (created === todayISO);
-            else if (["approved","rejected","pending","accepted",].includes(kind)) show = (status === kind);
-
-            if (show) { row.style.display = ""; showSubRow(row); }
-            else { row.style.display = "none"; hideSubRow(row); }
-        });
-    }
-
-    filterBoxes.forEach(box => {
-        box.addEventListener("click", () => applyFilter(box.dataset.filter));
+  function applyFilter(kind) {
+    const todayISO = new Date().toISOString().split("T")[0];
+    rows.forEach(row => {
+      const status = (row.dataset.status || "").toLowerCase();
+      const created = row.dataset.created;
+      let show = true;
+      if (kind === "today") show = (created === todayISO);
+      else if (["approved","rejected","pending","accepted"].includes(kind)) show = (status === kind);
+      row.style.display = show ? "" : "none";
     });
+  }
+
+  filterBoxes.forEach(box => {
+    box.addEventListener("click", () => applyFilter(box.dataset.filter));
+  });
 });
 </script>
 {% endblock %}

@@ -207,7 +207,6 @@ def logout_view(request):
 
 
 # -------------------- Profile Form --------------------
-
 @login_required
 def profile_form(request, user_id):
     logger.error("🔎 Entered profile_form for user_id=%s by %s", user_id, request.user.email)
@@ -216,6 +215,8 @@ def profile_form(request, user_id):
 
     # ✅ Prevent unauthorized edit
     if request.user.id != user.id and not request.user.is_superuser:
+        if request.headers.get("x-requested-with") == "XMLHttpRequest":
+            return JsonResponse({"ok": False, "errors": {"auth": ["Access denied."]}}, status=403)
         messages.error(request, "You are not allowed to edit this profile.")
         return redirect("index")
 
@@ -228,7 +229,8 @@ def profile_form(request, user_id):
             "full_name": user.email.split("@")[0],
             "status": "Hold",
             "pancard_number": f"DUMMY{uuid.uuid4().hex[:4].upper()}X",
-            "aadhaar_number": str(random.randint(10**11, 10**12 - 1)),
+            # Always 12-digit Aadhaar, no spaces
+            "aadhaar_number": str(random.randint(10**11, 10**12 - 1)).zfill(12),
         },
     )
 
@@ -247,28 +249,99 @@ def profile_form(request, user_id):
         logger.error("📥 Profile POST data = %s", request.POST.dict())
 
         errors = {}
+        warnings = []
 
         # ✅ PAN validation
         pancard_number = G("pancard_number", "panCardNumber")
         if not pancard_number:
-            errors["pancard_number"] = "PAN Card Number is required."
+            errors["pancard_number"] = ["PAN Card Number is required."]
         elif not re.match(r"^[A-Z]{5}[0-9]{4}[A-Z]$", pancard_number.upper()):
-            errors["pancard_number"] = "Invalid PAN format. Example: ABCDE1234F"
+            errors["pancard_number"] = ["Invalid PAN format. Example: ABCDE1234F"]
         elif Profile.objects.filter(pancard_number=pancard_number.upper()).exclude(user=user).exists():
-            errors["pancard_number"] = f"PAN {pancard_number} already exists."
+            errors["pancard_number"] = [f"PAN {pancard_number} already exists."]
 
-        # ✅ Aadhaar validation
+        # ✅ Aadhaar validation (UI format: 1234 5678 9012 → store: 123456789012)
         aadhaar_number = G("aadhaar_number", "aadhaarNumber")
-        if not aadhaar_number:
-            errors["aadhaar_number"] = "Aadhaar Number is required."
-        elif not re.match(r"^\d{12}$", aadhaar_number):
-            errors["aadhaar_number"] = "Invalid Aadhaar format. Example: 123456789012"
-        elif Profile.objects.filter(aadhaar_number=aadhaar_number).exclude(user=user).exists():
-            errors["aadhaar_number"] = f"Aadhaar {aadhaar_number} already exists."
+        aadhaar_clean = aadhaar_number.replace(" ", "") if aadhaar_number else None
+        if not aadhaar_clean:
+            errors["aadhaar_number"] = ["Aadhaar Number is required."]
+        elif not re.match(r"^\d{12}$", aadhaar_clean):
+            errors["aadhaar_number"] = ["Invalid Aadhaar format. Must be exactly 12 digits."]
+        elif Profile.objects.filter(aadhaar_number=aadhaar_clean).exclude(user=user).exists():
+            errors["aadhaar_number"] = [f"Aadhaar {aadhaar_clean} already exists."]
 
+        # ✅ Warnings for non-mandatory fields
+        optional_fields = ["gender", "marital_status", "address", "pincode", "city", "state"]
+        for f in optional_fields:
+            if not G(f):
+                warnings.append(f)
+
+        # ✅ Agar AJAX request hai to JSON return kare
+        if request.headers.get("x-requested-with") == "XMLHttpRequest":
+            if errors:
+                return JsonResponse({"ok": False, "errors": errors, "warnings": warnings})
+
+            # Save profile
+            profile.full_name = G("full_name", "fullName") or profile.full_name
+            profile.mobile = G("mobile") or profile.mobile
+            dob_val = G("dob")
+            profile.dob = parse_date(dob_val) if dob_val else profile.dob
+            profile.gender = G("gender") or profile.gender
+            profile.marital_status = G("marital_status", "maritalStatus") or profile.marital_status
+            profile.address = G("address") or profile.address
+            profile.pincode = G("pincode") or profile.pincode
+            profile.city = G("city") or profile.city
+            profile.state = G("state") or profile.state
+            profile.pancard_number = pancard_number.upper()
+            profile.aadhaar_number = aadhaar_clean  # ✅ store clean 12-digit Aadhaar
+            profile.save()
+
+            if role == "applicant":
+                details, _ = ApplicantDetails.objects.get_or_create(user=user)
+                details.employment_type = G("employment_type", "employmentType") or details.employment_type
+                cibil_val = G("cibil_score")
+                details.cibil_score = int(cibil_val) if cibil_val and cibil_val.isdigit() else details.cibil_score
+
+                # ✅ Safe update for Job fields
+                details.company_name = G("company_name") or details.company_name
+                details.company_type = G("company_type") or details.company_type
+                details.designation = G("designation") or details.designation
+                details.itr = G("itr") or details.itr
+                details.current_salary = G("current_salary") or details.current_salary
+                details.other_income = G("other_income") or details.other_income
+                details.total_emi = G("total_emi") or details.total_emi
+
+                # ✅ Safe update for Business fields
+                details.business_name = G("business_name") or details.business_name
+                details.business_type = G("business_type") or details.business_type
+                details.business_sector = G("business_sector") or details.business_sector
+                details.total_turnover = G("total_turnover") or details.total_turnover
+                details.last_year_turnover = G("last_year_turnover") or details.last_year_turnover
+                details.business_total_emi = G("business_total_emi") or details.business_total_emi
+                details.business_itr_status = G("business_itr_status") or details.business_itr_status
+                details.save()
+
+            elif role == "lender":
+                l, _ = LenderDetails.objects.get_or_create(user=user)
+                l.lender_type = G("lender_type") or l.lender_type
+                l.bank_firm_name = G("bank_firm_name", "bankfirmName") or l.bank_firm_name
+                l.branch_name = G("branch_name", "branchName") or l.branch_name
+                l.dsa_code = G("dsa_code", "dsaCode") or l.dsa_code
+                l.designation = G("designation") or l.designation
+                l.gst_number = G("gst_number", "gstNumber") or l.gst_number
+                l.save()
+
+            return JsonResponse({
+                "ok": True,
+                "redirect_url": reverse("review_profile"),
+                "warnings": warnings  # ⚠️ warnings send even if profile saved
+            })
+
+        # ✅ Agar AJAX nahi hai (fallback for normal form submit)
         if errors:
-            for field, msg in errors.items():
-                messages.error(request, msg)
+            for field, msgs in errors.items():
+                for msg in msgs:
+                    messages.error(request, msg)
             return render(request, "profile_form.html", {
                 "user": user,
                 "profile": profile,
@@ -278,7 +351,7 @@ def profile_form(request, user_id):
                 "errors": errors,
             })
 
-        # ✅ Save profile fields
+        # Save normally
         profile.full_name = G("full_name", "fullName") or profile.full_name
         profile.mobile = G("mobile") or profile.mobile
         dob_val = G("dob")
@@ -290,19 +363,33 @@ def profile_form(request, user_id):
         profile.city = G("city") or profile.city
         profile.state = G("state") or profile.state
         profile.pancard_number = pancard_number.upper()
-        profile.aadhaar_number = aadhaar_number
+        profile.aadhaar_number = aadhaar_clean  # ✅ store clean 12-digit Aadhaar
         profile.save()
 
-        logger.error("✅ Profile saved for %s", user.email)
-
-        # ✅ Applicant / Lender details
         if role == "applicant":
             details, _ = ApplicantDetails.objects.get_or_create(user=user)
             details.employment_type = G("employment_type", "employmentType") or details.employment_type
             cibil_val = G("cibil_score")
             details.cibil_score = int(cibil_val) if cibil_val and cibil_val.isdigit() else details.cibil_score
+
+            # ✅ Safe update for Job fields
+            details.company_name = G("company_name") or details.company_name
+            details.company_type = G("company_type") or details.company_type
+            details.designation = G("designation") or details.designation
+            details.itr = G("itr") or details.itr
+            details.current_salary = G("current_salary") or details.current_salary
+            details.other_income = G("other_income") or details.other_income
+            details.total_emi = G("total_emi") or details.total_emi
+
+            # ✅ Safe update for Business fields
+            details.business_name = G("business_name") or details.business_name
+            details.business_type = G("business_type") or details.business_type
+            details.business_sector = G("business_sector") or details.business_sector
+            details.total_turnover = G("total_turnover") or details.total_turnover
+            details.last_year_turnover = G("last_year_turnover") or details.last_year_turnover
+            details.business_total_emi = G("business_total_emi") or details.business_total_emi
+            details.business_itr_status = G("business_itr_status") or details.business_itr_status
             details.save()
-            applicant_details = details
 
         elif role == "lender":
             l, _ = LenderDetails.objects.get_or_create(user=user)
@@ -313,11 +400,16 @@ def profile_form(request, user_id):
             l.designation = G("designation") or l.designation
             l.gst_number = G("gst_number", "gstNumber") or l.gst_number
             l.save()
-            lender_details = l
+
+        # ✅ Non-AJAX ke liye warnings bhi messages me dikhado
+        if warnings:
+            for w in warnings:
+                messages.warning(request, f"{w.capitalize()} is recommended but not filled.")
 
         messages.success(request, "✅ Profile saved successfully.")
         return redirect("review_profile")
 
+    # GET request
     return render(request, "profile_form.html", {
         "user": user,
         "profile": profile,
@@ -332,87 +424,177 @@ def profile_form(request, user_id):
 def edit_profile(request, user_id):
     user = get_object_or_404(User, id=user_id)
 
+    # ✅ Access control
     if request.user.id != user.id and not request.user.is_superuser:
+        if request.headers.get("x-requested-with") == "XMLHttpRequest":
+            return JsonResponse({"ok": False, "errors": {"auth": ["Access denied."]}}, status=403)
         messages.error(request, "You are not allowed to edit this profile.")
         return redirect("index")
 
-    profile, _ = Profile.objects.get_or_create(user=user)
-    applicant_details = None
-    lender_details = None
+    role = (user.role or "").lower()
 
-    if user.role == "applicant":
-        applicant_details, _ = ApplicantDetails.objects.get_or_create(user=user)
-    elif user.role == "lender":
-        lender_details, _ = LenderDetails.objects.get_or_create(user=user)
+    # ✅ Ensure profile & details exist
+    profile, _ = Profile.objects.get_or_create(user=user)
+    applicant_details = ApplicantDetails.objects.filter(user=user).first() if role == "applicant" else None
+    lender_details = LenderDetails.objects.filter(user=user).first() if role == "lender" else None
+
+    # Helper to safely extract POST values
+    def G(*keys):
+        for k in keys:
+            v = request.POST.get(k)
+            if v and str(v).strip():
+                return str(v).strip()
+        return None
 
     if request.method == "POST":
-        # 🔒 Locked fields (always from DB, not from form)
-        profile.full_name = profile.full_name or request.POST.get("full_name")
-        profile.dob = profile.dob
-        profile.mobile = profile.mobile
-        profile.pancard_number = profile.pancard_number
-        profile.aadhaar_number = profile.aadhaar_number
+        errors = {}
+        warnings = []
 
-        # Editable fields
-        profile.gender = request.POST.get("gender")
-        profile.marital_status = request.POST.get("marital_status")
-        profile.address = request.POST.get("address")
-        profile.pincode = request.POST.get("pincode")
-        profile.city = request.POST.get("city")
-        profile.state = request.POST.get("state")
+        # ✅ PAN validation (locked, but still validate)
+        pancard_number = profile.pancard_number
+        if not pancard_number:
+            errors["pancard_number"] = ["PAN Card Number is required."]
+        elif not re.match(r"^[A-Z]{5}[0-9]{4}[A-Z]$", pancard_number.upper()):
+            errors["pancard_number"] = ["Invalid PAN format. Example: ABCDE1234F"]
 
+        # ✅ Aadhaar validation (locked, already stored clean 12-digit)
+        aadhaar_number = profile.aadhaar_number
+        aadhaar_clean = aadhaar_number.replace(" ", "") if aadhaar_number else None
+        if not aadhaar_clean:
+            errors["aadhaar_number"] = ["Aadhaar Number is required."]
+        elif not re.match(r"^\d{12}$", aadhaar_clean):
+            errors["aadhaar_number"] = ["Invalid Aadhaar format. Example: 1234 5678 9012"]
+
+        # ✅ Warnings for non-mandatory fields
+        optional_fields = ["gender", "marital_status", "address", "pincode", "city", "state"]
+        for f in optional_fields:
+            if not G(f):
+                warnings.append(f)
+
+        # ✅ Agar AJAX request hai to JSON return kare
+        if request.headers.get("x-requested-with") == "XMLHttpRequest":
+            if errors:
+                return JsonResponse({"ok": False, "errors": errors, "warnings": warnings})
+
+            # Save profile (editable fields only)
+            profile.gender = G("gender") or profile.gender
+            profile.marital_status = G("marital_status", "maritalStatus") or profile.marital_status
+            profile.address = G("address") or profile.address
+            profile.pincode = G("pincode") or profile.pincode
+            profile.city = G("city") or profile.city
+            profile.state = G("state") or profile.state
+            profile.save()
+
+            # Applicant / Lender details
+            if role == "applicant" and applicant_details:
+                applicant_details.employment_type = G("employment_type", "employmentType") or applicant_details.employment_type
+                cibil_val = G("cibil_score")
+                applicant_details.cibil_score = int(cibil_val) if cibil_val and cibil_val.isdigit() else applicant_details.cibil_score
+
+                # Job
+                applicant_details.company_name = G("company_name") or applicant_details.company_name
+                applicant_details.company_type = G("company_type") or applicant_details.company_type
+                applicant_details.designation = G("designation") or applicant_details.designation
+                applicant_details.itr = G("itr") or applicant_details.itr
+                applicant_details.current_salary = G("current_salary") or applicant_details.current_salary
+                applicant_details.other_income = G("other_income") or applicant_details.other_income
+                applicant_details.total_emi = G("total_emi") or applicant_details.total_emi
+
+                # Business
+                applicant_details.business_name = G("business_name") or applicant_details.business_name
+                applicant_details.business_type = G("business_type") or applicant_details.business_type
+                applicant_details.business_sector = G("business_sector") or applicant_details.business_sector
+                applicant_details.total_turnover = G("total_turnover") or applicant_details.total_turnover
+                applicant_details.last_year_turnover = G("last_year_turnover") or applicant_details.last_year_turnover
+                applicant_details.business_total_emi = G("business_total_emi") or applicant_details.business_total_emi
+                applicant_details.business_itr_status = G("business_itr_status") or applicant_details.business_itr_status
+                applicant_details.save()
+
+            elif role == "lender" and lender_details:
+                lender_details.lender_type = G("lender_type") or lender_details.lender_type
+                lender_details.bank_firm_name = G("bank_firm_name", "bankfirmName") or lender_details.bank_firm_name
+                lender_details.branch_name = G("branch_name", "branchName") or lender_details.branch_name
+                lender_details.dsa_code = G("dsa_code", "dsaCode") or lender_details.dsa_code
+                lender_details.designation = G("designation") or lender_details.designation
+                lender_details.gst_number = G("gst_number", "gstNumber") or lender_details.gst_number
+                lender_details.save()
+
+            return JsonResponse({
+                "ok": True,
+                "redirect_url": reverse("edit_profile", args=[user.id]),
+                "warnings": warnings
+            })
+
+        # ✅ Agar AJAX nahi hai (fallback for normal form submit)
+        if errors:
+            for field, msgs in errors.items():
+                for msg in msgs:
+                    messages.error(request, msg)
+            return render(request, "edit_profile.html", {
+                "user": user,
+                "profile": profile,
+                "role": role.capitalize() if role else "",
+                "applicant_details": applicant_details,
+                "lender_details": lender_details,
+                "dashboard_url": reverse("dashboard_applicant") if role == "applicant" else reverse("dashboard_lender"),
+                "errors": errors,
+            })
+
+        # Save normally (same as AJAX)
+        profile.gender = G("gender") or profile.gender
+        profile.marital_status = G("marital_status", "maritalStatus") or profile.marital_status
+        profile.address = G("address") or profile.address
+        profile.pincode = G("pincode") or profile.pincode
+        profile.city = G("city") or profile.city
+        profile.state = G("state") or profile.state
         profile.save()
 
-        # Applicant details
-        if user.role == "applicant":
-            applicant_details.employment_type = request.POST.get("employment_type")
-            applicant_details.company_name = request.POST.get("company_name")
-            applicant_details.company_type = request.POST.get("company_type")
-            applicant_details.designation = request.POST.get("designation")
-            applicant_details.itr = request.POST.get("itr")
-            applicant_details.current_salary = request.POST.get("current_salary") or None
-            applicant_details.other_income = request.POST.get("other_income") or None
-            applicant_details.total_emi = request.POST.get("total_emi") or None
+        if role == "applicant" and applicant_details:
+            applicant_details.employment_type = G("employment_type", "employmentType") or applicant_details.employment_type
+            cibil_val = G("cibil_score")
+            applicant_details.cibil_score = int(cibil_val) if cibil_val and cibil_val.isdigit() else applicant_details.cibil_score
 
-            # Business fields
-            applicant_details.business_name = request.POST.get("business_name")
-            applicant_details.business_type = request.POST.get("business_type")
-            applicant_details.business_sector = request.POST.get("business_sector")
-            applicant_details.total_turnover = request.POST.get("total_turnover") or None
-            applicant_details.last_year_turnover = request.POST.get("last_year_turnover") or None
-            applicant_details.business_total_emi = request.POST.get("business_total_emi") or None
-            applicant_details.business_itr_status = request.POST.get("business_itr_status")
+            # Job
+            applicant_details.company_name = G("company_name") or applicant_details.company_name
+            applicant_details.company_type = G("company_type") or applicant_details.company_type
+            applicant_details.designation = G("designation") or applicant_details.designation
+            applicant_details.itr = G("itr") or applicant_details.itr
+            applicant_details.current_salary = G("current_salary") or applicant_details.current_salary
+            applicant_details.other_income = G("other_income") or applicant_details.other_income
+            applicant_details.total_emi = G("total_emi") or applicant_details.total_emi
 
+            # Business
+            applicant_details.business_name = G("business_name") or applicant_details.business_name
+            applicant_details.business_type = G("business_type") or applicant_details.business_type
+            applicant_details.business_sector = G("business_sector") or applicant_details.business_sector
+            applicant_details.total_turnover = G("total_turnover") or applicant_details.total_turnover
+            applicant_details.last_year_turnover = G("last_year_turnover") or applicant_details.last_year_turnover
+            applicant_details.business_total_emi = G("business_total_emi") or applicant_details.business_total_emi
+            applicant_details.business_itr_status = G("business_itr_status") or applicant_details.business_itr_status
             applicant_details.save()
             messages.success(request, "✅ Applicant profile updated successfully!")
-            return redirect("edit_profile", user_id=user.id)  # same page reload
 
-        # Lender details
-        elif user.role == "lender":
-            lender_details.lender_type = request.POST.get("lender_type")
-            lender_details.dsa_code = request.POST.get("dsa_code")
-            lender_details.bank_firm_name = request.POST.get("bank_firm_name")
-            lender_details.gst_number = request.POST.get("gst_number")
-            lender_details.branch_name = request.POST.get("branch_name")
-            lender_details.designation = request.POST.get("designation")
+        elif role == "lender" and lender_details:
+            lender_details.lender_type = G("lender_type") or lender_details.lender_type
+            lender_details.bank_firm_name = G("bank_firm_name", "bankfirmName") or lender_details.bank_firm_name
+            lender_details.branch_name = G("branch_name", "branchName") or lender_details.branch_name
+            lender_details.dsa_code = G("dsa_code", "dsaCode") or lender_details.dsa_code
+            lender_details.designation = G("designation") or lender_details.designation
+            lender_details.gst_number = G("gst_number", "gstNumber") or lender_details.gst_number
             lender_details.save()
             messages.success(request, "✅ Lender profile updated successfully!")
-            return redirect("edit_profile", user_id=user.id)  # same page reload
 
-    return render(
-        request,
-        "edit_profile.html",
-        {
-            "user": user,
-            "profile": profile,
-            "role": user.role.capitalize(),
-            "applicant_details": applicant_details,
-            "lender_details": lender_details,
-            "dashboard_url": reverse("dashboard_applicant") if user.role == "applicant" else reverse("dashboard_lender"),
-        },
-    )
+        return redirect("edit_profile", user_id=user.id)
 
-
+    # GET request
+    return render(request, "edit_profile.html", {
+        "user": user,
+        "profile": profile,
+        "role": role.capitalize() if role else "",
+        "applicant_details": applicant_details,
+        "lender_details": lender_details,
+        "dashboard_url": reverse("dashboard_applicant") if role == "applicant" else reverse("dashboard_lender"),
+    })
 
 # -------------------- Admin Login --------------------
 def admin_login(request):
@@ -434,7 +616,7 @@ def admin_login(request):
 
             if auth_user and auth_user.is_superuser:
                 login(request, auth_user)
-                return redirect("dashboard_admin")  # redirect on success
+                return redirect("dashboard_admin")  # ✅ success → redirect to updated profile page
             else:
                 messages.error(request, "❌ Invalid password or not an admin user.")
         else:
@@ -442,23 +624,42 @@ def admin_login(request):
 
     return render(request, "admin_login.html")
 
-# -------------------- Admin: Full Profile (Applicant & Lender)--------------------
+
+# -------------------- Admin: Full Profile (Applicant & Lender) --------------------
 @login_required
 def admin_view_profile(request, user_id):
     if not request.user.is_superuser:
         messages.error(request, "Admins only.")
         return redirect("dashboard_admin")
 
-    user = get_object_or_404(User, id=user_id)
-    profile = getattr(user, "profile", None)
-    applicant_details = ApplicantDetails.objects.filter(user=user).first() if user.role == "applicant" else None
-    lender_details = LenderDetails.objects.filter(user=user).first() if user.role == "lender" else None
+    # ✅ Prefetch profile to avoid extra queries
+    user = get_object_or_404(User.objects.select_related("profile"), id=user_id)
 
-    return render(request, "admin_full_profile.html", {
-        "user": user, "profile": profile,
-        "applicant_details": applicant_details,
-        "lender_details": lender_details,
-    })
+    # ✅ Applicant details (always safe object)
+    applicant_details = None
+    if user.role == "applicant":
+        applicant_details = ApplicantDetails.objects.filter(user=user).first()
+        if not applicant_details:
+            applicant_details = ApplicantDetails(user=user)  # empty placeholder
+
+    # ✅ Lender details (always safe object)
+    lender_details = None
+    if user.role == "lender":
+        lender_details = LenderDetails.objects.filter(user=user).first()
+        if not lender_details:
+            lender_details = LenderDetails(user=user)  # empty placeholder
+
+    return render(
+        request,
+        "admin_full_profile.html",
+        {
+            "user": user,
+            "profile": getattr(user, "profile", None),
+            "applicant_details": applicant_details,
+            "lender_details": lender_details,
+        },
+    )
+
 
 
 # -------------------- Review Profile (Applicant & Lender)--------------------
@@ -946,19 +1147,51 @@ def feedback_view(request):
 @login_required
 def generate_cibil_score(request, loan_id):
     loan = get_object_or_404(LoanRequest, id=loan_id)
+
+    # ✅ Only lenders allowed
     if request.user.role != "lender":
-        return JsonResponse({"ok": False, "message": "Only lenders can generate CIBIL."}, status=403)
+        return JsonResponse(
+            {"ok": False, "message": "Only lenders can generate CIBIL."}, status=403
+        )
 
-    recent = CibilReport.objects.filter(loan=loan, lender=request.user).order_by("-created_at").first()
-    if recent and (timezone.now() - recent.created_at) < timedelta(days=30):
-        return JsonResponse({"ok": False, "already": True, "score": recent.score, "created_at": recent.created_at.isoformat(),
-                             "message": "CIBIL already generated. Try again after 30 days."})
+    applicant_details = getattr(loan.applicant, "applicant_details", None)
+    if not applicant_details:
+        return JsonResponse(
+            {"ok": False, "message": "Applicant details not found."}, status=404
+        )
 
+    # ✅ 31 days lock
+    if applicant_details.cibil_last_generated:
+        diff_days = (timezone.now() - applicant_details.cibil_last_generated).days
+        if diff_days < 31:
+            return JsonResponse({
+                "ok": False,
+                "already": True,
+                "score": applicant_details.cibil_score,
+                "created_at": applicant_details.cibil_last_generated.isoformat(),
+                "message": f"CIBIL already generated on {applicant_details.cibil_last_generated.strftime('%d-%m-%Y %I:%M %p')}. Try again after {31 - diff_days} days."
+            })
+
+    # ✅ Random CIBIL Score
     score = random.randint(300, 900)
-    report = CibilReport.objects.create(loan=loan, lender=request.user, score=score)
 
-    applicant_details = loan.applicant.applicant_details
+    # (Optional) Save in history
+    CibilReport.objects.create(
+        loan=loan,
+        lender=request.user,
+        score=score
+    )
+
+    # ✅ Save in ApplicantDetails
     applicant_details.cibil_score = score
-    applicant_details.save(update_fields=["cibil_score"])
+    applicant_details.cibil_last_generated = timezone.now()
+    applicant_details.cibil_generated_by = request.user
+    applicant_details.save(update_fields=["cibil_score", "cibil_last_generated", "cibil_generated_by"])
 
-    return JsonResponse({"ok": True, "score": report.score, "created_at": report.created_at.isoformat(), "message": "CIBIL generated successfully"})
+    return JsonResponse({
+        "ok": True,
+        "score": score,
+        "created_at": applicant_details.cibil_last_generated.isoformat(),
+        "message": "✅ CIBIL generated successfully"
+    })
+

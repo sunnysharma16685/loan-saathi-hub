@@ -14,8 +14,6 @@ from django.core.exceptions import ValidationError
 import re
 
 
-
-
 # -----------------------------
 # USER REGISTRATION FORMS
 # -----------------------------
@@ -73,12 +71,18 @@ class ApplicantRegistrationForm(forms.ModelForm):
 
     def clean_aadhaar_number(self):
         aadhaar = self.cleaned_data.get("aadhaar_number", "")
+        aadhaar = aadhaar.replace(" ", "")  # ✅ remove spaces
         if not re.match(r"^\d{12}$", aadhaar):
-            raise ValidationError("Invalid Aadhaar format. Must be 12 digits.")
+            raise ValidationError("Invalid Aadhaar format. Must be exactly 12 digits.")
         if Profile.objects.filter(aadhaar_number=aadhaar).exists():
             raise ValidationError(f"Aadhaar {aadhaar} already exists.")
         return aadhaar
 
+    def clean_phone(self):
+        phone = self.cleaned_data.get("phone")
+        if phone and (not phone.isdigit() or len(phone) != 10):
+            raise forms.ValidationError("Enter a valid 10-digit phone number")
+        return phone
     def save(self, commit=True):
         user = super().save(commit=False)
         user.role = "applicant"
@@ -162,12 +166,12 @@ class LenderRegistrationForm(forms.ModelForm):
 
     def clean_aadhaar_number(self):
         aadhaar = self.cleaned_data.get("aadhaar_number", "")
+        aadhaar = aadhaar.replace(" ", "")  # ✅ remove spaces
         if not re.match(r"^\d{12}$", aadhaar):
-            raise ValidationError("Invalid Aadhaar format. Must be 12 digits.")
+            raise ValidationError("Invalid Aadhaar format. Must be exactly 12 digits.")
         if Profile.objects.filter(aadhaar_number=aadhaar).exists():
             raise ValidationError(f"Aadhaar {aadhaar} already exists.")
         return aadhaar
-
     def save(self, commit=True):
         user = super().save(commit=False)
         user.role = "lender"
@@ -200,6 +204,47 @@ class LenderRegistrationForm(forms.ModelForm):
                 designation=self.cleaned_data.get("designation"),
             )
         return user
+
+# -----------------------------
+# PROFILE UPDATE FORM
+# -----------------------------
+class ProfileForm(forms.ModelForm):
+    class Meta:
+        model = Profile
+        fields = [
+            "full_name",
+            "mobile",
+            "gender",
+            "address",
+            "pincode",
+            "city",
+            "state",
+            "pancard_number",
+            "aadhaar_number",
+            "dob",
+        ]
+
+    # PAN Validation
+    def clean_pancard_number(self):
+        pancard = self.cleaned_data.get("pancard_number", "").upper()
+        if pancard and not re.match(r"^[A-Z]{5}[0-9]{4}[A-Z]$", pancard):
+            raise ValidationError("Invalid PAN format. Example: ABCDE1234F")
+        return pancard
+
+    # Aadhaar Validation
+    def clean_aadhaar_number(self):
+        aadhaar = self.cleaned_data.get("aadhaar_number", "")
+        aadhaar = aadhaar.replace(" ", "")  # ✅ remove spaces
+        if aadhaar and not re.match(r"^\d{12}$", aadhaar):
+            raise ValidationError("Invalid Aadhaar format. Must be exactly 12 digits.")
+        return aadhaar
+
+    # Phone Validation
+    def clean_mobile(self):
+        mobile = self.cleaned_data.get("mobile")
+        if mobile and (not mobile.isdigit() or len(mobile) != 10):
+            raise ValidationError("Enter a valid 10-digit phone number")
+        return mobile
 
 # -----------------------------
 # LOGIN FORM
@@ -256,3 +301,4 @@ class FeedbackForm(forms.ModelForm):
             ),
             "message": forms.Textarea(attrs={"rows": 4, "class": "form-control"}),
         }
+

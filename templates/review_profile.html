@@ -31,10 +31,15 @@
     If we find any issue in your profile, our team will reach you via your registered <strong>phone number</strong> or <strong>email</strong>.
   </p>
 
-  <!-- ✅ Home Button -->
-  <div class="mt-4 animate__animated animate__fadeInUp animate__delay-3s">
+  <!-- ✅ Action Buttons -->
+  <div class="mt-4 animate__animated animate__fadeInUp animate__delay-3s d-flex justify-content-center gap-3">
     <a href="{% url 'index' %}" class="btn btn-success btn-lg rounded-3 shadow-sm">
       <i class="bi bi-house-door-fill me-1"></i> Back to Home
+    </a>
+
+    <!-- 🔹 Edit Profile Button -->
+    <a href="{% url 'profile_form' user.id %}" class="btn btn-outline-primary btn-lg rounded-3 shadow-sm">
+      <i class="bi bi-pencil-square me-1"></i> Edit Profile
     </a>
   </div>
 </div>

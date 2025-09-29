@@ -140,6 +140,7 @@
       <div class="collapse navbar-collapse" id="navbarNav">
         {% block navbar %}
         <ul class="navbar-nav ms-auto align-items-center">
+
           {% if not request.user.is_authenticated %}
             <!-- Guest -->
             <li class="nav-item"><a class="nav-link" href="{% url 'index' %}">Home</a></li>
@@ -147,28 +148,45 @@
             <li class="nav-item"><a class="btn btn-register" href="{% url 'register' %}">Register</a></li>
 
           {% else %}
-            <!-- Always show Home -->
-            <li class="nav-item"><a class="nav-link" href="{% url 'index' %}">Home</a></li>
-
+            <!-- ✅ Welcome First -->
             {% if request.user.is_superuser %}
+              <li class="nav-item">
+                <span class="nav-link fw-semibold" style="color:#001f54;">
+                  Welcome, {{ request.user.get_full_name|default:request.user.email }}
+                </span>
+              </li>
+              <li class="nav-item"><a class="nav-link" href="{% url 'index' %}">Home</a></li>
               <li class="nav-item"><a class="nav-link" href="{% url 'dashboard_admin' %}">Admin Dashboard</a></li>
+
             {% else %}
-              {% if request.user.profile and request.user.profile.is_reviewed %}
+              {% if request.user.profile and request.user.profile.status == "Active" %}
+                <li class="nav-item">
+                  <span class="nav-link fw-semibold" style="color:#001f54;">
+                    Welcome, {{ request.user.profile.full_name }}
+                  </span>
+                </li>
+                <li class="nav-item"><a class="nav-link" href="{% url 'index' %}">Home</a></li>
                 {% if request.user.role == "applicant" %}
                   <li class="nav-item"><a class="nav-link" href="{% url 'dashboard_applicant' %}">Dashboard</a></li>
                 {% elif request.user.role == "lender" %}
                   <li class="nav-item"><a class="nav-link" href="{% url 'dashboard_lender' %}">Dashboard</a></li>
                 {% endif %}
+              {% else %}
+                <li class="nav-item">
+                  <span class="nav-link text-warning">Profile pending approval</span>
+                </li>
+                <li class="nav-item"><a class="nav-link" href="{% url 'index' %}">Home</a></li>
               {% endif %}
             {% endif %}
 
-            <!-- Logout -->
+            <!-- ✅ Logout (always last for authenticated users) -->
             <li class="nav-item">
               <a class="nav-link text-danger fw-semibold" href="{% url 'logout' %}">
                 <i class="bi bi-box-arrow-right me-1"></i> Logout
               </a>
             </li>
           {% endif %}
+
         </ul>
         {% endblock %}
       </div>

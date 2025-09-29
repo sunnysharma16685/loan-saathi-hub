@@ -113,9 +113,7 @@ class Profile(models.Model):
     aadhaar_number = models.CharField(
         max_length=12,
         unique=True,
-        null=False,
-        blank=False,
-        help_text="12-digit Aadhaar (e.g., 123456789012)"
+        help_text="12-digit Aadhaar (digits only, spaces auto-formatted in UI)"
     )
 
     # Location
@@ -141,6 +139,14 @@ class ApplicantDetails(models.Model):
 
     job_type = models.CharField(max_length=50, blank=True, null=True)
     cibil_score = models.IntegerField(blank=True, null=True)
+    cibil_last_generated = models.DateTimeField(blank=True, null=True)
+
+    # 🔥 New fields for CIBIL tracking
+    
+    cibil_generated_by = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, blank=True, related_name="generated_cibil_scores"
+    )
+
     employment_type = models.CharField(max_length=50, blank=True, null=True)
     company_name = models.CharField(max_length=255, blank=True, null=True)
     company_type = models.CharField(max_length=255, blank=True, null=True)

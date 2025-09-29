@@ -31,7 +31,8 @@ urlpatterns = [
     path("dashboard/applicant/", views.dashboard_applicant, name="dashboard_applicant"),
     path("dashboard/lender/", views.dashboard_lender, name="dashboard_lender"),
     path("dashboard/", views.dashboard_router, name="dashboard_router"),  # auto redirect based on role
-    path("dashboard/lender/cibil/generate/<uuid:loan_id>/", views.generate_cibil_score, name="generate_cibil_score"),
+    path("generate_cibil/<uuid:loan_id>/", views.generate_cibil_score, name="generate_cibil_score"),
+
 
     # ---------------- Loan + Payment ----------------
     path("loan/request/", views.loan_request, name="loan_request"),

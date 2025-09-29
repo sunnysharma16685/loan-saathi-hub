@@ -1,162 +1,211 @@
+{% extends "base.html" %}
 {% load static %}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>New Loan Request - LoanSaathiHub</title>
 
-    <!-- Google Font -->
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+{% block title %}New Loan Request | Loan Saathi Hub{% endblock %}
 
-    <style>
-        body {
-            font-family: 'Poppins', sans-serif;
-            background-color: #f8f9fa;
-            margin: 0;
-            padding: 0;
-        }
-        header {
-            background-color: #0d6efd;
-            padding: 15px 20px;
-            color: white;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        header h1 {
-            margin: 0;
-            font-size: 20px;
-        }
-        header a {
-            color: white;
-            text-decoration: none;
-            margin-left: 15px;
-            font-weight: 500;
-        }
-        .form-container {
-            max-width: 600px;
-            background: #fff;
-            margin: 40px auto;
-            padding: 30px;
-            border-radius: 16px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.05);
-        }
-        h2 {
-            text-align: center;
-            color: #0d6efd;
-            margin-bottom: 20px;
-            font-weight: 600;
-        }
-        label {
-            display: block;
-            font-weight: 500;
-            margin-bottom: 6px;
-            color: #333;
-        }
-        input, select, textarea {
-            width: 100%;
-            padding: 10px 14px;
-            border: 1px solid #ccc;
-            border-radius: 8px;
-            font-size: 14px;
-            margin-bottom: 16px;
-            font-family: inherit;
-        }
-        input:focus, select:focus, textarea:focus {
-            border-color: #0d6efd;
-            outline: none;
-            box-shadow: 0 0 0 3px rgba(13,110,253,0.15);
-        }
-        button {
-            width: 48%;
-            background-color: #0d6efd;
-            color: #fff;
-            padding: 12px;
-            font-size: 16px;
-            font-weight: 600;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: background 0.3s ease;
-        }
-        button:hover {
-            background-color: #0b5ed7;
-        }
-        .btn-back {
-            background-color: #6c757d;
-        }
-        .btn-back:hover {
-            background-color: #5a6268;
-        }
-        .btn-group {
-            display: flex;
-            justify-content: space-between;
-        }
-    </style>
-</head>
-<body>
+{% block extra_head %}
+  <style>
+    .form-card {
+      max-width: 650px;
+      background: #fff;
+      margin: 30px auto;
+      padding: 30px;
+      border-radius: 16px;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+    }
+    .form-card h2 {
+      text-align: center;
+      color: var(--brand);
+      font-weight: 700;
+      margin-bottom: 20px;
+    }
+    label {
+      font-weight: 500;
+      margin-bottom: 6px;
+      color: #333;
+    }
+    input, select {
+      width: 100%;
+      padding: 10px 14px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      font-size: 14px;
+      margin-bottom: 6px;
+      font-family: inherit;
+    }
+    input:focus, select:focus {
+      border-color: var(--brand);
+      outline: none;
+      box-shadow: 0 0 0 3px rgba(13,110,253,0.15);
+    }
+    .btn-submit {
+      background-color: var(--brand);
+      color: #fff;
+      font-weight: 600;
+      padding: 12px;
+      border-radius: 8px;
+      border: none;
+      width: 100%;
+      transition: 0.3s;
+    }
+    .btn-submit:hover { background-color: var(--brand-dark); }
+    .btn-back {
+      background-color: #6c757d;
+      color: #fff;
+      font-weight: 600;
+      padding: 12px;
+      border-radius: 8px;
+      border: none;
+      width: 100%;
+    }
+    .btn-back:hover { background-color: #5a6268; }
+    .btn-group {
+      display: flex;
+      gap: 12px;
+    }
+    small.text-muted { display: block; margin-bottom: 14px; font-size: 13px; }
+    .hint { font-size: 13px; color: #6c757d; margin-bottom: 14px; }
+  </style>
+{% endblock %}
 
-<header>
-    <h1>LoanSaathiHub</h1>
-    <div>
-        <a href="{% url 'dashboard_router' %}">Back to Dashboard</a>
-        <a href="{% url 'logout' %}">Logout</a>
-    </div>
-</header>
-
-<div class="form-container">
+{% block content %}
+  <div class="form-card">
     <h2>Apply for New Loan</h2>
 
-    <form method="POST" action="{% url 'loan_request' %}">
-        {% csrf_token %}
-        
-        <label for="loanType">Loan Type</label>
-        <select id="loanType" name="loan_type" required>
-            <option value="">-- Select Loan Type --</option>
-            <option value="Personal Loan">Personal Loan</option>
-            <option value="Home Loan">Home Loan</option>
-            <option value="Business Loan">Business Loan</option>
-            <option value="Vehicle Loan">Vehicle Loan</option>
-            <option value="Agriculture Loan">Agriculture Loan</option>
-            <option value="Mudra Loan">Mudra Loan</option>
-            <option value="Overdraft Loan">Overdraft Loan</option>
-        </select>
-
-            <label for="amount">Amount Requested (₹)</label>
-            <input type="number" id="amount" name="amount_requested" min="1" required>
-
-            <label for="duration">Duration (in months)</label>
-            <input type="number" id="duration" name="duration_months" min="1" required>
-
-            <label for="interest">Preferred Rate of Interest (%)</label>
-            <input type="number" id="interest" name="interest_rate" min="1" max="100" step="0.01" required>
-            <small style="color: gray;">Enter value between 1 and 100</small>
-        </select>
-
-        <label for="reason_for_loan">Reason for Loan</label>
-<select id="reason_for_loan" name="reason_for_loan" required>
-    <option value="">-- Select Reason --</option>
-    <option value="Marriage">Marriage</option>
-    <option value="Medical">Medical Expenses</option>
-    <option value="Home Renovation">Home Renovation</option>
-    <option value="Education">Education</option>
-    <option value="Travel">Travel / Vacation</option>
-    <option value="Business Expansion">Business Expansion</option>
-    <option value="Personal">Personal Needs</option>
-    <option value="Home">New Home</option>
-    <option value="Vehicle">New Vehicle</option>
-    <option value="Others">Others</option>
-</select>
-
-
-        
-        <div class="btn-group">
-            <button type="button" class="btn-back" onclick="window.location.href='{% url 'dashboard_router' %}'">Back</button>
-            <button type="submit">Submit</button>
+    <!-- ✅ Messages -->
+    {% if messages %}
+      {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} alert-dismissible fade show shadow-sm">
+          {{ message }}
+          <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
-    </form>
-</div>
+      {% endfor %}
+    {% endif %}
 
-</body>
-</html>
+    <form method="POST" action="{% url 'loan_request' %}">
+      {% csrf_token %}
+      
+      <label for="loanType"><i class="bi bi-cash-coin me-1"></i> Loan Type</label>
+      <select id="loanType" name="loan_type" required>
+        <option value="">-- Select Loan Type --</option>
+        <option value="Personal Loan">Personal Loan</option>
+        <option value="Home Loan">Home Loan</option>
+        <option value="Business Loan">Business Loan</option>
+        <option value="Vehicle Loan">Vehicle Loan</option>
+        <option value="Agriculture Loan">Agriculture Loan</option>
+        <option value="Mudra Loan">Mudra Loan</option>
+        <option value="Overdraft Loan">Overdraft Loan</option>
+      </select>
+
+      <label for="amount"><i class="bi bi-currency-rupee me-1"></i> Amount Requested</label>
+      <input type="text" id="amount" name="amount_requested" required placeholder="Enter loan amount (₹)">
+      <div class="hint" id="amountWords">💡 Example: 1,50,000</div>
+
+      <label for="duration"><i class="bi bi-calendar-range me-1"></i> Duration (Months)</label>
+      <input type="number" id="duration" name="duration_months" min="1" required placeholder="Enter duration in months">
+      <div class="hint" id="durationHint">⏳ ≈ 0 years</div>
+
+      <label for="interest"><i class="bi bi-percent me-1"></i> Preferred Interest Rate (%)</label>
+      <input type="number" id="interest" name="interest_rate" min="7" max="100" step="0.01" required placeholder="Example: 12.5">
+      <small class="text-muted">⚠ Enter value between 7 and 100</small>
+
+      <label for="reason_for_loan"><i class="bi bi-file-text me-1"></i> Reason for Loan</label>
+      <select id="reason_for_loan" name="reason_for_loan" required>
+        <option value="">-- Select Reason --</option>
+        <option value="Marriage">Marriage</option>
+        <option value="Medical">Medical Expenses</option>
+        <option value="Home Renovation">Home Renovation</option>
+        <option value="Education">Education</option>
+        <option value="Travel">Travel / Vacation</option>
+        <option value="Business Expansion">Business Expansion</option>
+        <option value="Personal">Personal Needs</option>
+        <option value="Home">New Home</option>
+        <option value="Vehicle">New Vehicle</option>
+        <option value="Others">Others</option>
+      </select>
+
+      <div class="btn-group mt-3">
+        <button type="button" class="btn-back" onclick="window.location.href='{% url 'dashboard_router' %}'">
+          <i class="bi bi-arrow-left-circle me-1"></i> Back
+        </button>
+        <button type="submit" class="btn-submit">
+          <i class="bi bi-check-circle me-1"></i> Submit Loan Request
+        </button>
+      </div>
+    </form>
+  </div>
+
+ <script>
+  function formatIndianNumber(x) {
+    return x.replace(/\B(?=(\d{3})+(?!\d))/g, ",")
+            .replace(/(\d+)(?=(\d{2})+(?!\d))/g, "$1,");
+  }
+  function numberToWords(num) {
+    const a=["","One","Two","Three","Four","Five","Six","Seven","Eight","Nine","Ten",
+      "Eleven","Twelve","Thirteen","Fourteen","Fifteen","Sixteen","Seventeen","Eighteen","Nineteen"];
+    const b=["","","Twenty","Thirty","Forty","Fifty","Sixty","Seventy","Eighty","Ninety"];
+    if((num=num.toString()).length>9) return "Overflow";
+    let n=("000000000"+num).substr(-9).match(/^(\d{2})(\d{2})(\d{2})(\d{1})(\d{2})$/);
+    if(!n) return; let str="";
+    str+=(n[1]!=0)?(a[Number(n[1])]||b[n[1][0]]+" "+a[n[1][1]])+" Crore ":"";
+    str+=(n[2]!=0)?(a[Number(n[2])]||b[n[2][0]]+" "+a[n[2][1]])+" Lakh ":"";
+    str+=(n[3]!=0)?(a[Number(n[3])]||b[n[3][0]]+" "+a[n[3][1]])+" Thousand ":"";
+    str+=(n[4]!=0)?(a[Number(n[4])]||b[n[4][0]]+" "+a[n[4][1]])+" Hundred ":"";
+    str+=(n[5]!=0)?((str!="")?"and ":"")+(a[Number(n[5])]||b[n[5][0]]+" "+a[n[5][1]])+" ":"";
+    return (str.trim() || "Zero") + " Rupees";
+  }
+
+  const form         = document.querySelector("form");
+  const amountInput  = document.getElementById("amount");
+  const amountWords  = document.getElementById("amountWords");
+  const durationEl   = document.getElementById("duration");
+  const interestEl   = document.getElementById("interest");
+
+  // Amount formatting + words
+  amountInput.addEventListener("input", function () {
+    let raw = this.value.replace(/,/g, "");
+    if (!isNaN(raw) && raw.length > 0) {
+      this.value = formatIndianNumber(raw);
+      amountWords.textContent = "🔢 " + numberToWords(raw);
+    } else {
+      amountWords.textContent = "💡 Example: 1,50,000";
+    }
+  });
+
+  // Duration → years hint
+  durationEl.addEventListener("input", function () {
+    let months = parseInt(this.value) || 0;
+    let years = (months / 12).toFixed(1);
+    document.getElementById("durationHint").textContent = "⏳ ≈ " + years + " years";
+  });
+
+  // Interest validate (blur + submit)
+  function validateInterest() {
+    const val = parseFloat(interestEl.value);
+    if (isNaN(val)) return true;
+    if (val < 7 || val > 100) {
+      alert("Interest rate must be between 7% and 100%");
+      // ❌ reset galat value
+      interestEl.value = "";
+      interestEl.focus();
+      return false;
+    }
+    return true;
+  }
+
+  interestEl.addEventListener("blur", function () {
+    if (interestEl.value !== "") validateInterest();
+  });
+
+  form.addEventListener("submit", function (e) {
+    if (amountInput && amountInput.value) {
+      amountInput.value = amountInput.value.replace(/,/g, "");
+    }
+    if (!validateInterest()) {
+      e.preventDefault();
+    }
+  });
+</script>
+
+
+{% endblock %}

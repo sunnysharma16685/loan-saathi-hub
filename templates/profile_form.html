@@ -1,4 +1,3 @@
-
 {% extends "base.html" %}
 {% load static %}
 
@@ -59,6 +58,7 @@
         {% endif %}
       </div>
 
+  
       <form method="POST" novalidate>
         {% csrf_token %}
 
@@ -241,37 +241,33 @@
       {% endif %}
     </div>
 
-    <!-- Aadhaar Number -->
-    <div class="col-md-6">
-      <label class="form-label" for="aadhaar_number">
-        Aadhaar Number <span class="text-danger">*</span>
-      </label>
-      <input
-        type="text"
-        class="form-control {% if errors.aadhaar_number %}is-invalid{% endif %}"
-        name="aadhaar_number"
-        id="aadhaar_number"
-        maxlength="12"
-        inputmode="numeric"
-        pattern="\d{12}"
-        placeholder="e.g., 123456789012"
-        value="{{ profile.aadhaar_number|default:'' }}"
-        required
-      >
-      {% if errors.aadhaar_number %}
-        <div class="invalid-feedback">{{ errors.aadhaar_number }}</div>
-      {% else %}
-        <small class="text-success">
-        <span style="filter: blur(0.2px);">Example Aadhar number, just replace it.</span> 
-        </small>
-        <br>
-        <small class="text-danger fw-semibold">⚠️ Aadhaar must match with UIDAI</small> (12 digits)
-      {% endif %}
-    </div>
-
-  </div>
+        <!-- Aadhaar Number -->
+<div class="col-md-6">
+  <label class="form-label" for="aadhaar_number">
+    Aadhaar Number <span class="text-danger">*</span>
+  </label>
+  <input
+    type="text"
+    class="form-control {% if errors.aadhaar_number %}is-invalid{% endif %}"
+    name="aadhaar_number"
+    id="aadhaar_number"
+    maxlength="14"
+    inputmode="numeric"
+    placeholder="e.g., 1234 5678 9012"
+    value="{{ profile.aadhaar_number|default:'' }}"
+    required
+    oninput="formatAadhaar(this)"
+  >
+  {% if errors.aadhaar_number %}
+    <div class="invalid-feedback">{{ errors.aadhaar_number }}</div>
+  {% else %}
+    <small class="text-success">
+      <span style="filter: blur(0.2px);">Example Aadhar number, just replace it.</span>
+    </small>
+    <br>
+    <small class="text-danger fw-semibold">⚠️ Aadhaar must match with UIDAI</small> (12 digits)
+  {% endif %}
 </div>
-
 
 
         <!-- Applicant Only -->
@@ -291,16 +287,21 @@
           </div>
 
           <!-- CIBIL Score Display -->
-          <div class="mb-3">
-            <label class="form-label">CIBIL Score (300-900)</label>
-            {% if applicant_details.cibil_score %}
-              <input type="number" class="form-control" value="{{ applicant_details.cibil_score }}" readonly style="background:#f8f9fa; cursor:not-allowed;">
-              <small class="text-muted">Generated on {{ applicant_details.cibil_generated_at|date:"d M Y, H:i" }}</small>
-            {% else %}
-              <input type="text" class="form-control" value="Not generated yet" readonly style="background:#f8f9fa; cursor:not-allowed;">
-              <small class="text-muted">A lender will generate your CIBIL score during loan review.</small>
-            {% endif %}
-          </div>
+<div class="mb-3">
+  <label class="form-label">CIBIL Score (300-900)</label>
+  {% if applicant_details.cibil_score %}
+    <input type="number" class="form-control" value="{{ applicant_details.cibil_score }}" readonly style="background:#f8f9fa; cursor:not-allowed;">
+    <small class="text-muted">
+      Generated on {{ applicant_details.cibil_last_generated|date:"d M Y, H:i" }}
+    </small>
+  {% else %}
+    <input type="text" class="form-control" value="Not generated yet" readonly style="background:#f8f9fa; cursor:not-allowed;">
+    <small class="text-muted">
+      A lender will generate your CIBIL score during loan review.
+    </small>
+  {% endif %}
+</div>
+
 
           <!-- Job Fields -->
           <div id="jobFields" class="mb-3">
@@ -440,19 +441,100 @@
           </div>
         </div>
 
-        <!-- Submit -->
-        <div class="d-flex justify-content-end mt-4">
-          <button type="submit" class="btn btn-gradient px-4 py-2" id="submitBtn">
-            Save Profile
-          </button>
-        </div>
-      </form>
-    </div>
-  </main>
+             <!-- Submit -->
+<div class="d-flex justify-content-end mt-4">
+  <button type="submit" class="btn btn-gradient px-4 py-2" id="submitBtn">
+    Save Profile
+  </button>
+</div>
+</form>
+</div>
+</main>
 </div>
 {% endblock %}
 
 {% block extra_js %}
+<!-- SweetAlert2 -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script>
+  // 🔹 Aadhaar auto-formatting (1234 5678 9012)
+  function formatAadhaar(input) {
+    let value = input.value.replace(/\D/g, "");   // only digits
+    value = value.substring(0, 12);               // max 12 digits
+    let formatted = value.replace(/(.{4})(?=.)/g, "$1 "); // space after 4,8
+    input.value = formatted;
+  }
+
+  // 🔹 Intercept form submit for AJAX + SweetAlert
+  document.addEventListener("DOMContentLoaded", function () {
+    const form = document.querySelector("form");
+    const submitBtn = document.getElementById("submitBtn");
+    const aadhaarField = document.getElementById("aadhaar_number");
+
+    // Attach auto-format Aadhaar on input
+    if (aadhaarField) {
+      aadhaarField.addEventListener("input", function () {
+        formatAadhaar(aadhaarField);
+      });
+    }
+
+    form.addEventListener("submit", function (e) {
+      e.preventDefault();
+
+      fetch(form.action || window.location.pathname, {
+        method: "POST",
+        body: new FormData(form),
+        headers: { "X-Requested-With": "XMLHttpRequest" }
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.ok) {
+          Swal.fire({
+            title: "✅ Saved!",
+            text: "Profile updated successfully.",
+            icon: "success",
+            confirmButtonText: "OK"
+          }).then(() => {
+            window.location.href = data.redirect_url;
+          });
+        } else {
+          let html = "";
+
+          if (data.errors) {
+            for (let field in data.errors) {
+              html += `<b>${field}:</b> ${data.errors[field].join(", ")}<br>`;
+            }
+          }
+
+          if (data.warnings && data.warnings.length > 0) {
+            html += `<hr><b>⚠️ Warning:</b> You haven't filled required fields:<br>`;
+            html += data.warnings.join(", ");
+          }
+
+          Swal.fire({
+            title: "Form Issues",
+            html: html || "Something went wrong!",
+            icon: "warning",
+            showCancelButton: true,
+            confirmButtonText: "Save Anyway",
+            cancelButtonText: "Back"
+          }).then((result) => {
+            if (result.isConfirmed) {
+              form.submit(); // fallback normal submit
+            }
+          });
+        }
+      })
+      .catch(err => {
+        console.error("Form submit error:", err);
+        Swal.fire("Error", "Something went wrong. Please try again.", "error");
+      });
+    });
+  });
+</script>
+
+<!-- ✅ Your existing JS stays the same -->
 <script>
   const ROLE_FROM_INDEX = document.querySelector('.page-wrapper')?.dataset.role || '';
   let generatedOTP = null, resendTimer = null, resendRemaining = 30;
@@ -518,7 +600,6 @@
     if (applicant) applicant.style.display = (ROLE_FROM_INDEX === "applicant") ? "block" : "none";
     if (lender) lender.style.display = (ROLE_FROM_INDEX === "lender") ? "block" : "none";
 
-    // ✅ Run toggle only for applicants
     if (ROLE_FROM_INDEX === "applicant") {
       toggleApplicantType();
     }
@@ -540,13 +621,3 @@
   }
 </script>
 {% endblock %}
-
-       
-
-       
-
-       
-
-       
-
-      

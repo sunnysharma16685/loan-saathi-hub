@@ -129,3 +129,40 @@ footer a {
 footer a:hover {
   text-decoration: underline;
 }
+
+/* ------------------------------
+   Ads Styling
+------------------------------ */
+.ad-box {
+  background: #f8f9fa;
+  border: 1px solid #e1e5eb;
+  border-radius: 12px;
+  padding: 10px;
+  text-align: center;
+  transition: all 0.3s ease-in-out;
+  margin-bottom: 15px;
+}
+
+.ad-box img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 8px;
+}
+
+.ad-box:hover {
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  transform: translateY(-2px);
+}
+
+/* ✅ Size-based Ads */
+.ad-box.small img { max-width: 200px; }
+.ad-box.medium img { max-width: 400px; }
+.ad-box.big img { max-width: 728px; }
+
+/* Center alignment in grids */
+.ad-box.text-center {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+

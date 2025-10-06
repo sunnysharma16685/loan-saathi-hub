@@ -21,7 +21,7 @@
 <div class="container-max">
   <h2 class="my-4 fw-bold">Admin Dashboard</h2>
 
-  <!-- ✅ Summary Cards -->
+<!-- ✅ Summary Cards -->
 <div class="row g-3 mb-4">
   <div class="col-md-2">
     <div class="summary-card bg-primary text-white">
@@ -53,6 +53,8 @@
       <h6>Payments</h6><h3>{{ payments|length }}</h3>
     </div>
   </div>
+</div>
+
   <!-- ✅ Gmail Summary Card -->
   <div class="col-md-2">
     <a href="{% url 'admin_emails' %}" style="text-decoration:none;">
@@ -61,6 +63,11 @@
       </div>
     </a>
   </div>
+</div>
+
+<!-- ✅ Quick Action Buttons -->
+<div class="mb-4 d-flex gap-2">
+  <a href="{% url 'admin:main_pagead_changelist' %}" class="btn btn-dark">🪧 Manage Ads</a>
 </div>
 
 <!-- ✅ Gmail Section -->

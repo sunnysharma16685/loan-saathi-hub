@@ -179,3 +179,48 @@ class DeletedUserLog(models.Model):
     pancard_number=models.CharField(max_length=20,null=True,blank=True); aadhaar_number=models.CharField(max_length=20,null=True,blank=True)
     reason=models.TextField(); deleted_at=models.DateTimeField(auto_now_add=True)
     def __str__(self): return f"{self.email}-{self.reason[:30]}"
+
+
+# =====================================================
+# ADVERTISEMENT
+# =====================================================
+class PageAd(models.Model):
+    PAGE_CHOICES = [
+        ("loan_request", "Loan Request Page"),
+        ("dashboard_admin", "Admin Dashboard"),
+        ("dashboard_applicant", "Applicant Dashboard"),
+        ("dashboard_lender", "Lender Dashboard"),
+        ("profile_form", "Profile Form"),
+        ("edit_profile", "Edit Profile"),
+        ("review_profile", "Review Profile"),
+        ("edit_profile", "Edit Profile"),
+        ("partial_profile", "Partial Profile"),
+        ("view_profile", "View Profile"),
+        ("register", "Register Page"),
+        ("login", "Login Page"),
+    ]
+    SIZE_CHOICES = [
+        ("small", "Small (200x200)"),
+        ("medium", "Medium (400x250)"),
+        ("big", "Big (728x90 Banner)"),
+    ]
+    POSITION_CHOICES = [
+        ("left", "Left"),
+        ("right", "Right"),
+        ("top", "Top"),
+        ("bottom", "Bottom"),
+        ("inline", "Inside Content"),
+    ]
+
+    page = models.CharField(max_length=50, choices=PAGE_CHOICES)
+    title = models.CharField(max_length=150)
+    image = models.ImageField(upload_to="ads/")
+    link = models.URLField(blank=True, null=True)
+    size = models.CharField(max_length=20, choices=SIZE_CHOICES, default="medium")
+    position = models.CharField(max_length=20, choices=POSITION_CHOICES, default="right")
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.title} ({self.page} - {self.position})"
+

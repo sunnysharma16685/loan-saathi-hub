@@ -1,89 +1,112 @@
 {% extends "base.html" %}
 {% load static %}
+{% load ad_tags %}
 
 {% block title %}Register — Loan Saathi Hub{% endblock %}
 
 {% block content %}
-<div class="row justify-content-center">
-  <div class="col-md-7 col-lg-6">
-    <div class="card shadow-lg border-0 rounded-4 p-4">
-      <!-- Header -->
-      <div class="text-center mb-4">
-        <div class="rounded-circle bg-light d-inline-flex align-items-center justify-content-center mb-3"
-             style="width:60px;height:60px;">
-          <i class="bi bi-person-plus text-success fs-3"></i>
+<div class="container my-5">
+  <div class="row g-4 justify-content-center">
+
+    <!-- Left Ads -->
+    <div class="col-lg-3">
+      {% show_ads "left" "register" %}
+    </div>
+
+    <!-- Register Form Center -->
+    <div class="col-md-7 col-lg-6">
+      <div class="card shadow-lg border-0 rounded-4 p-4">
+        <!-- Header -->
+        <div class="text-center mb-4">
+          <div class="rounded-circle bg-light d-inline-flex align-items-center justify-content-center mb-3"
+               style="width:60px;height:60px;">
+            <i class="bi bi-person-plus text-success fs-3"></i>
+          </div>
+          <h3 class="fw-bold mb-1">Create Your Account</h3>
+          <p class="text-muted mb-0">Register as an applicant or lender to get started</p>
         </div>
-        <h3 class="fw-bold mb-1">Create Your Account</h3>
-        <p class="text-muted mb-0">Register as an applicant or lender to get started</p>
+
+        <!-- Form -->
+        <form method="POST" id="registerForm" novalidate>
+          {% csrf_token %}
+          <div class="row g-3">
+            <!-- Role -->
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Register as</label>
+              <select name="role" id="role" class="form-select" required>
+                <option value="">-- Select Role --</option>
+                <option value="applicant" {% if role == "applicant" %}selected{% endif %}>Applicant</option>
+                <option value="lender" {% if role == "lender" %}selected{% endif %}>Lender</option>
+              </select>
+            </div>
+
+            <!-- Email -->
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Email</label>
+              <input type="email" name="email" id="email" class="form-control" 
+                     value="{{ request.POST.email|default:'' }}" required>
+            </div>
+
+            <!-- Password -->
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Password</label>
+              <div class="input-group">
+                <input type="password" name="password" id="password" class="form-control" 
+                       required minlength="8" aria-describedby="passwordHelp">
+                <button type="button" class="btn btn-outline-secondary" id="togglePassword">
+                  <i class="bi bi-eye"></i>
+                </button>
+              </div>
+              <div id="passwordHelp" class="form-text">At least 8 characters recommended</div>
+            </div>
+
+            <!-- Confirm Password -->
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Confirm Password</label>
+              <div class="input-group">
+                <input type="password" name="confirm_password" id="confirm_password" class="form-control" required>
+                <button type="button" class="btn btn-outline-secondary" id="toggleConfirmPassword">
+                  <i class="bi bi-eye"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Terms -->
+          <div class="form-check mt-3">
+            <input class="form-check-input" type="checkbox" id="terms" name="terms" required>
+            <label class="form-check-label" for="terms">
+              I agree to the <a href="{% url 'terms' %}" target="_blank" rel="noopener">Terms & Conditions</a>
+            </label>
+          </div>
+
+          <!-- Submit -->
+          <div class="d-grid mt-4">
+            <button class="btn btn-success btn-lg rounded-3 shadow-sm" type="submit">
+              <i class="bi bi-person-check me-1"></i> Create Account
+            </button>
+          </div>
+
+          <!-- Login Link -->
+          <div class="text-center mt-3 small">
+            <span class="text-muted">Already have an account?</span> 
+            <a href="{% url 'login' %}" class="fw-semibold text-decoration-none">Login here</a>
+          </div>
+        </form>
       </div>
+    </div>
 
-      <!-- Form -->
-      <form method="POST" id="registerForm" novalidate>
-        {% csrf_token %}
-        <div class="row g-3">
-          <!-- Role -->
-          <div class="col-md-6">
-            <label class="form-label fw-semibold">Register as</label>
-            <select name="role" id="role" class="form-select" required>
-              <option value="">-- Select Role --</option>
-              <option value="applicant" {% if role == "applicant" %}selected{% endif %}>Applicant</option>
-              <option value="lender" {% if role == "lender" %}selected{% endif %}>Lender</option>
-            </select>
-          </div>
+    <!-- Right Ads -->
+    <div class="col-lg-3">
+      {% show_ads "right" "register" %}
+    </div>
 
-          <!-- Email -->
-          <div class="col-md-6">
-            <label class="form-label fw-semibold">Email</label>
-            <input type="email" name="email" id="email" class="form-control" 
-                   value="{{ request.POST.email|default:'' }}" required>
-          </div>
+  </div>
 
-          <!-- Password -->
-          <div class="col-md-6">
-            <label class="form-label fw-semibold">Password</label>
-            <div class="input-group">
-              <input type="password" name="password" id="password" class="form-control" 
-                     required minlength="8" aria-describedby="passwordHelp">
-              <button type="button" class="btn btn-outline-secondary" id="togglePassword">
-                <i class="bi bi-eye"></i>
-              </button>
-            </div>
-            <div id="passwordHelp" class="form-text">At least 8 characters recommended</div>
-          </div>
-
-          <!-- Confirm Password -->
-          <div class="col-md-6">
-            <label class="form-label fw-semibold">Confirm Password</label>
-            <div class="input-group">
-              <input type="password" name="confirm_password" id="confirm_password" class="form-control" required>
-              <button type="button" class="btn btn-outline-secondary" id="toggleConfirmPassword">
-                <i class="bi bi-eye"></i>
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <!-- Terms -->
-        <div class="form-check mt-3">
-          <input class="form-check-input" type="checkbox" id="terms" name="terms" required>
-          <label class="form-check-label" for="terms">
-            I agree to the <a href="{% url 'terms' %}" target="_blank" rel="noopener">Terms & Conditions</a>
-          </label>
-        </div>
-
-        <!-- Submit -->
-        <div class="d-grid mt-4">
-          <button class="btn btn-success btn-lg rounded-3 shadow-sm" type="submit">
-            <i class="bi bi-person-check me-1"></i> Create Account
-          </button>
-        </div>
-
-        <!-- Login Link -->
-        <div class="text-center mt-3 small">
-          <span class="text-muted">Already have an account?</span> 
-          <a href="{% url 'login' %}" class="fw-semibold text-decoration-none">Login here</a>
-        </div>
-      </form>
+  <!-- Bottom Ads -->
+  <div class="row mt-4">
+    <div class="col-12 text-center">
+      {% show_ads "bottom" "register" %}
     </div>
   </div>
 </div>
@@ -187,7 +210,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // ✅ Toggle password visibility helper
+  // ✅ Toggle password visibility
   function toggleVisibility(btnId, inputId) {
     const btn = document.getElementById(btnId);
     const input = document.getElementById(inputId);

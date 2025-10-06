@@ -1,0 +1,17 @@
+{% for ad in ads %}
+  <div class="ad-box ad-{{ ad.size }} mb-3 text-center">
+    {% if ad.image %}
+      {% if ad.link %}
+        <a href="{{ ad.link }}" target="_blank" rel="noopener noreferrer">
+          <img src="{{ ad.image.url }}" alt="{{ ad.title }}" class="img-fluid rounded shadow-sm">
+        </a>
+      {% else %}
+        <img src="{{ ad.image.url }}" alt="{{ ad.title }}" class="img-fluid rounded shadow-sm">
+      {% endif %}
+    {% else %}
+      <span class="text-muted">[Ad: {{ ad.title }}]</span>
+    {% endif %}
+  </div>
+{% empty %}
+  <!-- No ads available for this position -->
+{% endfor %}

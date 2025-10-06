@@ -1,4 +1,5 @@
 from django.contrib import admin
+from .models import PageAd
 from .models import (
     User,
     Profile,
@@ -48,3 +49,10 @@ class PaymentAdmin(admin.ModelAdmin):
     list_display = ("loan_request", "lender", "amount", "status", "created_at")
     search_fields = ("loan_request__loan_id", "lender__email")
     list_filter = ("status", "payment_method")
+
+
+@admin.register(PageAd)
+class PageAdAdmin(admin.ModelAdmin):
+    list_display = ("title", "page", "position", "size", "is_active", "created_at")
+    list_filter = ("page", "position", "size", "is_active")
+    search_fields = ("title",)

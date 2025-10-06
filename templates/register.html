@@ -9,34 +9,17 @@
     <div class="card shadow-lg border-0 rounded-4 p-4">
       <!-- Header -->
       <div class="text-center mb-4">
-        <div class="rounded-circle bg-light d-inline-flex align-items-center justify-content-center mb-3" style="width:60px;height:60px;">
+        <div class="rounded-circle bg-light d-inline-flex align-items-center justify-content-center mb-3"
+             style="width:60px;height:60px;">
           <i class="bi bi-person-plus text-success fs-3"></i>
         </div>
         <h3 class="fw-bold mb-1">Create Your Account</h3>
         <p class="text-muted mb-0">Register as an applicant or lender to get started</p>
       </div>
 
-      <!-- Django messages -->
-      {% if messages %}
-        <div class="mb-3">
-          {% for message in messages %}
-            <div class="alert 
-                        {% if 'error' in message.tags %}alert-danger
-                        {% elif 'warning' in message.tags %}alert-warning
-                        {% elif 'success' in message.tags %}alert-success
-                        {% else %}alert-info{% endif %}
-                        alert-dismissible fade show small shadow-sm" role="alert">
-              {{ message }}
-              <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-            </div>
-          {% endfor %}
-        </div>
-      {% endif %}
-
       <!-- Form -->
       <form method="POST" id="registerForm" novalidate>
         {% csrf_token %}
-
         <div class="row g-3">
           <!-- Role -->
           <div class="col-md-6">
@@ -80,7 +63,7 @@
           </div>
         </div>
 
-        <!-- Terms & Conditions -->
+        <!-- Terms -->
         <div class="form-check mt-3">
           <input class="form-check-input" type="checkbox" id="terms" name="terms" required>
           <label class="form-check-label" for="terms">
@@ -95,7 +78,7 @@
           </button>
         </div>
 
-        <!-- Link -->
+        <!-- Login Link -->
         <div class="text-center mt-3 small">
           <span class="text-muted">Already have an account?</span> 
           <a href="{% url 'login' %}" class="fw-semibold text-decoration-none">Login here</a>
@@ -107,53 +90,121 @@
 {% endblock %}
 
 {% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
-(function(){
-  const form = document.getElementById('registerForm');
-  if (!form) return;
+document.addEventListener("DOMContentLoaded", () => {
+  const form = document.getElementById("registerForm");
 
-  form.addEventListener('submit', function(e){
-    const pass = document.getElementById('password').value || '';
-    const confirm = document.getElementById('confirm_password').value || '';
-
-    // Password match check
-    if (pass !== confirm) {
+  if (form) {
+    form.addEventListener("submit", async function(e) {
       e.preventDefault();
-      const existing = form.querySelector('.alert.alert-danger');
-      if (existing) existing.remove();
 
-      const div = document.createElement('div');
-      div.className = 'alert alert-danger mt-3';
-      div.role = 'alert';
-      div.textContent = '❌ Passwords do not match. Please check and try again.';
-      form.appendChild(div);
-      div.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      return false;
-    }
-  }, { passive: false });
+      const pass = document.getElementById("password").value;
+      const confirm = document.getElementById("confirm_password").value;
+      if (pass !== confirm) {
+        Swal.fire("Error", "❌ Passwords do not match.", "error");
+        return;
+      }
 
-  // Toggle password show/hide
-  const togglePassword = document.getElementById('togglePassword');
-  const toggleConfirmPassword = document.getElementById('toggleConfirmPassword');
+      try {
+        const res = await fetch(form.action || window.location.pathname, {
+          method: "POST",
+          body: new FormData(form),
+          headers: { "X-Requested-With": "XMLHttpRequest" }
+        });
+        const data = await res.json();
 
-  function toggleVisibility(btn, inputId) {
-    btn.addEventListener('click', function(){
-      const input = document.getElementById(inputId);
-      const icon = this.querySelector('i');
-      if (input.type === 'password') {
-        input.type = 'text';
-        icon.classList.remove('bi-eye');
-        icon.classList.add('bi-eye-slash');
-      } else {
-        input.type = 'password';
-        icon.classList.remove('bi-eye-slash');
-        icon.classList.add('bi-eye');
+        if (data.ok && data.show_otp) {
+          let timerInterval;
+          Swal.fire({
+            title: "Enter OTP",
+            html: `
+              <p>OTP sent to your email</p>
+              <input type="text" id="otpInput" class="swal2-input" placeholder="Enter 6-digit OTP">
+              <p id="timerText" class="mt-2 text-danger fw-bold"></p>
+              <button id="resendBtn" class="btn btn-link mt-2" style="display:none;">Resend OTP</button>
+            `,
+            confirmButtonText: "Verify",
+            allowOutsideClick: false,
+            didOpen: () => {
+              const resendBtn = Swal.getPopup().querySelector("#resendBtn");
+              const timerText = Swal.getPopup().querySelector("#timerText");
+
+              let timeLeft = 300; // 5 minutes
+              timerInterval = setInterval(() => {
+                const min = Math.floor(timeLeft / 60);
+                const sec = timeLeft % 60;
+                timerText.textContent = `Time left: ${min}:${sec < 10 ? "0"+sec : sec}`;
+                timeLeft--;
+                if (timeLeft < 0) {
+                  clearInterval(timerInterval);
+                  timerText.textContent = "OTP expired!";
+                  resendBtn.style.display = "block";
+                }
+              }, 1000);
+
+              // ✅ Resend OTP
+              resendBtn.addEventListener("click", async () => {
+                try {
+                  const res = await fetch("/resend-email-otp/");
+                  const data = await res.json();
+                  if (data.ok) {
+                    Swal.fire("✅ Sent", data.msg, "success").then(() => location.reload());
+                  } else {
+                    Swal.fire("Error", data.msg, "error");
+                  }
+                } catch {
+                  Swal.fire("Error", "Failed to resend OTP", "error");
+                }
+              });
+            },
+            preConfirm: async () => {
+              const otp = Swal.getPopup().querySelector("#otpInput").value;
+              if (!otp) {
+                Swal.showValidationMessage("⚠ Please enter OTP");
+                return false;
+              }
+              const verifyRes = await fetch(`/verify-email-otp/?otp=${otp}`);
+              const verifyData = await verifyRes.json();
+              if (!verifyData.ok) {
+                Swal.showValidationMessage("❌ " + (verifyData.msg || "Invalid OTP"));
+                return false;
+              }
+              return verifyData;
+            }
+          }).then((result) => {
+            if (result.isConfirmed && result.value.redirect_url) {
+              window.location.href = result.value.redirect_url;
+            }
+          });
+        } else {
+          Swal.fire("Error", data.msg || "Registration failed", "error");
+        }
+      } catch (err) {
+        console.error("Register error:", err);
+        Swal.fire("Error", "Server error. Please try again.", "error");
       }
     });
   }
 
-  if (togglePassword) toggleVisibility(togglePassword, 'password');
-  if (toggleConfirmPassword) toggleVisibility(toggleConfirmPassword, 'confirm_password');
-})();
+  // ✅ Toggle password visibility helper
+  function toggleVisibility(btnId, inputId) {
+    const btn = document.getElementById(btnId);
+    const input = document.getElementById(inputId);
+    if (!btn || !input) return;
+    btn.addEventListener("click", () => {
+      const icon = btn.querySelector("i");
+      if (input.type === "password") {
+        input.type = "text";
+        icon.classList.replace("bi-eye", "bi-eye-slash");
+      } else {
+        input.type = "password";
+        icon.classList.replace("bi-eye-slash", "bi-eye");
+      }
+    });
+  }
+  toggleVisibility("togglePassword", "password");
+  toggleVisibility("toggleConfirmPassword", "confirm_password");
+});
 </script>
 {% endblock %}

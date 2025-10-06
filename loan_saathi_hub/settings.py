@@ -4,6 +4,8 @@ from dotenv import load_dotenv
 import dj_database_url
 import logging
 import traceback
+from decouple import config
+
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -165,7 +167,7 @@ STATICFILES_STORAGE = (
 # ---------------------------
 EMAIL_BACKEND = os.getenv(
     "EMAIL_BACKEND",
-    "django.core.mail.backends.console.EmailBackend" if DEBUG else "django.core.mail.backends.smtp.EmailBackend",
+    "django.core.mail.backends.smtp.EmailBackend"   # default safe fallback
 )
 EMAIL_HOST = os.getenv("EMAIL_HOST", "smtp.gmail.com")
 EMAIL_PORT = int(os.getenv("EMAIL_PORT", 587))
@@ -231,3 +233,4 @@ LOGGING = {
         "level": "DEBUG" if DEBUG else "ERROR",
     },
 }
+

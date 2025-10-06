@@ -4,7 +4,7 @@ from main import views
 from django.views.generic import TemplateView
 from django.conf import settings
 from django.conf.urls.static import static
-from main import views as main_views
+
 
 urlpatterns = [
     # ---------------- Home ----------------
@@ -31,7 +31,13 @@ urlpatterns = [
     path("dashboard/applicant/", views.dashboard_applicant, name="dashboard_applicant"),
     path("dashboard/lender/", views.dashboard_lender, name="dashboard_lender"),
     path("dashboard/", views.dashboard_router, name="dashboard_router"),  # auto redirect based on role
+
+    # ---------------- CIBIL ----------------
     path("generate_cibil/<uuid:loan_id>/", views.generate_cibil_score, name="generate_cibil_score"),
+
+    # ---------------- Email OTP ----------------
+    path("verify-email-otp/", views.verify_email_otp_view, name="verify_email_otp"),
+    path("resend-email-otp/", views.resend_email_otp_view, name="resend_email_otp"),
 
 
     # ---------------- Loan + Payment ----------------
@@ -49,8 +55,12 @@ urlpatterns = [
     path("admin_logout/", views.admin_logout, name="admin_logout"),
     path("admin/full_profile/<uuid:user_id>/", views.admin_view_profile, name="admin_full_profile"),
     path("admin/user_action/<uuid:user_id>/", views.admin_user_action, name="admin_user_action"),
+    
+    # ---------------- Gmail View (Admin Dashboard) ----------------
+    path("admin/emails/", views.admin_emails, name="admin_emails"),
+    path("admin/emails/compose/", views.admin_email_compose, name="admin_email_compose"), 
 
-    # ------- Support / Complaint / Feedback (dynamic views) ----------------
+    # ------- Support / Complaint / Feedback ----------------
     path("support/", views.support_view, name="support"),
     path("complaint/", views.complaint_view, name="complaint"),
     path("feedback/", views.feedback_view, name="feedback"),

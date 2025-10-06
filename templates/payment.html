@@ -1,91 +1,157 @@
+{% extends "base.html" %}
 {% load static %}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Loan Saathi Hub - Payment</title>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
-    <style>
-        body { font-family: 'Poppins', sans-serif; background: #f5f8fa; margin: 0; }
-        header, footer { background: #0d6efd; color: #fff; padding: 15px 30px; }
-        header { display: flex; justify-content: space-between; }
-        header a { color: #fff; text-decoration: none; }
-        .container { background: #fff; max-width: 600px; margin: 40px auto; padding: 20px; border-radius: 8px; box-shadow: 0px 0px 8px rgba(0,0,0,0.1); }
-        h1 { color: #0d6efd; }
-        label { font-weight: 600; }
-        .payment-method { margin-bottom: 10px; }
-        button { background: #28a745; color: #fff; padding: 10px 15px; border: none; cursor: pointer; border-radius: 4px; }
-        .alert { padding: 10px; margin-bottom: 15px; border-radius: 5px; }
-        .alert-success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
-        footer { text-align: center; font-size: 14px; }
-        footer a { color: #fff; margin: 0 5px; text-decoration: none; }
-    </style>
-</head>
-<body>
 
-<header>
-    <div>Loan Saathi Hub</div>
-    <a href="{% url 'dashboard_lender' %}">Back to Dashboard</a>
-</header>
+{% block title %}Payment | Loan Saathi Hub{% endblock %}
 
-<div class="container">
-    <h1>Payment for Profile Access</h1>
+{% block extra_head %}
+<style>
+  .payment-container {
+    max-width: 750px;
+    margin: 30px auto;
+    background: #fff;
+    padding: 30px;
+    border-radius: 16px;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+    position: relative;
+  }
+  .payment-container h2 {
+    color: var(--brand);
+    font-weight: 700;
+    margin-bottom: 20px;
+    text-align: center;
+  }
+  .payment-methods {
+    margin: 20px 0;
+  }
+  .method-option {
+    background: #f8f9fa;
+    padding: 12px 16px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+    border: 1px solid #ddd;
+    transition: 20s;
+  }
+  .method-option:hover { border-color: var(--brand); background: #eef4ff; }
+  .method-option input { margin-right: 12px; }
+  .amount-box {
+    margin-top: 20px;
+  }
+  .amount-box input {
+    font-size: 18px;
+    font-weight: 600;
+    color: #0d6efd;
+    background: #f8f9fa;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    padding: 12px;
+    text-align: center;
+  }
+  .btn-pay {
+    margin-top: 25px;
+    width: 100%;
+    padding: 14px;
+    font-weight: 600;
+    border-radius: 10px;
+    font-size: 16px;
+  }
+  /* ✅ Ads Space */
+  .ads-banner {
+    margin: 20px 0;
+    background: #f1f3f5;
+    border: 2px dashed #ccc;
+    text-align: center;
+    padding: 30px;
+    border-radius: 12px;
+    color: #666;
+    font-size: 14px;
+  }
+  .sidebar-ads {
+    position: absolute;
+    top: 0;
+    right: -200px;
+    width: 180px;
+    background: #f1f3f5;
+    border: 2px dashed #bbb;
+    padding: 20px;
+    border-radius: 12px;
+    font-size: 13px;
+    color: #555;
+    text-align: center;
+  }
+</style>
+{% endblock %}
 
-    <!-- ✅ Success Message -->
-    {% if messages %}
-        {% for message in messages %}
-            <div class="alert alert-success">{{ message }}</div>
-        {% endfor %}
-    {% endif %}
+{% block content %}
+<div class="payment-container">
 
-    <!-- ✅ Loan ID Information -->
-    <p>Accessing profile for <strong>Loan ID: {{ loan_id }}</strong></p>
-    <p>Company: <strong>S M Enterprises</strong></p>
-    <p>Please select a payment method to proceed:</p>
+  <!-- ✅ Sidebar Ads -->
+  <div class="sidebar-ads">Advertisement Space (160x600)</div>
 
-    <!-- ✅ Django Form -->
-    <form method="POST">
-        {% csrf_token %}
-        <div class="payment-method">
-            <input type="radio" name="payment_method" value="UPI" required>
-            <label for="upi">UPI</label>
-        </div>
-        <div class="payment-method">
-            <input type="radio" name="payment_method" value="Card">
-            <label for="card">Credit/Debit Card</label>
-        </div>
-        <div class="payment-method">
-            <input type="radio" name="payment_method" value="NetBanking">
-            <label for="netbanking">Net Banking</label>
-        </div>
+  <h2>Payment for Profile Access</h2>
 
-        <!-- ✅ Auto-fill Amount -->
-        <label for="amount">Amount (₹)</label>
-        <input type="number" name="amount" min="1" value="49" required>
+  <!-- ✅ Success Message -->
+  {% if messages %}
+    {% for message in messages %}
+      <div class="alert alert-success alert-dismissible fade show shadow-sm">
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      </div>
+    {% endfor %}
+  {% endif %}
 
-        <button type="submit">Confirm Payment</button>
-    </form>
+  <!-- ✅ Ads Top Banner -->
+  <div class="ads-banner">Top Banner Ad (728x90)</div>
+
+  <!-- ✅ Loan Info -->
+  <p class="text-muted text-center">
+    You are making payment for <strong>Loan ID: {{ loan.loan_id }}</strong><br>
+    <small>Platform service fee for accessing applicant profile</small>
+  </p>
+
+  <!-- ✅ Payment Form -->
+  <form method="POST">
+    {% csrf_token %}
+
+    <div class="payment-methods">
+      <label class="method-option">
+        <input type="radio" name="payment_method" value="UPI" required> 
+        <span>UPI</span>
+      </label>
+      <label class="method-option">
+        <input type="radio" name="payment_method" value="Card"> 
+        <span>Credit / Debit Card</span>
+      </label>
+      <label class="method-option">
+        <input type="radio" name="payment_method" value="NetBanking"> 
+        <span>Net Banking</span>
+      </label>
+    </div>
+
+    <!-- ✅ Fixed Amount -->
+    <div class="amount-box text-center">
+      <label class="fw-bold">Platform Fee (₹)</label>
+      <input type="number" name="amount" value="49" readonly>
+      <small class="text-muted d-block mt-1">This fee is received by Loan Saathi Hub</small>
+    </div>
+
+    <button type="submit" class="btn btn-success btn-pay">
+      <i class="bi bi-check-circle me-1"></i> Confirm & Pay ₹49
+    </button>
+  </form>
+
+  <!-- ✅ Ads Bottom -->
+  <div class="ads-banner">Bottom Banner Ad (728x90)</div>
+
 </div>
-
-<footer>
-    © 2025 LoanSaathiHub. All rights reserved. |
-    <a href="#">About us</a> |
-    <a href="#">Terms & Conditions</a> |
-    <a href="#">Privacy Policy</a> |
-    <a href="#">FAQ</a> |
-    <a href="#">Support</a> |
-    <a href="#">Contacts</a> |
-    <a href="#">Feedback Stars</a>
-</footer>
 
 <!-- ✅ Auto redirect after success -->
 {% if messages %}
 <script>
-    setTimeout(function() {
-        window.location.href = "{% url 'dashboard_lender' %}";
-    }, 2000); // 2 sec after showing success msg
+  setTimeout(function() {
+    window.location.href = "{% url 'dashboard_lender' %}";
+  }, 2000);
 </script>
 {% endif %}
-
-</body>
-</html>
+{% endblock %}

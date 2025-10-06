@@ -6,360 +6,176 @@ from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin, BaseU
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 
-
 # =====================================================
 # USER MANAGER
 # =====================================================
 class UserManager(BaseUserManager):
     def create_user(self, email, password=None, **extra_fields):
-        """Create a normal user with email + password"""
-        if not email:
-            raise ValueError("Users must have an email address")
-        email = self.normalize_email(email)
-        user = self.model(email=email, **extra_fields)
-        user.set_password(password)
-        user.save(using=self._db)
-        return user
-
+        if not email: raise ValueError("Users must have an email address")
+        email = self.normalize_email(email); user = self.model(email=email, **extra_fields)
+        user.set_password(password); user.save(using=self._db); return user
     def create_superuser(self, email, password=None, **extra_fields):
-        """Create an admin/superuser"""
-        extra_fields.setdefault("is_staff", True)
-        extra_fields.setdefault("is_superuser", True)
-        extra_fields.setdefault("role", "admin")
-        return self.create_user(email, password, **extra_fields)
-
+        extra_fields.setdefault("is_staff", True); extra_fields.setdefault("is_superuser", True)
+        extra_fields.setdefault("role", "admin"); return self.create_user(email, password, **extra_fields)
 
 # =====================================================
 # CUSTOM USER MODEL
 # =====================================================
 class User(AbstractBaseUser, PermissionsMixin):
-    ROLE_CHOICES = [
-        ("applicant", "Applicant"),
-        ("lender", "Lender"),
-        ("admin", "Admin"),
-    ]
-
+    ROLE_CHOICES = [("applicant","Applicant"),("lender","Lender"),("admin","Admin")]
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     user_id = models.CharField(max_length=20, unique=True, editable=False, null=True, blank=True)
     email = models.EmailField(unique=True)
     role = models.CharField(max_length=20, choices=ROLE_CHOICES)
-
     created_at = models.DateTimeField(default=timezone.now)
-    is_active = models.BooleanField(default=True)
-    is_staff = models.BooleanField(default=False)
-
-    USERNAME_FIELD = "email"
-    REQUIRED_FIELDS: list[str] = []
-
+    is_active = models.BooleanField(default=True); is_staff = models.BooleanField(default=False)
+    USERNAME_FIELD = "email"; REQUIRED_FIELDS: list[str] = []
     objects = UserManager()
-
-    def save(self, *args, **kwargs):
-        """Auto-generate formatted user_id like LSHA0001 / LSHL0001 / LSHAD0001"""
+    def save(self,*a,**kw):
         if not self.user_id:
-            if self.role == "applicant":
-                prefix = "LSHA"
-            elif self.role == "lender":
-                prefix = "LSHL"
-            else:
-                prefix = "LSHAD"
-
-            last_user = User.objects.filter(role=self.role).order_by("-created_at").first()
-            if last_user and last_user.user_id:
-                try:
-                    last_number = int(last_user.user_id[-4:])
-                except ValueError:
-                    last_number = 0
-                new_number = str(last_number + 1).zfill(4)
-            else:
-                new_number = "0001"
-
-            self.user_id = f"{prefix}{new_number}"
-
-        super().save(*args, **kwargs)
-
-    def __str__(self):
-        return f"{self.user_id} - {self.email} ({self.role})"
-
+            prefix = "LSHA" if self.role=="applicant" else "LSHL" if self.role=="lender" else "LSHAD"
+            last = User.objects.filter(role=self.role).order_by("-created_at").first()
+            last_num = int(last.user_id[-4:]) if last and last.user_id and last.user_id[-4:].isdigit() else 0
+            self.user_id = f"{prefix}{str(last_num+1).zfill(4)}"
+        super().save(*a,**kw)
+    def __str__(self): return f"{self.user_id} - {self.email} ({self.role})"
 
 # =====================================================
 # PROFILE
 # =====================================================
 class Profile(models.Model):
-    STATUS_CHOICES = [
-        ("Hold", "Hold"),
-        ("Active", "Active"),
-        ("Deactivated", "Deactivated"),
-        ("Deleted", "Deleted"),
-    ]
-
+    STATUS_CHOICES = [("Hold","Hold"),("Active","Active"),("Deactivated","Deactivated"),("Deleted","Deleted")]
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="profile")
-
-    full_name = models.CharField(max_length=255)
-    mobile = models.CharField(max_length=20, blank=True, null=True)
-    dob = models.DateField(blank=True, null=True)
-    gender = models.CharField(max_length=20, blank=True, null=True)
-    marital_status = models.CharField(max_length=50, blank=True, null=True)
-    address = models.TextField(blank=True, null=True)
-
-    # 🔒 KYC (Mandatory + Validated at form level)
-    pancard_number = models.CharField(
-        max_length=10,
-        unique=True,
-        null=False,
-        blank=False,
-        help_text="10-character PAN (e.g., ABCDE1234F)"
-    )
-    aadhaar_number = models.CharField(
-        max_length=12,
-        unique=True,
-        help_text="12-digit Aadhaar (digits only, spaces auto-formatted in UI)"
-    )
-
-    # Location
-    pincode = models.CharField(max_length=10, blank=True, null=True)
-    city = models.CharField(max_length=50, blank=True, null=True)
-    state = models.CharField(max_length=50, blank=True, null=True)
-
-    # Admin status
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="Hold")
-    is_reviewed = models.BooleanField(default=False)
-    is_blocked = models.BooleanField(default=False)
-
-    def __str__(self):
-        return f"{self.full_name} ({self.status})"
-
+    user = models.OneToOneField(settings.AUTH_USER_MODEL,on_delete=models.CASCADE,related_name="profile")
+    full_name = models.CharField(max_length=255); mobile=models.CharField(max_length=20,blank=True,null=True)
+    dob=models.DateField(blank=True,null=True); gender=models.CharField(max_length=20,blank=True,null=True)
+    marital_status=models.CharField(max_length=50,blank=True,null=True); address=models.TextField(blank=True,null=True)
+    pancard_number=models.CharField(max_length=10,unique=True,help_text="ABCDE1234F")
+    aadhaar_number=models.CharField(max_length=12,unique=True,help_text="12-digit Aadhaar")
+    pincode=models.CharField(max_length=10,blank=True,null=True); city=models.CharField(max_length=50,blank=True,null=True)
+    state=models.CharField(max_length=50,blank=True,null=True)
+    status=models.CharField(max_length=20,choices=STATUS_CHOICES,default="Hold")
+    is_reviewed=models.BooleanField(default=False); is_blocked=models.BooleanField(default=False)
+    delete_reason=models.TextField(blank=True,null=True)  # ✅ added field
+    def __str__(self): return f"{self.full_name} ({self.status})"
 
 # =====================================================
 # APPLICANT DETAILS
 # =====================================================
 class ApplicantDetails(models.Model):
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="applicant_details")
-
-    job_type = models.CharField(max_length=50, blank=True, null=True)
-    cibil_score = models.IntegerField(blank=True, null=True)
-    cibil_last_generated = models.DateTimeField(blank=True, null=True)
-
-    # 🔥 New fields for CIBIL tracking
-    
-    cibil_generated_by = models.ForeignKey(
-        User, on_delete=models.SET_NULL, null=True, blank=True, related_name="generated_cibil_scores"
-    )
-
-    employment_type = models.CharField(max_length=50, blank=True, null=True)
-    company_name = models.CharField(max_length=255, blank=True, null=True)
-    company_type = models.CharField(max_length=255, blank=True, null=True)
-    designation = models.CharField(max_length=255, blank=True, null=True)
-    itr = models.TextField(blank=True, null=True)
-    current_salary = models.DecimalField(max_digits=12, decimal_places=2, blank=True, null=True)
-    other_income = models.DecimalField(max_digits=12, decimal_places=2, blank=True, null=True)
-    total_emi = models.DecimalField(max_digits=12, decimal_places=2, blank=True, null=True)
-
-    business_name = models.CharField(max_length=255, blank=True, null=True)
-    business_type = models.CharField(max_length=255, blank=True, null=True)
-    business_sector = models.CharField(max_length=255, blank=True, null=True)
-    total_turnover = models.DecimalField(max_digits=15, decimal_places=2, blank=True, null=True)
-    last_year_turnover = models.DecimalField(max_digits=15, decimal_places=2, blank=True, null=True)
-    business_total_emi = models.DecimalField(max_digits=12, decimal_places=2, blank=True, null=True)
-    business_itr_status = models.CharField(max_length=255, blank=True, null=True)
-
-    created_at = models.DateTimeField(default=timezone.now)
-    updated_at = models.DateTimeField(auto_now=True)
-
-    def __str__(self):
-        return f"Applicant Details for {self.user.user_id}"
-
+    id=models.UUIDField(primary_key=True,default=uuid.uuid4,editable=False)
+    user=models.OneToOneField(User,on_delete=models.CASCADE,related_name="applicant_details")
+    job_type=models.CharField(max_length=50,blank=True,null=True); cibil_score=models.IntegerField(blank=True,null=True)
+    cibil_last_generated=models.DateTimeField(blank=True,null=True)
+    cibil_generated_by=models.ForeignKey(User,on_delete=models.SET_NULL,null=True,blank=True,related_name="generated_cibil_scores")
+    employment_type=models.CharField(max_length=50,blank=True,null=True); company_name=models.CharField(max_length=255,blank=True,null=True)
+    company_type=models.CharField(max_length=255,blank=True,null=True); designation=models.CharField(max_length=255,blank=True,null=True)
+    itr=models.TextField(blank=True,null=True); current_salary=models.DecimalField(max_digits=12,decimal_places=2,blank=True,null=True)
+    other_income=models.DecimalField(max_digits=12,decimal_places=2,blank=True,null=True); total_emi=models.DecimalField(max_digits=12,decimal_places=2,blank=True,null=True)
+    business_name=models.CharField(max_length=255,blank=True,null=True); business_type=models.CharField(max_length=255,blank=True,null=True)
+    business_sector=models.CharField(max_length=255,blank=True,null=True); total_turnover=models.DecimalField(max_digits=15,decimal_places=2,blank=True,null=True)
+    last_year_turnover=models.DecimalField(max_digits=15,decimal_places=2,blank=True,null=True); business_total_emi=models.DecimalField(max_digits=12,decimal_places=2,blank=True,null=True)
+    business_itr_status=models.CharField(max_length=255,blank=True,null=True)
+    created_at=models.DateTimeField(default=timezone.now); updated_at=models.DateTimeField(auto_now=True)
+    def __str__(self): return f"Applicant {self.user.user_id}"
 
 # =====================================================
 # LENDER DETAILS
 # =====================================================
 class LenderDetails(models.Model):
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="lender_details")
-
-    lender_type = models.CharField(max_length=255, blank=True, null=True)
-    dsa_code = models.CharField(max_length=50, blank=True, null=True)
-    bank_firm_name = models.CharField(max_length=255, blank=True, null=True)
-    gst_number = models.CharField(max_length=50, blank=True, null=True)
-    branch_name = models.CharField(max_length=255, blank=True, null=True)
-    designation = models.CharField(max_length=100, blank=True, null=True)
-
-    created_at = models.DateTimeField(default=timezone.now)
-    updated_at = models.DateTimeField(auto_now=True)
-
-    def __str__(self):
-        return f"Lender Details for {self.user.user_id}"
-
+    id=models.UUIDField(primary_key=True,default=uuid.uuid4,editable=False)
+    user=models.OneToOneField(User,on_delete=models.CASCADE,related_name="lender_details")
+    lender_type=models.CharField(max_length=255,blank=True,null=True); dsa_code=models.CharField(max_length=50,blank=True,null=True)
+    bank_firm_name=models.CharField(max_length=255,blank=True,null=True); gst_number=models.CharField(max_length=50,blank=True,null=True)
+    branch_name=models.CharField(max_length=255,blank=True,null=True); designation=models.CharField(max_length=100,blank=True,null=True)
+    created_at=models.DateTimeField(default=timezone.now); updated_at=models.DateTimeField(auto_now=True)
+    def __str__(self): return f"Lender {self.user.user_id}"
 
 # =====================================================
 # LOAN REQUEST
 # =====================================================
 class LoanRequest(models.Model):
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    loan_id = models.CharField(max_length=100, unique=True)
-    applicant = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="loan_requests")
-
-    loan_type = models.CharField(max_length=100, blank=True, null=True)
-    amount_requested = models.DecimalField(max_digits=12, decimal_places=2)
-    duration_months = models.IntegerField()
-    interest_rate = models.DecimalField(max_digits=5, decimal_places=2)
-    reason_for_loan = models.TextField(blank=True, null=True)
-
-    status = models.CharField(
-        max_length=20,
-        choices=[
-            ("Pending", "Pending"),
-            ("Approved", "Approved"),
-            ("Rejected", "Rejected"),
-            ("Hold", "Hold"),
-            ("Accepted", "Accepted"),
-        ],
-        default="Pending",
-    )
-
-    accepted_lender = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.SET_NULL,
-        null=True, blank=True,
-        related_name="accepted_loans",
-    )
-
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    def __str__(self):
-        return self.loan_id
-
+    id=models.UUIDField(primary_key=True,default=uuid.uuid4,editable=False)
+    loan_id=models.CharField(max_length=100,unique=True)
+    applicant=models.ForeignKey(settings.AUTH_USER_MODEL,on_delete=models.CASCADE,related_name="loan_requests")
+    loan_type=models.CharField(max_length=100,blank=True,null=True); amount_requested=models.DecimalField(max_digits=12,decimal_places=2)
+    duration_months=models.IntegerField(); interest_rate=models.DecimalField(max_digits=5,decimal_places=2)
+    reason_for_loan=models.TextField(blank=True,null=True)
+    status=models.CharField(max_length=20,choices=[("Pending","Pending"),("Approved","Approved"),("Rejected","Rejected"),("Hold","Hold"),("Accepted","Accepted")],default="Pending")
+    accepted_lender=models.ForeignKey(settings.AUTH_USER_MODEL,on_delete=models.SET_NULL,null=True,blank=True,related_name="accepted_loans")
+    created_at=models.DateTimeField(auto_now_add=True)
+    def __str__(self): return self.loan_id
 
 # =====================================================
 # LOAN LENDER STATUS
 # =====================================================
 class LoanLenderStatus(models.Model):
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    loan = models.ForeignKey(LoanRequest, on_delete=models.CASCADE, related_name="lender_statuses")
-    lender = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="lender_decisions")
-
-    status = models.CharField(
-        max_length=50,
-        choices=[("Pending", "Pending"), ("Approved", "Approved"), ("Rejected", "Rejected")],
-        default="Pending",
-    )
-    remarks = models.TextField(blank=True, null=True)
-
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-
-    class Meta:
-        unique_together = ("loan", "lender")
-
-    def __str__(self):
-        return f"{self.lender} - {self.loan.loan_id} ({self.status})"
-
+    id=models.UUIDField(primary_key=True,default=uuid.uuid4,editable=False)
+    loan=models.ForeignKey(LoanRequest,on_delete=models.CASCADE,related_name="lender_statuses")
+    lender=models.ForeignKey(settings.AUTH_USER_MODEL,on_delete=models.CASCADE,related_name="lender_decisions")
+    status=models.CharField(max_length=50,choices=[("Pending","Pending"),("Approved","Approved"),("Rejected","Rejected")],default="Pending")
+    remarks=models.TextField(blank=True,null=True); created_at=models.DateTimeField(auto_now_add=True); updated_at=models.DateTimeField(auto_now=True)
+    class Meta: unique_together=("loan","lender")
+    def __str__(self): return f"{self.lender}-{self.loan.loan_id}({self.status})"
 
 # =====================================================
 # PAYMENT
 # =====================================================
 class Payment(models.Model):
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    loan_request = models.ForeignKey(LoanRequest, on_delete=models.CASCADE, related_name="payments")
-    lender = models.ForeignKey(User, on_delete=models.CASCADE, related_name="lender_payments")
-
-    amount = models.DecimalField(max_digits=12, decimal_places=2)
-    status = models.CharField(max_length=20, default="Pending")
-    payment_method = models.CharField(max_length=50)
-
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    def __str__(self):
-        return f"{self.loan_request.loan_id} - {self.amount} ({self.status})"
-
+    id=models.UUIDField(primary_key=True,default=uuid.uuid4,editable=False)
+    loan_request=models.ForeignKey(LoanRequest,on_delete=models.CASCADE,related_name="payments")
+    lender=models.ForeignKey(User,on_delete=models.CASCADE,related_name="lender_payments")
+    amount=models.DecimalField(max_digits=12,decimal_places=2); status=models.CharField(max_length=20,default="Pending")
+    payment_method=models.CharField(max_length=50); created_at=models.DateTimeField(auto_now_add=True)
+    def __str__(self): return f"{self.loan_request.loan_id}-{self.amount}({self.status})"
 
 # =====================================================
-# SUPPORT TICKET
+# SUPPORT / COMPLAINT / FEEDBACK / CIBIL
 # =====================================================
 class SupportTicket(models.Model):
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    name = models.CharField(max_length=150, blank=True, null=True)
-    email = models.EmailField()
-    subject = models.CharField(max_length=255)
-    message = models.TextField()
+    id=models.UUIDField(primary_key=True,default=uuid.uuid4,editable=False)
+    name=models.CharField(max_length=150,blank=True,null=True); email=models.EmailField()
+    subject=models.CharField(max_length=255); message=models.TextField()
+    created_at=models.DateTimeField(default=timezone.now); resolved=models.BooleanField(default=False)
+    def __str__(self): return f"Support({self.email}-{self.subject})"
 
-    created_at = models.DateTimeField(default=timezone.now)
-    resolved = models.BooleanField(default=False)
-
-    def __str__(self):
-        return f"SupportTicket({self.email} - {self.subject})"
-
-
-# =====================================================
-# COMPLAINT
-# =====================================================
 class Complaint(models.Model):
-    ROLE_CHOICES = (("applicant", "Applicant"), ("lender", "Lender"), ("guest", "Guest"))
+    ROLE_CHOICES=(("applicant","Applicant"),("lender","Lender"),("guest","Guest"))
+    id=models.UUIDField(primary_key=True,default=uuid.uuid4,editable=False)
+    name=models.CharField(max_length=150,blank=True); email=models.EmailField()
+    complaint_against=models.CharField(max_length=255,blank=True); against_role=models.CharField(max_length=20,choices=ROLE_CHOICES,default="guest")
+    message=models.TextField(); created_at=models.DateTimeField(default=timezone.now); handled=models.BooleanField(default=False)
+    def __str__(self): return f"Complaint({self.email}->{self.complaint_against})"
 
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    name = models.CharField(max_length=150, blank=True)
-    email = models.EmailField()
-    complaint_against = models.CharField(max_length=255, blank=True, help_text="Email or User ID")
-    against_role = models.CharField(max_length=20, choices=ROLE_CHOICES, default="guest")
-    message = models.TextField(help_text="Max 250 words")
-
-    created_at = models.DateTimeField(default=timezone.now)
-    handled = models.BooleanField(default=False)
-
-    def __str__(self):
-        return f"Complaint({self.email} -> {self.complaint_against})"
-
-
-# =====================================================
-# FEEDBACK
-# =====================================================
 class Feedback(models.Model):
-    ROLE_CHOICES = (("applicant", "Applicant"), ("lender", "Lender"), ("guest", "Guest"))
+    ROLE_CHOICES=(("applicant","Applicant"),("lender","Lender"),("guest","Guest"))
+    id=models.UUIDField(primary_key=True,default=uuid.uuid4,editable=False)
+    role=models.CharField(max_length=20,choices=ROLE_CHOICES,default="guest"); name=models.CharField(max_length=150,blank=True)
+    email=models.EmailField(blank=True,null=True); user=models.ForeignKey(settings.AUTH_USER_MODEL,null=True,blank=True,on_delete=models.SET_NULL)
+    rating=models.PositiveSmallIntegerField(null=True,blank=True); message=models.TextField(blank=True)
+    created_at=models.DateTimeField(default=timezone.now)
+    def __str__(self): return f"Feedback({self.role}-{self.email or ''}-{self.rating})"
 
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    role = models.CharField(max_length=20, choices=ROLE_CHOICES, default="guest")
-    name = models.CharField(max_length=150, blank=True)
-    email = models.EmailField(blank=True, null=True)
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL)
-    rating = models.PositiveSmallIntegerField(null=True, blank=True, help_text="1-5 stars")
-    message = models.TextField(blank=True)
-
-    created_at = models.DateTimeField(default=timezone.now)
-
-    def __str__(self):
-        return f"Feedback({self.role} {self.email or ''} - {self.rating})"
-
-
-# =====================================================
-# CIBIL REPORT
-# =====================================================
 class CibilReport(models.Model):
-    loan = models.ForeignKey(LoanRequest, on_delete=models.CASCADE, related_name="cibil_reports")
-    lender = models.ForeignKey(User, on_delete=models.CASCADE, related_name="cibil_reports")
-
-    score = models.PositiveSmallIntegerField(null=True, blank=True)  # 300–900
-    raw_response = models.JSONField(null=True, blank=True)           # store API response
-
-    created_at = models.DateTimeField(default=timezone.now)
-
-    class Meta:
-        ordering = ["-created_at"]
-        verbose_name = "CIBIL Report"
-        verbose_name_plural = "CIBIL Reports"
-
-    def __str__(self):
-        return f"CIBIL-{self.loan.loan_id} by {self.lender.email} @ {self.created_at:%Y-%m-%d %H:%M}"
-
+    loan=models.ForeignKey(LoanRequest,on_delete=models.CASCADE,related_name="cibil_reports")
+    lender=models.ForeignKey(User,on_delete=models.CASCADE,related_name="cibil_reports")
+    score=models.PositiveSmallIntegerField(null=True,blank=True); raw_response=models.JSONField(null=True,blank=True)
+    created_at=models.DateTimeField(default=timezone.now)
+    class Meta: ordering=["-created_at"]; verbose_name="CIBIL Report"; verbose_name_plural="CIBIL Reports"
+    def __str__(self): return f"CIBIL-{self.loan.loan_id} by {self.lender.email}"
 
 # =====================================================
-# SIGNALS (LAST)
+# SIGNALS
 # =====================================================
-@receiver(post_save, sender=User)
-def create_user_profile(sender, instance, created, **kwargs):
-    """
-    ⚠️ Auto profile creation disabled.
-    Profile will only be created/updated when user fills profile_form with PAN/Aadhaar.
-    """
-    if created:
-        pass
+@receiver(post_save,sender=User)
+def create_user_profile(sender,instance,created,**kw): 
+    if created: pass
+
+# =====================================================
+# DELETED USER LOG
+# =====================================================
+class DeletedUserLog(models.Model):
+    email=models.EmailField(); mobile=models.CharField(max_length=15,null=True,blank=True)
+    pancard_number=models.CharField(max_length=20,null=True,blank=True); aadhaar_number=models.CharField(max_length=20,null=True,blank=True)
+    reason=models.TextField(); deleted_at=models.DateTimeField(auto_now_add=True)
+    def __str__(self): return f"{self.email}-{self.reason[:30]}"

@@ -19,6 +19,10 @@
     font-weight:600; transition:0.3s;
   }
   .btn-back:hover { background:#5a6268; }
+  .alert-note {
+    background:#fff3cd; border:1px solid #ffeeba; padding:12px;
+    border-radius:8px; color:#856404; font-size:14px; margin-bottom:20px;
+  }
 </style>
 {% endblock %}
 
@@ -32,10 +36,26 @@
     <p><strong>Joined:</strong> {{ user.date_joined|date:"d-m-Y H:i" }}</p>
   </div>
 
+  <!-- Deleted Info (if any) -->
+  {% if deleted_log %}
+  <div class="alert-note">
+    <strong>⚠️ This user was deleted by admin earlier.</strong><br>
+    <strong>Reason:</strong> {{ deleted_log.reason|default:"No reason provided" }}<br>
+    <strong>Deleted At:</strong> {{ deleted_log.deleted_at|date:"d-m-Y H:i" }}<br>
+    <hr>
+    <strong>Email (at deletion):</strong> {{ deleted_log.email|default:"-" }}<br>
+    <strong>Mobile (at deletion):</strong> {{ deleted_log.mobile|default:"-" }}<br>
+    <strong>PAN (at deletion):</strong> {{ deleted_log.pancard_number|default:"-" }}<br>
+    <strong>Aadhaar (at deletion):</strong> {{ deleted_log.aadhaar_number|default:"-" }}
+  </div>
+  {% endif %}
+
+
   <!-- Profile -->
   {% if profile %}
   <div class="card">
     <h4>Basic Profile</h4>
+    <p><strong>Status:</strong> {{ profile.status }}</p>
     <p><strong>Full Name:</strong> {{ profile.full_name }}</p>
     <p><strong>Mobile:</strong> {{ profile.mobile }}</p>
     <p><strong>Date of Birth:</strong> {{ profile.dob|date:"d-m-Y" }}</p>

@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block title %}Compose Email — Admin{% endblock %}
+
+{% block extra_head %}
+<style>
+  body { font-family:'Poppins',sans-serif; background:#f8fafc; }
+  .container-max { max-width:800px; margin:30px auto; }
+  .card { border-radius:12px; box-shadow:0 6px 18px rgba(0,0,0,0.06); border:none; padding:25px; }
+  label { font-weight:600; margin-top:10px; }
+  .btn-gradient {
+    background: linear-gradient(135deg, #0d6efd, #2563eb);
+    color:#fff; font-weight:600;
+    border:none; border-radius:8px;
+    padding:10px 20px;
+    transition:all .3s ease;
+  }
+  .btn-gradient:hover { background: linear-gradient(135deg,#0b5ed7,#0a58ca); }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-max">
+  <div class="card">
+    <h3 class="mb-3">✉️ Compose Email</h3>
+
+    {% if error %}
+      <div class="alert alert-danger">{{ error }}</div>
+    {% endif %}
+
+    <form method="POST">
+      {% csrf_token %}
+
+      <!-- To -->
+      <div class="mb-3">
+        <label for="to" class="form-label">Recipient Email(s)</label>
+        <input type="text" class="form-control" id="to" name="to"
+               placeholder="user1@example.com, user2@example.com"
+               value="{{ request.GET.to|default:'' }}" required>
+        <small class="text-muted">Use comma for multiple recipients.</small>
+      </div>
+
+      <!-- Subject -->
+      <div class="mb-3">
+        <label for="subject" class="form-label">Subject</label>
+        <input type="text" class="form-control" id="subject" name="subject" placeholder="Enter subject" required>
+      </div>
+
+      <!-- Body -->
+      <div class="mb-3">
+        <label for="body" class="form-label">Message</label>
+        <textarea class="form-control" id="body" name="body" rows="6" placeholder="Write your message..." required></textarea>
+      </div>
+
+      <!-- Buttons -->
+      <div class="d-flex justify-content-between">
+        <a href="{% url 'admin_emails' %}" class="btn btn-secondary">← Back</a>
+        <button type="submit" class="btn-gradient">Send Email</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,174 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Admin Emails | Loan Saathi Hub{% endblock %}
+
+{% block extra_head %}
+<style>
+  body { font-family: 'Poppins', sans-serif; background:#f8fafc; }
+  .container-max { max-width:1200px; margin:20px auto; }
+  .card { border-radius:12px; box-shadow:0 6px 20px rgba(0,0,0,0.05); border:none; }
+  table th { background:#0d6efd; color:#fff; font-weight:600; }
+  table td { vertical-align: middle; }
+  .tab-content { margin-top:20px; }
+  .btn-compose { float:right; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-max">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h2 class="fw-bold">📧 Admin Emails</h2>
+    <a href="{% url 'admin_email_compose' %}" class="btn btn-primary btn-compose">+ Compose</a>
+  </div>
+
+  <!-- Tabs -->
+  <ul class="nav nav-tabs" id="emailTabs" role="tablist">
+    <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" href="#inbox">Inbox</a></li>
+    <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#sent">Sent</a></li>
+    <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#otp">OTP</a></li>
+    <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#complaints">Complaints</a></li>
+    <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#feedback">Feedback</a></li>
+    <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#deleted">Deleted Users</a></li>
+  </ul>
+
+  <!-- Tab Content -->
+  <div class="tab-content">
+
+    <!-- Inbox -->
+    <div class="tab-pane fade show active" id="inbox">
+      <div class="card p-3 mt-3">
+        <h5>📥 Inbox</h5>
+        <div class="table-responsive">
+          <table class="table table-hover align-middle">
+            <thead><tr><th>From</th><th>To</th><th>Subject</th><th>Date</th><th>Snippet</th></tr></thead>
+            <tbody>
+              {% for m in inbox %}
+              <tr>
+                <td>{{ m.from }}</td>
+                <td>{{ m.to }}</td>
+                <td>{{ m.subject }}</td>
+                <td>{{ m.date }}</td>
+                <td>{{ m.snippet }}</td>
+              </tr>
+              {% empty %}<tr><td colspan="5" class="text-center text-muted">No mails found.</td></tr>{% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sent -->
+    <div class="tab-pane fade" id="sent">
+      <div class="card p-3 mt-3">
+        <h5>📤 Sent</h5>
+        <div class="table-responsive">
+          <table class="table table-hover align-middle">
+            <thead><tr><th>To</th><th>Subject</th><th>Date</th><th>Snippet</th></tr></thead>
+            <tbody>
+              {% for m in sent %}
+              <tr>
+                <td>{{ m.to }}</td>
+                <td>{{ m.subject }}</td>
+                <td>{{ m.date }}</td>
+                <td>{{ m.snippet }}</td>
+              </tr>
+              {% empty %}<tr><td colspan="4" class="text-center text-muted">No sent mails found.</td></tr>{% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- OTP -->
+    <div class="tab-pane fade" id="otp">
+      <div class="card p-3 mt-3">
+        <h5>🔑 OTP Mails</h5>
+        <div class="table-responsive">
+          <table class="table table-hover align-middle">
+            <thead><tr><th>From</th><th>To</th><th>Subject</th><th>Date</th><th>Snippet</th></tr></thead>
+            <tbody>
+              {% for m in otp %}
+              <tr>
+                <td>{{ m.from }}</td>
+                <td>{{ m.to }}</td>
+                <td>{{ m.subject }}</td>
+                <td>{{ m.date }}</td>
+                <td>{{ m.snippet }}</td>
+              </tr>
+              {% empty %}<tr><td colspan="5" class="text-center text-muted">No OTP mails.</td></tr>{% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Complaints -->
+    <div class="tab-pane fade" id="complaints">
+      <div class="card p-3 mt-3">
+        <h5>⚠️ Complaints</h5>
+        <div class="table-responsive">
+          <table class="table table-hover align-middle">
+            <thead><tr><th>From</th><th>Subject</th><th>Date</th><th>Snippet</th></tr></thead>
+            <tbody>
+              {% for m in complaints %}
+              <tr>
+                <td>{{ m.from }}</td>
+                <td>{{ m.subject }}</td>
+                <td>{{ m.date }}</td>
+                <td>{{ m.snippet }}</td>
+              </tr>
+              {% empty %}<tr><td colspan="4" class="text-center text-muted">No complaints mails.</td></tr>{% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Feedback -->
+    <div class="tab-pane fade" id="feedback">
+      <div class="card p-3 mt-3">
+        <h5>💬 Feedback</h5>
+        <div class="table-responsive">
+          <table class="table table-hover align-middle">
+            <thead><tr><th>From</th><th>Subject</th><th>Date</th><th>Snippet</th></tr></thead>
+            <tbody>
+              {% for m in feedback %}
+              <tr>
+                <td>{{ m.from }}</td>
+                <td>{{ m.subject }}</td>
+                <td>{{ m.date }}</td>
+                <td>{{ m.snippet }}</td>
+              </tr>
+              {% empty %}<tr><td colspan="4" class="text-center text-muted">No feedback mails.</td></tr>{% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Deleted Users -->
+    <div class="tab-pane fade" id="deleted">
+      <div class="card p-3 mt-3">
+        <h5>🗑️ Deleted User Mails</h5>
+        <div class="table-responsive">
+          <table class="table table-hover align-middle">
+            <thead><tr><th>To</th><th>Subject</th><th>Date</th><th>Snippet</th></tr></thead>
+            <tbody>
+              {% for m in deleted_users %}
+              <tr>
+                <td>{{ m.to }}</td>
+                <td>{{ m.subject }}</td>
+                <td>{{ m.date }}</td>
+                <td>{{ m.snippet }}</td>
+              </tr>
+              {% empty %}<tr><td colspan="4" class="text-center text-muted">No deleted user mails.</td></tr>{% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

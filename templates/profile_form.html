@@ -81,33 +81,24 @@
           </div>
         </div>
 
-        <!-- ✅ Mobile + OTP -->
-        <div class="form-section">
-          <h4>Mobile Verification</h4>
-          <div class="row g-3">
-            <div class="col-md-6">
-              <label class="form-label">Mobile Number</label>
-              <div class="input-group">
-                <span class="input-group-text">+91</span>
-                <input type="text" class="form-control" name="mobile" id="mobile"
-                       maxlength="10" inputmode="numeric" pattern="\d{10}"
-                       placeholder="10-digit mobile" required
-                       value="{{ profile.mobile|default:'' }}">
-                <button type="button" class="btn btn-outline-primary" id="sendOtpBtn" onclick="sendOTP()">Send OTP</button>
-              </div>
-              <small id="otpSentMsg" class="text-success d-none">OTP sent successfully!</small>
-            </div>
-            <div class="col-md-6" id="otpSection" style="display:none;">
-              <label class="form-label">Enter OTP</label>
-              <div class="d-flex gap-2">
-                <input type="text" class="form-control" id="otpInput" maxlength="6" inputmode="numeric" placeholder="Enter OTP">
-                <button type="button" class="btn btn-success" id="verifyBtn" onclick="verifyOTP()">Verify</button>
-                <button type="button" class="btn btn-outline-secondary" id="resendBtn" onclick="sendOTP()" disabled>Resend (30s)</button>
-              </div>
-              <small id="otpVerifyMsg"></small>
-            </div>
-          </div>
-        </div>
+<!-- ✅ Mobile -->
+<div class="form-section mt-4">
+  <h4 class="mb-3 text-primary">📱 Mobile</h4>
+  <div class="row g-3">
+    <div class="col-md-6">
+      <label class="form-label">Mobile Number</label>
+      <div class="input-group">
+        <span class="input-group-text">+91</span>
+        <input type="text" class="form-control" 
+               name="mobile" id="mobile"
+               maxlength="10" inputmode="numeric" pattern="\d{10}"
+               placeholder="10-digit mobile"
+               required value="{{ profile.mobile|default:'' }}">
+      </div>
+    </div>
+  </div>
+</div>
+
 
         <!-- ✅ Gender + Marital -->
         <div class="form-section">
@@ -441,15 +432,15 @@
           </div>
         </div>
 
-             <!-- Submit -->
-<div class="d-flex justify-content-end mt-4">
-  <button type="submit" class="btn btn-gradient px-4 py-2" id="submitBtn">
-    Save Profile
-  </button>
-</div>
-</form>
-</div>
-</main>
+<!-- Submit -->
+        <div class="d-flex justify-content-end mt-4">
+          <button type="submit" class="btn btn-gradient px-4 py-2" id="submitBtn">
+            Save Profile
+          </button>
+        </div>
+      </form>
+    </div>
+  </main>
 </div>
 {% endblock %}
 
@@ -469,15 +460,6 @@
   // 🔹 Intercept form submit for AJAX + SweetAlert
   document.addEventListener("DOMContentLoaded", function () {
     const form = document.querySelector("form");
-    const submitBtn = document.getElementById("submitBtn");
-    const aadhaarField = document.getElementById("aadhaar_number");
-
-    // Attach auto-format Aadhaar on input
-    if (aadhaarField) {
-      aadhaarField.addEventListener("input", function () {
-        formatAadhaar(aadhaarField);
-      });
-    }
 
     form.addEventListener("submit", function (e) {
       e.preventDefault();
@@ -487,7 +469,15 @@
         body: new FormData(form),
         headers: { "X-Requested-With": "XMLHttpRequest" }
       })
-      .then(res => res.json())
+      .then(res => {
+        // 🔹 अगर redirect आया है तो भी JSON parse कराओ
+        const ct = res.headers.get("content-type");
+        if (ct && ct.indexOf("application/json") !== -1) {
+          return res.json();
+        } else {
+          return { ok: true, redirect_url: res.url || "/review_profile/" };
+        }
+      })
       .then(data => {
         if (data.ok) {
           Swal.fire({
@@ -532,92 +522,5 @@
       });
     });
   });
-</script>
-
-<!-- ✅ Your existing JS stays the same -->
-<script>
-  const ROLE_FROM_INDEX = document.querySelector('.page-wrapper')?.dataset.role || '';
-  let generatedOTP = null, resendTimer = null, resendRemaining = 30;
-
-  function sendOTP() {
-    const mobile = document.getElementById("mobile").value.trim();
-    if (!/^\d{10}$/.test(mobile)) { 
-      alert("Please enter a valid 10-digit mobile number."); 
-      return; 
-    }
-    generatedOTP = Math.floor(1000 + Math.random() * 9000).toString();
-    document.getElementById("otpSection").style.display = "block";
-    document.getElementById("otpSentMsg").classList.remove("d-none");
-    document.getElementById("submitBtn").disabled = true;
-    alert("Your OTP is: " + generatedOTP);
-    startResendCountdown();
-  }
-
-  function startResendCountdown() {
-    const resendBtn = document.getElementById("resendBtn");
-    resendRemaining = 30; 
-    resendBtn.disabled = true; 
-    resendBtn.textContent = "Resend OTP (30s)";
-    clearInterval(resendTimer);
-    resendTimer = setInterval(() => {
-      resendRemaining -= 1;
-      resendBtn.textContent = `Resend OTP (${resendRemaining}s)`;
-      if (resendRemaining <= 0) { 
-        clearInterval(resendTimer); 
-        resendBtn.disabled = false; 
-        resendBtn.textContent = "Resend OTP"; 
-      }
-    }, 1000);
-  }
-
-  function verifyOTP() {
-    const userOTP = document.getElementById("otpInput").value.trim();
-    const msg = document.getElementById("otpVerifyMsg"); 
-    const submitBtn = document.getElementById("submitBtn");
-    if (generatedOTP && userOTP === generatedOTP) { 
-      msg.innerHTML = "<span class='text-success'>✅ OTP Verified!</span>"; 
-      submitBtn.disabled = false; 
-    }
-    else { 
-      msg.innerHTML = "<span class='text-danger'>❌ Invalid OTP</span>"; 
-      submitBtn.disabled = true; 
-    }
-  }
-
-  function toggleApplicantType() {
-    const type = document.querySelector("input[name='employment_type']:checked")?.value;
-    const jobFields = document.getElementById("jobFields");
-    const businessFields = document.getElementById("businessFields");
-
-    if (jobFields) jobFields.style.display = (type === "Job") ? "block" : "none";
-    if (businessFields) businessFields.style.display = (type === "Business") ? "block" : "none";
-  }
-
-  function applyRoleVisibility() {
-    const applicant = document.getElementById("applicantFields");
-    const lender = document.getElementById("lenderFields");
-
-    if (applicant) applicant.style.display = (ROLE_FROM_INDEX === "applicant") ? "block" : "none";
-    if (lender) lender.style.display = (ROLE_FROM_INDEX === "lender") ? "block" : "none";
-
-    if (ROLE_FROM_INDEX === "applicant") {
-      toggleApplicantType();
-    }
-  }
-
-  window.addEventListener('load', function () {
-    document.getElementById("submitBtn").disabled = false;
-    applyRoleVisibility();
-  });
-
-  function fetchCityState(pin) {
-    if (!/^\d{6}$/.test(pin)) return;
-    let cityField = document.querySelector("input[name='city']");
-    let stateSelect = document.querySelector("select[name='state']");
-    if (pin.startsWith('11')) { 
-      if (cityField) cityField.value = 'New Delhi'; 
-      if (stateSelect) stateSelect.value = 'Delhi'; 
-    }
-  }
 </script>
 {% endblock %}

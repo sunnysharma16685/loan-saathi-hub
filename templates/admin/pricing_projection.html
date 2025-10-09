@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+{% block title %}💰 Pricing Projection — Loan Saathi Hub{% endblock %}
+
+{% block extra_head %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+  <h2 class="fw-bold text-primary mb-4 text-center">💰 Loan Pricing & Profit Projection</h2>
+
+  <form method="get" class="text-center mb-4">
+    <label class="fw-semibold me-2">Enter expected loans per month:</label>
+    <input type="number" name="loans" value="{{ loan_count }}" class="form-control d-inline-block text-center" min="1" style="width:140px;">
+    <button class="btn btn-primary ms-2">Calculate</button>
+  </form>
+
+  <!-- Summary Cards -->
+  <div class="row g-4 mb-4 text-center">
+    <div class="col-md-3">
+      <div class="card shadow-sm border-success">
+        <div class="card-body"><h6>Per Loan Fee</h6><h4>₹{{ per_loan_fee }}</h4></div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card shadow-sm border-info">
+        <div class="card-body"><h6>Loans / Month</h6><h4>{{ loan_count }}</h4></div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card shadow-sm border-warning">
+        <div class="card-body"><h6>Break-even Loans</h6><h4>{{ break_even_loans }}</h4></div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card shadow-sm border-success">
+        <div class="card-body"><h6>Net Profit</h6><h4 class="text-success">₹{{ net_profit|floatformat:2 }}</h4></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Table -->
+  <table class="table table-bordered shadow-sm">
+    <thead class="table-primary">
+      <tr><th>Category</th><th>Amount (₹)</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><strong>Gross Revenue</strong></td><td>{{ gross_revenue|floatformat:2 }}</td></tr>
+      <tr><td>Razorpay Fees</td><td>{{ gateway_fees|floatformat:2 }}</td></tr>
+      <tr><td>Server & Hosting</td><td>10000.00</td></tr>
+      <tr><td>Marketing / SEO</td><td>12000.00</td></tr>
+      <tr><td>Maintenance / Dev</td><td>8000.00</td></tr>
+      <tr><td>Misc / Tools</td><td>2000.00</td></tr>
+      <tr class="table-warning"><td><strong>Total Expense</strong></td><td><strong>{{ total_expense|floatformat:2 }}</strong></td></tr>
+      <tr class="table-success"><td><strong>Net Profit</strong></td><td><strong>{{ net_profit|floatformat:2 }}</strong></td></tr>
+    </tbody>
+  </table>
+
+  <!-- Chart -->
+  <div class="card mt-5 shadow-sm">
+    <div class="card-body">
+      <h5 class="text-center text-primary mb-3">📈 Profit vs Number of Loans</h5>
+      <canvas id="profitChart" height="120"></canvas>
+    </div>
+  </div>
+
+  <div class="alert alert-info text-center mt-4">
+    <strong>Average Cost per Loan:</strong> ₹{{ avg_cost_per_loan|floatformat:2 }}<br>
+    <strong>Break-even Point:</strong> {{ break_even_loans }} loans/month
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const ctx = document.getElementById("profitChart").getContext("2d");
+const loanLabels = {{ loan_range|safe }};
+const profitValues = {{ profit_data|safe }};
+
+new Chart(ctx, {
+  type: "line",
+  data: {
+    labels: loanLabels,
+    datasets: [{
+      label: "Net Profit (₹)",
+      data: profitValues,
+      borderColor: "rgb(13,110,253)",
+      backgroundColor: "rgba(13,110,253,0.2)",
+      fill: true,
+      tension: 0.3,
+      borderWidth: 2,
+      pointRadius: 3,
+      pointHoverRadius: 6
+    }]
+  },
+  options: {
+    responsive: true,
+    scales: {
+      x: { title: { display: true, text: "Number of Loans / Month" }},
+      y: { title: { display: true, text: "Profit (₹)" }, beginAtZero: true }
+    },
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        callbacks: {
+          label: function(context) {
+            return "Profit: ₹" + context.formattedValue;
+          }
+        }
+      }
+    }
+  }
+});
+</script>
+{% endblock %}

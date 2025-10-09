@@ -1,0 +1,203 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Payment Successful | Loan Saathi Hub{% endblock %}
+
+{% block extra_head %}
+<style>
+  body {
+    background-color: #f8fafc;
+    overflow-x: hidden;
+    font-family: 'Poppins', sans-serif;
+  }
+
+  .success-box {
+    max-width: 520px;
+    margin: 80px auto;
+    background: #ffffff;
+    border-radius: 16px;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.08);
+    padding: 40px 30px;
+    text-align: center;
+    position: relative;
+    z-index: 10;
+    animation: fadeInDown 0.8s ease-out;
+  }
+
+  .success-icon {
+    font-size: 80px;
+    color: #28a745;
+    animation: pop 0.8s ease-in-out;
+  }
+
+  h2 {
+    font-weight: 600;
+    color: #155724;
+    margin-top: 20px;
+  }
+
+  p {
+    color: #444;
+    font-size: 15px;
+    margin-bottom: 20px;
+  }
+
+  .btn {
+    border-radius: 8px;
+    padding: 10px 22px;
+    margin: 6px;
+    font-weight: 500;
+  }
+
+  .btn-primary {
+    background-color: #198754;
+    border: none;
+  }
+
+  .btn-primary:hover {
+    background-color: #157347;
+  }
+
+  .btn-outline-secondary:hover {
+    background-color: #f1f1f1;
+  }
+
+  @keyframes fadeInDown {
+    0% { opacity: 0; transform: translateY(-20px); }
+    100% { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes pop {
+    0% { transform: scale(0.6); opacity: 0; }
+    60% { transform: scale(1.1); opacity: 1; }
+    100% { transform: scale(1); }
+  }
+
+  /* Confetti Animation */
+  .confetti {
+    position: fixed;
+    top: -10px;
+    width: 10px;
+    height: 10px;
+    background: var(--color, #ffc107);
+    opacity: 0.7;
+    animation: fall 3s linear infinite;
+  }
+
+  @keyframes fall {
+    0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+    100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+  }
+
+  /* ✅ Payment breakdown */
+  .breakdown-box {
+    background: #f8f9fa;
+    border-radius: 10px;
+    padding: 15px;
+    margin-top: 15px;
+    font-size: 14px;
+    text-align: left;
+  }
+
+  .breakdown-box p {
+    margin: 0;
+    padding: 2px 0;
+  }
+
+  .breakdown-box strong {
+    color: #000;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- 🎉 Confetti Animation -->
+<div id="confetti-container"></div>
+
+<div class="success-box">
+  <div class="success-icon">✅</div>
+  <h2>Payment Successful!</h2>
+  <p>Thank you! Your Razorpay payment has been successfully processed.</p>
+
+  {% if txn_id %}
+  <p class="text-muted"><small>Transaction ID: {{ txn_id }}</small></p>
+  {% endif %}
+
+  <!-- 💸 GST Breakdown -->
+  <div class="breakdown-box mt-3 text-start">
+    <p><strong>Payment Summary:</strong></p>
+    <p>Base Amount: ₹41.53</p>
+    <p>GST (18%): ₹7.47</p>
+    <p><strong>Total Paid: ₹49.00</strong></p>
+  </div>
+
+  <div class="mt-4">
+    <a href="{% url 'dashboard_router' %}" class="btn btn-primary">🏠 Go to Dashboard</a>
+    <a href="#" class="btn btn-outline-secondary" onclick="downloadInvoice()">🧾 Download Invoice</a>
+  </div>
+</div>
+
+<script>
+  // 🎊 Confetti animation
+  document.addEventListener('DOMContentLoaded', () => {
+    const confettiContainer = document.getElementById('confetti-container');
+    for (let i = 0; i < 60; i++) {
+      const confetti = document.createElement('div');
+      confetti.classList.add('confetti');
+      confetti.style.left = Math.random() * 100 + 'vw';
+      confetti.style.animationDuration = (Math.random() * 3 + 2) + 's';
+      confetti.style.background = ['#ffc107', '#198754', '#0dcaf0', '#fd7e14'][Math.floor(Math.random() * 4)];
+      confettiContainer.appendChild(confetti);
+      setTimeout(() => confetti.remove(), 5000);
+    }
+  });
+
+  <!-- 💾 Download or View Invoice -->
+  <div class="mt-4">
+    <a href="{% url 'dashboard_router' %}" class="btn btn-primary">🏠 Go to Dashboard</a>
+    <a href="#" class="btn btn-outline-secondary" onclick="downloadInvoice()">⬇️ Download Invoice</a>
+    {% if txn_id %}
+    <a href="{% url 'invoice' %}?txn_id={{ txn_id }}" class="btn btn-outline-success">🧾 View Full Invoice</a>
+    {% endif %}
+  </div>
+</div>
+
+<script>
+  // 🎉 Confetti animation
+  document.addEventListener('DOMContentLoaded', () => {
+    const confettiContainer = document.getElementById('confetti-container');
+    for (let i = 0; i < 60; i++) {
+      const confetti = document.createElement('div');
+      confetti.classList.add('confetti');
+      confetti.style.left = Math.random() * 100 + 'vw';
+      confetti.style.animationDuration = (Math.random() * 3 + 2) + 's';
+      confetti.style.background = ['#ffc107', '#198754', '#0dcaf0', '#fd7e14'][Math.floor(Math.random() * 4)];
+      confettiContainer.appendChild(confetti);
+      setTimeout(() => confetti.remove(), 5000);
+    }
+  });
+
+  // 🧾 Invoice download (simple text-based)
+  function downloadInvoice() {
+    const invoiceData = `
+Loan Saathi Hub - Payment Invoice
+
+Transaction Status: SUCCESS ✅
+Transaction ID: {{ txn_id|default:"N/A" }}
+------------------------------------------
+Base Amount : ₹41.53
+GST (18%)   : ₹7.47
+------------------------------------------
+Total Paid  : ₹49.00
+
+Thank you for your payment!
+    `;
+    const blob = new Blob([invoiceData], { type: "text/plain" });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = "LoanSaathiHub_Invoice.txt";
+    link.click();
+  }
+</script>
+{% endblock %}
+

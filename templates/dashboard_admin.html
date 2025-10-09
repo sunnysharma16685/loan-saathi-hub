@@ -21,87 +21,152 @@
 <div class="container-max">
   <h2 class="my-4 fw-bold">Admin Dashboard</h2>
 
-<!-- ✅ Summary Cards -->
-<div class="row g-3 mb-4">
-  <div class="col-md-2">
-    <div class="summary-card bg-primary text-white">
-      <h6>Total Users</h6><h3>{{ users|length }}</h3>
-    </div>
+<!-- ✅ Summary Section -->
+<style>
+  .summary-section {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 18px;
+    margin-bottom: 40px;
+  }
+  .summary-card {
+    border-radius: 14px;
+    padding: 20px 15px;
+    text-align: center;
+    transition: all 0.25s ease-in-out;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  }
+  .summary-card h6 {
+    font-weight: 600;
+    opacity: 0.9;
+  }
+  .summary-card h3, .summary-card h4, .summary-card h5 {
+    margin: 10px 0 0;
+    font-weight: 700;
+  }
+  .summary-card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+  }
+  a.summary-card {
+    text-decoration: none;
+    color: inherit;
+  }
+</style>
+
+<div class="summary-section">
+  <!-- 🧍‍♂️ Total Users -->
+  <div class="summary-card bg-primary text-white">
+    <h6>Total Users</h6>
+    <h3>{{ users|length }}</h3>
   </div>
-  <div class="col-md-2">
-    <div class="summary-card bg-success text-white">
-      <h6>Applicants</h6><h3>{{ applicants|length }}</h3>
-    </div>
+
+  <!-- 👩‍💼 Applicants -->
+  <div class="summary-card bg-success text-white">
+    <h6>Applicants</h6>
+    <h3>{{ applicants|length }}</h3>
   </div>
-  <div class="col-md-2">
-    <div class="summary-card bg-warning text-dark">
-      <h6>Lenders</h6><h3>{{ lenders|length }}</h3>
-    </div>
+
+  <!-- 💼 Lenders -->
+  <div class="summary-card bg-warning text-dark">
+    <h6>Lenders</h6>
+    <h3>{{ lenders|length }}</h3>
   </div>
-  <div class="col-md-2">
-    <div class="summary-card bg-danger text-white">
-      <h6>Deleted Users</h6><h3>{{ deleted_users|length }}</h3>
-    </div>
+
+  <!-- 🗑️ Deleted Users -->
+  <div class="summary-card bg-danger text-white">
+    <h6>Deleted Users</h6>
+    <h3>{{ deleted_users|length }}</h3>
   </div>
-  <div class="col-md-2">
-    <div class="summary-card bg-info text-white">
-      <h6>Loan Requests</h6><h3>{{ loans|length }}</h3>
-    </div>
+
+  <!-- 📝 Loan Requests -->
+  <div class="summary-card bg-info text-white">
+    <h6>Loan Requests</h6>
+    <h3>{{ loans|length }}</h3>
   </div>
-  <div class="col-md-2">
-    <div class="summary-card bg-secondary text-white">
-      <h6>Payments</h6><h3>{{ payments|length }}</h3>
-    </div>
+
+  <!-- 💳 Payments -->
+  <div class="summary-card bg-secondary text-white">
+    <h6>Payments</h6>
+    <h3>{{ payments|length }}</h3>
   </div>
+
+  <!-- 📬 Unread Emails -->
+  <a href="{% url 'admin_emails' %}" class="summary-card bg-dark text-white">
+    <h6>Emails</h6>
+    <h3>{{ unread_mails_count }}</h3>
+  </a>
+
+  <!-- 🪧 Manage Ads -->
+  <a href="{% url 'admin:main_pagead_changelist' %}" class="summary-card bg-indigo-600 text-dark">
+    <h6>🪧 Manage Ads</h6>
+    <h4>Open Panel</h4>
+  </a>
+
+  <!-- 💰 Pricing Projection -->
+  <a href="{% url 'pricing_projection' %}" class="summary-card bg-success text-white">
+    <h6>💰 Pricing Projection</h6>
+    <h4>View Chart</h4>
+  </a>
 </div>
 
-  <!-- ✅ Gmail Summary Card -->
-  <div class="col-md-2">
-    <a href="{% url 'admin_emails' %}" style="text-decoration:none;">
-      <div class="summary-card bg-dark text-white">
-        <h6>Emails</h6><h3>{{ unread_mails_count }}</h3>
-      </div>
+
+<!-- ✅ Gmail Section -->
+<div class="card shadow-sm border-0 mb-4 rounded-3">
+  <div class="card-header bg-light d-flex justify-content-between align-items-center rounded-top-3">
+    <h5 class="mb-0 fw-semibold text-primary">
+      📩 Recent Emails
+    </h5>
+    <a href="{% url 'admin_email_compose' %}" class="btn btn-sm btn-primary px-3">
+      ✉️ Compose
+    </a>
+  </div>
+
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover table-striped align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th scope="col">From</th>
+            <th scope="col">Subject</th>
+            <th scope="col">Date</th>
+            <th scope="col" style="width: 35%">Snippet</th>
+            <th scope="col" class="text-center">Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for m in mails %}
+          <tr>
+            <td class="fw-medium text-dark">{{ m.from }}</td>
+            <td class="text-primary text-truncate" style="max-width: 180px;">{{ m.subject }}</td>
+            <td class="text-muted small">{{ m.date }}</td>
+            <td class="text-muted small">{{ m.snippet|safe }}</td>
+            <td class="text-center">
+              <a href="{% url 'admin_email_compose' %}?to={{ m.from|urlencode }}"
+                 class="btn btn-sm btn-outline-success rounded-pill px-3 py-1">
+                Reply
+              </a>
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="5" class="text-center py-4 text-muted">
+              <i class="bi bi-envelope-slash me-2"></i>No emails found.
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="card-footer bg-white text-end rounded-bottom-3">
+    <a href="{% url 'admin_emails' %}" class="btn btn-outline-secondary btn-sm rounded-pill">
+      View All Emails →
     </a>
   </div>
 </div>
 
-<!-- ✅ Quick Action Buttons -->
-<div class="mb-4 d-flex gap-2">
-  <a href="{% url 'admin:main_pagead_changelist' %}" class="btn btn-dark">🪧 Manage Ads</a>
-</div>
-
-<!-- ✅ Gmail Section -->
-<div class="card mb-4">
-  <div class="d-flex justify-content-between align-items-center mb-3">
-    <h5 class="mb-0">📩 Recent Emails</h5>
-    <a href="{% url 'admin_email_compose' %}" class="btn btn-primary btn-sm">✉️ Compose</a>
-  </div>
-  <div class="table-responsive">
-    <table class="table table-hover align-middle">
-      <thead>
-        <tr><th>From</th><th>Subject</th><th>Date</th><th>Snippet</th><th>Action</th></tr>
-      </thead>
-      <tbody>
-        {% for m in mails %}
-        <tr>
-          <td>{{ m.from }}</td>
-          <td>{{ m.subject }}</td>
-          <td>{{ m.date }}</td>
-          <td>{{ m.snippet|safe }}</td>
-          <td>
-            <a href="{% url 'admin_email_compose' %}?to={{ m.from|urlencode }}" class="btn btn-sm btn-success">Reply</a>
-          </td>
-        </tr>
-        {% empty %}
-        <tr><td colspan="5" class="text-center text-muted">No emails found.</td></tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  </div>
-  <div class="text-end">
-    <a href="{% url 'admin_emails' %}" class="btn btn-outline-secondary btn-sm">View All Emails →</a>
-  </div>
-</div>
 
 
   <!-- ✅ Users Table -->

@@ -1,0 +1,184 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Invoice | Loan Saathi Hub{% endblock %}
+
+{% block extra_head %}
+<style>
+  body {
+    font-family: 'Poppins', sans-serif;
+    background: #f8fafc;
+  }
+
+  .invoice-wrapper {
+    max-width: 800px;
+    margin: 50px auto;
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    padding: 40px;
+    animation: fadeIn 0.8s ease;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 3px solid #0d6efd;
+    padding-bottom: 15px;
+    margin-bottom: 25px;
+  }
+
+  .logo {
+    font-size: 26px;
+    font-weight: 700;
+    color: #0d6efd;
+  }
+
+  .invoice-title {
+    text-align: right;
+  }
+
+  .invoice-title h3 {
+    margin: 0;
+    color: #333;
+  }
+
+  .invoice-title small {
+    color: #888;
+  }
+
+  .details {
+    margin-bottom: 25px;
+  }
+
+  .details p {
+    margin: 4px 0;
+  }
+
+  .table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 15px;
+  }
+
+  .table th, .table td {
+    border: 1px solid #e5e5e5;
+    padding: 10px;
+    text-align: left;
+  }
+
+  .table th {
+    background: #0d6efd;
+    color: white;
+  }
+
+  .total-box {
+    text-align: right;
+    margin-top: 20px;
+  }
+
+  .total-box h4 {
+    margin: 5px 0;
+  }
+
+  .thank-you {
+    text-align: center;
+    margin-top: 30px;
+    font-weight: 600;
+    color: #0d6efd;
+    font-size: 18px;
+  }
+
+  .btn-print {
+    display: block;
+    margin: 20px auto;
+    text-align: center;
+    padding: 10px 20px;
+    border-radius: 8px;
+    background: #0d6efd;
+    color: white;
+    text-decoration: none;
+    font-weight: 500;
+    width: 200px;
+  }
+
+  .qr {
+    text-align: right;
+    margin-top: 20px;
+  }
+
+  .qr img {
+    width: 100px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+  }
+
+  @media print {
+    .btn-print { display: none; }
+    body { background: white; }
+    .invoice-wrapper { box-shadow: none; border: none; margin: 0; }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="invoice-wrapper">
+  <div class="header">
+    <div class="logo">💼 Loan Saathi Hub</div>
+    <div class="invoice-title">
+      <h3>Invoice</h3>
+      <small>{{ invoice_number }}</small>
+    </div>
+  </div>
+
+  <div class="details">
+    <p><strong>Billed To:</strong> {{ user_email }}</p>
+    <p><strong>Date:</strong> {{ date }}</p>
+    <p><strong>Payment Method:</strong> {{ payment_method }}</p>
+    <p><strong>Transaction ID:</strong> {{ txn_id }}</p>
+  </div>
+
+  <table class="table">
+    <thead>
+      <tr>
+        <th>Description</th>
+        <th>Base Amount</th>
+        <th>GST (18%)</th>
+        <th>Total (₹)</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>LoanSaathiHub Lender Access Fee</td>
+        <td>₹41.53</td>
+        <td>₹7.47</td>
+        <td><strong>₹49.00</strong></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="total-box">
+    <h4>Subtotal: ₹41.53</h4>
+    <h4>GST (18%): ₹7.47</h4>
+    <h4><strong>Total Paid: ₹49.00</strong></h4>
+  </div>
+
+  <div class="qr">
+    <img src="https://api.qrserver.com/v1/create-qr-code/?data={{ txn_id|urlencode }}&size=100x100" alt="QR Code">
+  </div>
+
+  <div class="thank-you">
+    ✅ Thank you for your payment!<br>
+    Your lender dashboard is now unlocked.
+  </div>
+
+  <a href="#" class="btn-print" onclick="window.print()">🧾 Print / Save PDF</a>
+</div>
+{% endblock %}

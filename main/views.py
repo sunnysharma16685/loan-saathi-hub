@@ -35,6 +35,7 @@ from django.views.decorators.csrf import csrf_protect, csrf_exempt
 from django.views.decorators.http import require_POST, require_http_methods
 from email.mime.text import MIMEText
 from dotenv import load_dotenv
+import math
 
 # ✅ Razorpay SDK Import (replaces all PhonePe SDK imports)
 import razorpay
@@ -905,73 +906,67 @@ def approve_loan(request,loan_id):
     return redirect("dashboard_lender")
 
 # ---------------------------------------------------------------------
-# ✅ Step 1: Initiate Razorpay Payment (Stable + Correct)
+# ✅ Step 1: Initiate Razorpay Payment (Fixed ₹49 including GST)
 # ---------------------------------------------------------------------
 @login_required
 @csrf_exempt
 def initiate_payment(request):
     """
-    Initiate Razorpay payment safely and store transaction.
+    Initiates a Razorpay payment for a fixed ₹49 (inclusive of 18% GST).
+    This replaces dynamic loan-based amounts.
     """
     if request.method == "POST":
         try:
             user = request.user
-            amount_str = str(request.POST.get("amount", "49")).strip()
 
-            # ✅ Validate amount
-            try:
-                amount = Decimal(amount_str)
-                if amount <= 0:
-                    raise InvalidOperation("Amount must be positive")
-            except (InvalidOperation, ValueError):
-                logger.error(f"❌ Invalid amount: {amount_str}")
-                return JsonResponse({"ok": False, "error": "Invalid amount"}, status=400)
+            # 🧾 Fixed pricing
+            total_amount = Decimal("49.00")  # ₹49 inclusive
+            base_amount = (total_amount / Decimal("1.18")).quantize(Decimal("0.01"))  # ₹41.53
+            gst_amount = (total_amount - base_amount).quantize(Decimal("0.01"))        # ₹7.47
 
-            # ✅ Convert to paise (Razorpay uses smallest currency unit)
-            amount_paise = int(amount * 100)
+            # Razorpay uses paise
+            amount_paise = int(total_amount * 100)
+            merchant_order_id = f"ORD-{user.id}-{uuid.uuid4().hex[:8].upper()}"
 
-            # ✅ Short, safe order receipt ID (max 40 chars)
-            short_user_id = str(user.id)[:8].replace("-", "")
-            receipt_id = f"ORD{short_user_id}{uuid.uuid4().hex[:8].upper()}"[:40]
-
-            # ✅ Create Razorpay client
+            # ✅ Razorpay client
             client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
 
-            # ✅ Create order at Razorpay
+            # ✅ Create order
             order = client.order.create({
                 "amount": amount_paise,
                 "currency": "INR",
-                "receipt": receipt_id,
-                "payment_capture": 1
+                "receipt": merchant_order_id[:40],  # within Razorpay 40-char limit
+                "payment_capture": 1,
             })
 
-            # ✅ Save locally
+            # ✅ Save transaction
             with transaction.atomic():
                 PaymentTransaction.objects.create(
                     user=user,
                     txn_id=order["id"],
-                    amount=amount,
+                    amount=total_amount,
                     status="Pending",
                     payment_method="Razorpay",
                 )
 
-            logger.info(f"✅ Razorpay order created | OrderID={order['id']} | User={user.email}")
+            logger.info(f"✅ Razorpay order created | ₹{total_amount} | User={user.email}")
 
             return JsonResponse({
                 "ok": True,
                 "order_id": order["id"],
                 "amount": amount_paise,
                 "currency": "INR",
-                "key": settings.RAZORPAY_KEY_ID
+                "key": settings.RAZORPAY_KEY_ID,
+                "base_amount": str(base_amount),
+                "gst_amount": str(gst_amount),
+                "gst_percent": "18%"
             })
 
-        except razorpay.errors.BadRequestError as e:
-            logger.error(f"❌ Razorpay Authentication failed: {e}", exc_info=True)
-            return JsonResponse({"ok": False, "error": f"Razorpay Error: {e}"}, status=400)
         except Exception as e:
             logger.error(f"❌ Payment initiation failed: {e}", exc_info=True)
             return JsonResponse({"ok": False, "error": str(e)}, status=400)
 
+    # Default render (GET request)
     return render(request, "payments/initiate_payment.html")
 
 # ---------------------------------------------------------------------
@@ -1029,45 +1024,54 @@ def payment_callback(request):
         return JsonResponse({"ok": False, "error": str(e)}, status=400)
 
 # ---------------------------------------------------------------------
-# ✅ Step 3: Success Page
+# ✅ Step 3: Success Page (Updated with Invoice Context)
 # ---------------------------------------------------------------------
 @login_required
 def payment_success(request):
     """
-    Show payment status to the user.
+    Show payment status after completion and render success summary with invoice link.
     """
     txn_id = request.GET.get("txn_id") or request.GET.get("order_id")
 
     context = {
         "message": "ℹ️ Payment details not found. Please check your transaction history.",
         "status": "unknown",
+        "txn_id": txn_id,
     }
 
     try:
         if txn_id:
             payment = PaymentTransaction.objects.filter(txn_id=txn_id).first()
+
             if payment:
-                if payment.status == "Completed":
-                    context["message"] = "✅ Payment Successful! Thank you for using Loan Saathi Hub."
-                    context["status"] = "success"
-                elif payment.status == "Pending":
-                    context["message"] = "⏳ Payment is still processing. Please wait."
-                    context["status"] = "pending"
-                else:
-                    context["message"] = "❌ Payment failed or cancelled. Please try again."
-                    context["status"] = "failed"
+                # ✅ If Razorpay callback succeeded, mark payment as completed
+                if payment.status not in ["Completed", "Failed"]:
+                    payment.status = "Completed"
+                    payment.save(update_fields=["status"])
+
+                context.update({
+                    "status": "success",
+                    "message": "✅ Payment Successful! Thank you for using Loan Saathi Hub.",
+                    "amount": payment.amount,
+                    "date": payment.created_at.strftime("%d %b %Y, %I:%M %p"),
+                    "payment_method": payment.payment_method or "Razorpay",
+                    "user_email": payment.user.email,
+                    "invoice_number": f"INV-{payment.txn_id[-8:].upper()}",
+                })
             else:
                 context["message"] = f"⚠️ No transaction found for ID: {txn_id}"
                 context["status"] = "not_found"
         else:
             context["message"] = "⚠️ Invalid request. No transaction ID provided."
             context["status"] = "invalid"
+
     except Exception as e:
-        logger.error(f"❌ Error loading success page: {e}", exc_info=True)
+        logger.error(f"❌ Error rendering payment_success: {e}", exc_info=True)
         context["message"] = "⚠️ Unexpected error while verifying payment."
         context["status"] = "error"
 
-    return render(request, "payments/success.html", context)
+    return render(request, "payments/payment_success.html", context)
+
 
 # ---------------------------------------------------------------------
 # ✅ Step 4: Failure Page
@@ -1103,6 +1107,27 @@ def payment_failure(request):
         context["message"] = "⚠️ Something went wrong while processing payment failure."
 
     return render(request, "payments/failure.html", context)
+
+# ---------------------------------------------------------------------
+# ✅ Step 5: Invoice View Page
+# ---------------------------------------------------------------------
+@login_required
+def invoice_view(request):
+    txn_id = request.GET.get("txn_id")
+    payment = PaymentTransaction.objects.filter(txn_id=txn_id).first()
+    if not payment:
+        messages.error(request, "Invoice not found.")
+        return redirect("dashboard_router")
+
+    context = {
+        "invoice_number": f"INV-{payment.txn_id[-8:].upper()}",
+        "txn_id": payment.txn_id,
+        "amount": payment.amount,
+        "user_email": payment.user.email,
+        "date": payment.created_at.strftime("%d %b %Y, %I:%M %p"),
+        "payment_method": payment.payment_method or "Razorpay",
+    }
+    return render(request, "payments/invoice.html", context)
 
 
 # -------------------- View Profile (Lender side) --------------------
@@ -1254,63 +1279,116 @@ def resend_email_otp_view(request):
 
 
 
-# --------------- Gmail View in Admin Dashboard---------------
+# --------------- Gmail View in Admin Dashboard ---------------
+
 def fetch_emails(folder="inbox", search="ALL", limit=15):
-    """Fetch emails from Gmail IMAP"""
+    """Fetch emails safely from Gmail IMAP and return structured list."""
     mails = []
     try:
+        # ✅ Connect securely to Gmail IMAP
         mail = imaplib.IMAP4_SSL("imap.gmail.com")
         mail.login(settings.EMAIL_HOST_USER, settings.EMAIL_HOST_PASSWORD)
+
+        # ✅ Select folder (case-insensitive)
         mail.select(folder)
+
+        # ✅ Search emails
         status, data = mail.search(None, search)
+        if status != "OK" or not data or not data[0]:
+            return [{"from": "System", "subject": "No emails found", "date": "", "snippet": ""}]
+
+        # ✅ Process latest messages
         for num in data[0].split()[-limit:]:
             _, raw = mail.fetch(num, "(RFC822)")
             msg = email.message_from_bytes(raw[0][1])
-            payload = msg.get_payload()
+
             snippet = ""
+            payload = msg.get_payload()
+
+            # ✅ Handle multipart messages
             if isinstance(payload, list):
                 for part in payload:
-                    if part.get_content_type() == "text/plain":
+                    ctype = part.get_content_type()
+                    if ctype == "text/plain":
                         snippet = part.get_payload(decode=True).decode(errors="ignore")[:200]
                         break
+                    elif ctype == "text/html" and not snippet:
+                        snippet = part.get_payload(decode=True).decode(errors="ignore")[:200]
             else:
-                snippet = payload[:200] if isinstance(payload, str) else ""
+                if isinstance(payload, bytes):
+                    snippet = payload.decode(errors="ignore")[:200]
+                elif isinstance(payload, str):
+                    snippet = payload[:200]
 
             mails.append({
                 "from": msg.get("From"),
                 "to": msg.get("To"),
-                "subject": msg.get("Subject"),
+                "subject": msg.get("Subject") or "(No Subject)",
                 "date": msg.get("Date"),
-                "snippet": snippet,
+                "snippet": snippet.strip() if snippet else "(No content)",
             })
+
         mail.logout()
+
+    except imaplib.IMAP4.error as e:
+        mails = [{"from": "Error", "subject": f"IMAP login failed: {e}", "date": "", "snippet": ""}]
     except Exception as e:
         mails = [{"from": "Error", "subject": str(e), "date": "", "snippet": ""}]
     return mails
 
-
+# ------------------------- Admin Emails (Gmail Integration) -------------------------
 @login_required
 def admin_emails(request):
+    """
+    Display Gmail Inbox and Sent emails for admin users,
+    along with categorized filters like OTP, Complaints, Feedback, etc.
+    """
     if not request.user.is_superuser:
         return redirect("dashboard_admin")
 
-    inbox = fetch_emails("inbox", limit=20)
-    sent = fetch_emails("[Gmail]/Sent Mail", limit=20)
+    try:
+        # ✅ Fetch latest 20 emails from Inbox and Sent
+        inbox = fetch_emails("inbox", limit=20)
+        sent = fetch_emails('"[Gmail]/Sent Mail"', limit=20)
 
-    # Filters by subject
-    otp = [m for m in inbox if m["subject"] and "OTP" in m["subject"]]
-    complaints = [m for m in inbox if m["subject"] and "Complaint" in m["subject"]]
-    feedback = [m for m in inbox if m["subject"] and "Feedback" in m["subject"]]
-    deleted_users = [m for m in inbox if m["subject"] and "Deleted" in m["subject"]]
+        # ✅ Apply subject-based categorization (case-insensitive)
+        otp = [m for m in inbox if m.get("subject") and "otp" in m["subject"].lower()]
+        complaints = [m for m in inbox if m.get("subject") and "complaint" in m["subject"].lower()]
+        feedback = [m for m in inbox if m.get("subject") and "feedback" in m["subject"].lower()]
+        deleted_users = [m for m in inbox if m.get("subject") and "deleted" in m["subject"].lower()]
 
-    return render(request, "admin_emails.html", {
-        "inbox": inbox,
-        "sent": sent,
-        "otp": otp,
-        "complaints": complaints,
-        "feedback": feedback,
-        "deleted_users": deleted_users,
-    })
+        # ✅ Sort emails by date (latest first when possible)
+        def parse_date_safe(mail_item):
+            from email.utils import parsedate_to_datetime
+            try:
+                return parsedate_to_datetime(mail_item.get("date"))
+            except Exception:
+                return None
+
+        inbox.sort(key=parse_date_safe, reverse=True)
+        sent.sort(key=parse_date_safe, reverse=True)
+
+        context = {
+            "inbox": inbox,
+            "sent": sent,
+            "otp": otp,
+            "complaints": complaints,
+            "feedback": feedback,
+            "deleted_users": deleted_users,
+        }
+
+    except Exception as e:
+        # ✅ Catch any unexpected Gmail/IMAP error
+        context = {
+            "inbox": [{"from": "Error", "subject": f"Gmail Error: {e}", "date": "", "snippet": ""}],
+            "sent": [],
+            "otp": [],
+            "complaints": [],
+            "feedback": [],
+            "deleted_users": [],
+        }
+
+    return render(request, "admin_emails.html", context)
 
 
 # --------------- Gmail Compose ---------------
@@ -1340,3 +1418,67 @@ def admin_email_compose(request):
             return render(request, "admin_email_compose.html", {"error": str(e)})
 
     return render(request, "admin_email_compose.html")
+
+# ---------------------------------------------------------------------
+# ✅ Expense & Profit Projection Dashboard (with Chart)
+# ---------------------------------------------------------------------
+
+@login_required
+def pricing_projection(request):
+    """
+    Displays monthly cost, revenue, and profit estimation based on
+    number of loans processed per month (₹49 per loan model).
+    Includes Chart.js visualization.
+    """
+    # --- Configurable constants ---
+    per_loan_fee = Decimal("49.00")  # ₹49 per loan
+    razorpay_fee_percent = Decimal("2.36")  # Razorpay % fee
+    razorpay_flat_fee = Decimal("3.00")  # per transaction ₹3 fixed
+    fixed_server_cost = Decimal("10000.00")
+    marketing_cost = Decimal("12000.00")
+    maintenance_cost = Decimal("8000.00")
+    misc_cost = Decimal("2000.00")
+
+    # --- Input ---
+    loan_count = int(request.GET.get("loans", 1000))
+
+    # --- Base calculations ---
+    gross_revenue = per_loan_fee * loan_count
+    gateway_fees = ((gross_revenue * razorpay_fee_percent) / 100) + (razorpay_flat_fee * loan_count)
+    total_fixed_costs = fixed_server_cost + marketing_cost + maintenance_cost + misc_cost
+    total_expense = total_fixed_costs + gateway_fees
+    net_profit = gross_revenue - total_expense
+
+    # --- Break-even analysis ---
+    try:
+        per_loan_net = per_loan_fee - (per_loan_fee * razorpay_fee_percent / 100) - razorpay_flat_fee
+        break_even_loans = math.ceil(float(total_fixed_costs / per_loan_net)) if per_loan_net > 0 else 0
+    except Exception:
+        break_even_loans = 0
+
+    avg_cost_per_loan = (total_expense / loan_count) if loan_count else 0
+
+    # --- Generate chart data dynamically ---
+    loan_range = list(range(100, 2100, 100))  # 100 to 2000 loans
+    profit_data = []
+    for n in loan_range:
+        revenue = per_loan_fee * n
+        fees = ((revenue * razorpay_fee_percent) / 100) + (razorpay_flat_fee * n)
+        total_cost = total_fixed_costs + fees
+        profit = revenue - total_cost
+        profit_data.append(round(profit, 2))
+
+    ctx = {
+        "loan_count": loan_count,
+        "gross_revenue": gross_revenue,
+        "gateway_fees": gateway_fees,
+        "total_fixed_costs": total_fixed_costs,
+        "total_expense": total_expense,
+        "net_profit": net_profit,
+        "avg_cost_per_loan": avg_cost_per_loan,
+        "break_even_loans": break_even_loans,
+        "per_loan_fee": per_loan_fee,
+        "loan_range": loan_range,
+        "profit_data": profit_data,
+    }
+    return render(request, "admin/pricing_projection.html", ctx)

@@ -45,6 +45,8 @@ urlpatterns = [
     path("payment/callback/", views.payment_callback, name="payment_callback"),
     path("payment/success/", views.payment_success, name="payment_success"),
     path("payment/failure/", views.payment_failure, name="payment_failure"),
+    path("payment/invoice/", views.invoice_view, name="invoice"),
+
 
     # ---------------- Email OTP ----------------
     path("verify-email-otp/", views.verify_email_otp_view, name="verify_email_otp"),
@@ -63,10 +65,11 @@ urlpatterns = [
     path("admin_logout/", views.admin_logout, name="admin_logout"),
     path("admin/full_profile/<uuid:user_id>/", views.admin_view_profile, name="admin_full_profile"),
     path("admin/user_action/<uuid:user_id>/", views.admin_user_action, name="admin_user_action"),
+    path("pricing-projection/", views.pricing_projection, name="pricing_projection"),
 
     # ---------------- Gmail (Admin Dashboard) ----------------
-    path("admin/emails/", views.admin_emails, name="admin_emails"),
-    path("admin/emails/compose/", views.admin_email_compose, name="admin_email_compose"),
+    path("dashboard/admin/emails/", views.admin_emails, name="admin_emails"),
+    path("dashboard/admin/emails/compose/", views.admin_email_compose, name="admin_email_compose"),
 
     # ---------------- Support / Complaint / Feedback ----------------
     path("support/", views.support_view, name="support"),
@@ -79,6 +82,9 @@ urlpatterns = [
     path("privacy/", TemplateView.as_view(template_name="privacy.html"), name="privacy"),
     path("faq/", TemplateView.as_view(template_name="faq.html"), name="faq"),
     path("contact/", TemplateView.as_view(template_name="contact.html"), name="contact"),
+
+    # ---------------- Django Admin (keep this at bottom) ----------------
+    path("admin/", admin.site.urls),
 ]
 
 

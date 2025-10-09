@@ -5,53 +5,104 @@
 
 {% block extra_head %}
 <style>
-  body { font-family: 'Poppins', sans-serif; background:#f8fafc; }
-  .container-max { max-width:1200px; margin:20px auto; }
-  .card { border-radius:12px; box-shadow:0 6px 20px rgba(0,0,0,0.05); border:none; }
-  table th { background:#0d6efd; color:#fff; font-weight:600; }
-  table td { vertical-align: middle; }
-  .tab-content { margin-top:20px; }
-  .btn-compose { float:right; }
+  body {
+    font-family: 'Poppins', sans-serif;
+    background: #f8fafc;
+  }
+  .container-max {
+    max-width: 1250px;
+    margin: 30px auto;
+  }
+  .card {
+    border: none;
+    border-radius: 14px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+    background-color: #fff;
+  }
+  .nav-tabs .nav-link {
+    border: none;
+    color: #555;
+    font-weight: 500;
+  }
+  .nav-tabs .nav-link.active {
+    color: #0d6efd;
+    font-weight: 600;
+    border-bottom: 3px solid #0d6efd;
+    background: transparent;
+  }
+  table th {
+    background: #0d6efd;
+    color: #fff;
+    font-weight: 600;
+  }
+  table td {
+    vertical-align: middle;
+    font-size: 14px;
+  }
+  h5 {
+    font-weight: 600;
+    color: #333;
+  }
+  .tab-content {
+    margin-top: 20px;
+  }
+  .btn-compose {
+    font-weight: 500;
+    border-radius: 8px;
+    padding: 8px 16px;
+  }
+  .badge {
+    font-size: 12px;
+    padding: 4px 10px;
+  }
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="container-max">
-  <div class="d-flex justify-content-between align-items-center mb-3">
-    <h2 class="fw-bold">📧 Admin Emails</h2>
-    <a href="{% url 'admin_email_compose' %}" class="btn btn-primary btn-compose">+ Compose</a>
+  <!-- Header -->
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="fw-bold text-primary mb-0">📧 Admin Emails</h2>
+    <a href="{% url 'admin_email_compose' %}" class="btn btn-primary btn-compose shadow-sm">+ Compose</a>
   </div>
 
-  <!-- Tabs -->
+  <!-- Tabs Navigation -->
   <ul class="nav nav-tabs" id="emailTabs" role="tablist">
-    <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" href="#inbox">Inbox</a></li>
-    <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#sent">Sent</a></li>
-    <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#otp">OTP</a></li>
-    <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#complaints">Complaints</a></li>
-    <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#feedback">Feedback</a></li>
-    <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#deleted">Deleted Users</a></li>
+    <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" href="#inbox">📥 Inbox</a></li>
+    <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#sent">📤 Sent</a></li>
+    <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#otp">🔑 OTP</a></li>
+    <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#complaints">⚠️ Complaints</a></li>
+    <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#feedback">💬 Feedback</a></li>
+    <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#deleted">🗑️ Deleted Users</a></li>
   </ul>
 
-  <!-- Tab Content -->
+  <!-- Tabs Content -->
   <div class="tab-content">
 
     <!-- Inbox -->
     <div class="tab-pane fade show active" id="inbox">
       <div class="card p-3 mt-3">
-        <h5>📥 Inbox</h5>
-        <div class="table-responsive">
+        <div class="d-flex justify-content-between align-items-center">
+          <h5>📥 Inbox</h5>
+          <span class="badge bg-primary">{{ inbox|length }} mails</span>
+        </div>
+        <div class="table-responsive mt-3">
           <table class="table table-hover align-middle">
-            <thead><tr><th>From</th><th>To</th><th>Subject</th><th>Date</th><th>Snippet</th></tr></thead>
+            <thead>
+              <tr><th>From</th><th>To</th><th>Subject</th><th>Date</th><th>Snippet</th></tr>
+            </thead>
             <tbody>
               {% for m in inbox %}
               <tr>
                 <td>{{ m.from }}</td>
                 <td>{{ m.to }}</td>
                 <td>{{ m.subject }}</td>
-                <td>{{ m.date }}</td>
-                <td>{{ m.snippet }}</td>
+                <td class="text-muted">{{ m.date }}</td>
+                <td class="text-muted">{{ m.snippet }}</td>
               </tr>
-              {% empty %}<tr><td colspan="5" class="text-center text-muted">No mails found.</td></tr>{% endfor %}
+              {% empty %}
+              <tr><td colspan="5" class="text-center text-muted">No emails found.</td></tr>
+              {% endfor %}
             </tbody>
           </table>
         </div>
@@ -61,8 +112,11 @@
     <!-- Sent -->
     <div class="tab-pane fade" id="sent">
       <div class="card p-3 mt-3">
-        <h5>📤 Sent</h5>
-        <div class="table-responsive">
+        <div class="d-flex justify-content-between align-items-center">
+          <h5>📤 Sent Mails</h5>
+          <span class="badge bg-success">{{ sent|length }} sent</span>
+        </div>
+        <div class="table-responsive mt-3">
           <table class="table table-hover align-middle">
             <thead><tr><th>To</th><th>Subject</th><th>Date</th><th>Snippet</th></tr></thead>
             <tbody>
@@ -70,10 +124,12 @@
               <tr>
                 <td>{{ m.to }}</td>
                 <td>{{ m.subject }}</td>
-                <td>{{ m.date }}</td>
-                <td>{{ m.snippet }}</td>
+                <td class="text-muted">{{ m.date }}</td>
+                <td class="text-muted">{{ m.snippet }}</td>
               </tr>
-              {% empty %}<tr><td colspan="4" class="text-center text-muted">No sent mails found.</td></tr>{% endfor %}
+              {% empty %}
+              <tr><td colspan="4" class="text-center text-muted">No sent mails.</td></tr>
+              {% endfor %}
             </tbody>
           </table>
         </div>
@@ -83,8 +139,8 @@
     <!-- OTP -->
     <div class="tab-pane fade" id="otp">
       <div class="card p-3 mt-3">
-        <h5>🔑 OTP Mails</h5>
-        <div class="table-responsive">
+        <h5>🔑 OTP Emails</h5>
+        <div class="table-responsive mt-3">
           <table class="table table-hover align-middle">
             <thead><tr><th>From</th><th>To</th><th>Subject</th><th>Date</th><th>Snippet</th></tr></thead>
             <tbody>
@@ -93,10 +149,12 @@
                 <td>{{ m.from }}</td>
                 <td>{{ m.to }}</td>
                 <td>{{ m.subject }}</td>
-                <td>{{ m.date }}</td>
-                <td>{{ m.snippet }}</td>
+                <td class="text-muted">{{ m.date }}</td>
+                <td class="text-muted">{{ m.snippet }}</td>
               </tr>
-              {% empty %}<tr><td colspan="5" class="text-center text-muted">No OTP mails.</td></tr>{% endfor %}
+              {% empty %}
+              <tr><td colspan="5" class="text-center text-muted">No OTP mails found.</td></tr>
+              {% endfor %}
             </tbody>
           </table>
         </div>
@@ -107,7 +165,7 @@
     <div class="tab-pane fade" id="complaints">
       <div class="card p-3 mt-3">
         <h5>⚠️ Complaints</h5>
-        <div class="table-responsive">
+        <div class="table-responsive mt-3">
           <table class="table table-hover align-middle">
             <thead><tr><th>From</th><th>Subject</th><th>Date</th><th>Snippet</th></tr></thead>
             <tbody>
@@ -115,10 +173,12 @@
               <tr>
                 <td>{{ m.from }}</td>
                 <td>{{ m.subject }}</td>
-                <td>{{ m.date }}</td>
-                <td>{{ m.snippet }}</td>
+                <td class="text-muted">{{ m.date }}</td>
+                <td class="text-muted">{{ m.snippet }}</td>
               </tr>
-              {% empty %}<tr><td colspan="4" class="text-center text-muted">No complaints mails.</td></tr>{% endfor %}
+              {% empty %}
+              <tr><td colspan="4" class="text-center text-muted">No complaint mails found.</td></tr>
+              {% endfor %}
             </tbody>
           </table>
         </div>
@@ -129,7 +189,7 @@
     <div class="tab-pane fade" id="feedback">
       <div class="card p-3 mt-3">
         <h5>💬 Feedback</h5>
-        <div class="table-responsive">
+        <div class="table-responsive mt-3">
           <table class="table table-hover align-middle">
             <thead><tr><th>From</th><th>Subject</th><th>Date</th><th>Snippet</th></tr></thead>
             <tbody>
@@ -137,10 +197,12 @@
               <tr>
                 <td>{{ m.from }}</td>
                 <td>{{ m.subject }}</td>
-                <td>{{ m.date }}</td>
-                <td>{{ m.snippet }}</td>
+                <td class="text-muted">{{ m.date }}</td>
+                <td class="text-muted">{{ m.snippet }}</td>
               </tr>
-              {% empty %}<tr><td colspan="4" class="text-center text-muted">No feedback mails.</td></tr>{% endfor %}
+              {% empty %}
+              <tr><td colspan="4" class="text-center text-muted">No feedback mails found.</td></tr>
+              {% endfor %}
             </tbody>
           </table>
         </div>
@@ -151,7 +213,7 @@
     <div class="tab-pane fade" id="deleted">
       <div class="card p-3 mt-3">
         <h5>🗑️ Deleted User Mails</h5>
-        <div class="table-responsive">
+        <div class="table-responsive mt-3">
           <table class="table table-hover align-middle">
             <thead><tr><th>To</th><th>Subject</th><th>Date</th><th>Snippet</th></tr></thead>
             <tbody>
@@ -159,10 +221,12 @@
               <tr>
                 <td>{{ m.to }}</td>
                 <td>{{ m.subject }}</td>
-                <td>{{ m.date }}</td>
-                <td>{{ m.snippet }}</td>
+                <td class="text-muted">{{ m.date }}</td>
+                <td class="text-muted">{{ m.snippet }}</td>
               </tr>
-              {% empty %}<tr><td colspan="4" class="text-center text-muted">No deleted user mails.</td></tr>{% endfor %}
+              {% empty %}
+              <tr><td colspan="4" class="text-center text-muted">No deleted user mails found.</td></tr>
+              {% endfor %}
             </tbody>
           </table>
         </div>

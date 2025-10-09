@@ -1,6 +1,16 @@
-import logging, uuid, random, re, json, requests
-import smtplib, imaplib, email
+import os
+import uuid
+import json
+import random
+import re
+import logging
+import smtplib
+import imaplib
+import email
+import requests
 from datetime import date, datetime, timedelta
+from decimal import Decimal, InvalidOperation
+
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import (
@@ -11,7 +21,8 @@ from django.contrib.auth.hashers import make_password
 from django.contrib.auth.tokens import default_token_generator
 from django.contrib.auth.forms import SetPasswordForm
 from django.core.mail import send_mail
-from django.db import transaction
+from django.db import transaction, models
+from django.db.models import Q
 from django.http import JsonResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse
@@ -20,26 +31,32 @@ from django.utils.crypto import get_random_string
 from django.utils.dateparse import parse_date
 from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
-from django.views.decorators.csrf import csrf_protect
+from django.views.decorators.csrf import csrf_protect, csrf_exempt
 from django.views.decorators.http import require_POST, require_http_methods
 from email.mime.text import MIMEText
-from django.db.models import Q
-
 from dotenv import load_dotenv
-from .models import (
+
+# ✅ Razorpay SDK Import (replaces all PhonePe SDK imports)
+import razorpay
+
+# ✅ Django app imports
+from main.utils import send_email_otp
+from main.models import (
     User, Profile, ApplicantDetails, LenderDetails,
-    LoanRequest, LoanLenderStatus, Payment,
+    LoanRequest, LoanLenderStatus, PaymentTransaction,
     SupportTicket, Complaint, Feedback, CibilReport, DeletedUserLog
 )
-from .forms import (
+from main.forms import (
     ApplicantRegistrationForm, LenderRegistrationForm, LoginForm,
     SupportForm, ComplaintForm, FeedbackForm
 )
-from .utils import send_email_otp
 
+# ✅ Environment + Logger setup
 load_dotenv()
 logger = logging.getLogger(__name__)
 User = get_user_model()
+
+
 
 # -------------------- Home --------------------
 def index(request): return render(request, 'index.html')
@@ -465,7 +482,11 @@ def dashboard_admin(request):
     applicants = ApplicantDetails.objects.select_related("user", "user__profile").all().order_by("-id")
     lenders = LenderDetails.objects.select_related("user", "user__profile").all().order_by("-id")
     loans = LoanRequest.objects.select_related("applicant", "accepted_lender").all().order_by("-created_at")
-    payments = Payment.objects.select_related("lender", "lender__profile", "loan_request").all().order_by("-id")
+    payments = (
+        PaymentTransaction.objects.select_related("user", "user__profile")
+        .all()
+        .order_by("-created_at")
+    )
 
     # ✅ Decorated Users (with deleted log email fix)
     decorated_users = []
@@ -474,7 +495,7 @@ def dashboard_admin(request):
         status = getattr(profile, "status", "No Profile") if profile else "No Profile"
         delete_reason = getattr(profile, "delete_reason", None) if profile else None
 
-        # 🛠 Fix: Show actual email from DeletedUserLog
+        # 🛠 Fix: Show actual email from DeletedUserLog (if deleted)
         display_email = u.email
         if status == "Deleted":
             last_log = (
@@ -513,7 +534,7 @@ def dashboard_admin(request):
         status, data = mail.search(None, "ALL")
         if status == "OK" and data[0]:
             ids = data[0].split()
-            for num in reversed(ids[-5:]):  # ✅ latest first
+            for num in reversed(ids[-5:]):  # latest first
                 _, raw = mail.fetch(num, "(RFC822)")
                 msg = email.message_from_bytes(raw[0][1])
 
@@ -541,29 +562,43 @@ def dashboard_admin(request):
                     "to": msg.get("To"),
                     "subject": subject,
                     "date": msg.get("Date"),
-                    "snippet": snippet.strip()
+                    "snippet": snippet.strip(),
                 })
 
         mail.logout()
 
     except Exception as e:
-        mails = [{"from": "Error", "subject": str(e), "date": "", "snippet": str(e)}]
+        logger.error(f"📧 Gmail fetch error: {e}")
+        mails = [{"from": "Error", "subject": "Email fetch failed", "date": "", "snippet": str(e)}]
+
+    # ✅ Razorpay-specific data (aggregated summary)
+    total_completed = payments.filter(status="Completed").count()
+    total_pending = payments.filter(status="Pending").count()
+    total_failed = payments.filter(status="Failed").count()
+    total_revenue = payments.filter(status="Completed").aggregate(
+        total=models.Sum("amount")
+    )["total"] or 0
+
+    # ✅ Context
+    context = {
+        "users_dec": decorated_users,
+        "users": users_qs,
+        "applicants": applicants,
+        "lenders": lenders,
+        "loans": loans,
+        "payments": payments,
+        "unread_mails_count": unread_count,
+        "mails": mails,
+        "razorpay_summary": {
+            "total_completed": total_completed,
+            "total_pending": total_pending,
+            "total_failed": total_failed,
+            "total_revenue": total_revenue,
+        },
+    }
 
     # ✅ Final Render
-    return render(
-        request,
-        "dashboard_admin.html",
-        {
-            "users_dec": decorated_users,
-            "users": users_qs,
-            "applicants": applicants,
-            "lenders": lenders,
-            "loans": loans,
-            "payments": payments,
-            "unread_mails_count": unread_count,  # for summary card
-            "mails": mails,  # for recent mails table
-        }
-    )
+    return render(request, "dashboard_admin.html", context)
 
 
 # -------------------- Admin View Profile --------------------
@@ -752,29 +787,77 @@ def dashboard_applicant(request):
 # -------------------- Lender Dashboard --------------------
 @login_required
 def dashboard_lender(request):
-    profile=getattr(request.user,"profile",None)
+    user = request.user
+    profile = getattr(user, "profile", None)
+
+    # ✅ Step 1: If profile not reviewed, redirect to review page
     if profile and not profile.is_reviewed:
-        return render(request,"review_profile.html",{"profile":profile})
+        return render(request, "review_profile.html", {"profile": profile})
 
-    feedbacks=LoanLenderStatus.objects.filter(lender=request.user).select_related("loan","loan__applicant").order_by("-updated_at")
+    # ✅ Step 2: Fetch lender feedbacks
+    feedbacks = (
+        LoanLenderStatus.objects.filter(lender=user)
+        .select_related("loan", "loan__applicant")
+        .order_by("-updated_at")
+    )
+
+    # ✅ Annotate loan status with global_status
     for fb in feedbacks:
-        loan=fb.loan
-        if loan.status=="Accepted" and loan.accepted_lender==request.user: fb.loan.global_status="Approved"
-        elif loan.status in ["Accepted","Finalised"] and loan.accepted_lender!=request.user: fb.loan.global_status="Rejected"
-        else: fb.loan.global_status=fb.status
+        loan = fb.loan
+        if loan.status == "Accepted" and loan.accepted_lender == user:
+            fb.loan.global_status = "Approved"
+        elif loan.status in ["Accepted", "Finalised"] and loan.accepted_lender != user:
+            fb.loan.global_status = "Rejected"
+        else:
+            fb.loan.global_status = fb.status
 
-    today=timezone.now().date()
-    handled=LoanLenderStatus.objects.filter(lender=request.user).values_list("loan_id",flat=True)
-    pending=LoanRequest.objects.filter(status="Pending",accepted_lender__isnull=True).exclude(id__in=handled).select_related("applicant").order_by("-created_at")
-    finalised=LoanRequest.objects.filter(status__in=["Accepted","Finalised"]).select_related("applicant","accepted_lender")
+    # ✅ Step 3: Get today's date
+    today = timezone.now().date()
 
-    ctx={"profile":profile,"lender_feedbacks":feedbacks,
-         "total_today":feedbacks.filter(loan__created_at__date=today).count(),
-         "total_approved":sum(1 for fb in feedbacks if fb.loan.global_status=="Approved"),
-         "total_rejected":sum(1 for fb in feedbacks if fb.loan.global_status=="Rejected"),
-         "total_pending":sum(1 for fb in feedbacks if fb.loan.global_status=="Pending"),
-         "pending_loans":pending,"finalised_loans":finalised}
-    return render(request,"dashboard_lender.html",ctx)
+    # ✅ Step 4: Loans handled / pending / finalised
+    handled = LoanLenderStatus.objects.filter(lender=user).values_list("loan_id", flat=True)
+    pending = (
+        LoanRequest.objects.filter(status="Pending", accepted_lender__isnull=True)
+        .exclude(id__in=handled)
+        .select_related("applicant")
+        .order_by("-created_at")
+    )
+    finalised = (
+        LoanRequest.objects.filter(status__in=["Accepted", "Finalised"])
+        .select_related("applicant", "accepted_lender")
+    )
+
+    # ✅ Step 5: Razorpay Payments Summary
+    # Fetch all payments by this lender
+    lender_payments = PaymentTransaction.objects.filter(user=user).order_by("-created_at")
+
+    total_paid = lender_payments.filter(status="Completed").aggregate(
+        total=models.Sum("amount")
+    )["total"] or 0
+
+    total_pending_payments = lender_payments.filter(status="Pending").count()
+    total_failed_payments = lender_payments.filter(status="Failed").count()
+
+    # ✅ Step 6: Dashboard statistics
+    ctx = {
+        "profile": profile,
+        "lender_feedbacks": feedbacks,
+        "pending_loans": pending,
+        "finalised_loans": finalised,
+        "lender_payments": lender_payments,
+        "total_today": feedbacks.filter(loan__created_at__date=today).count(),
+        "total_approved": sum(1 for fb in feedbacks if fb.loan.global_status == "Approved"),
+        "total_rejected": sum(1 for fb in feedbacks if fb.loan.global_status == "Rejected"),
+        "total_pending": sum(1 for fb in feedbacks if fb.loan.global_status == "Pending"),
+        "razorpay_summary": {
+            "total_paid": total_paid,
+            "total_pending": total_pending_payments,
+            "total_failed": total_failed_payments,
+        },
+    }
+
+    return render(request, "dashboard_lender.html", ctx)
+
 
 # -------------------- Applicant Accept Loan --------------------
 @login_required
@@ -821,31 +904,206 @@ def approve_loan(request,loan_id):
     messages.success(request,f"Loan {ls.loan.loan_id} approved.")
     return redirect("dashboard_lender")
 
-# -------------------- Payments --------------------
+# ---------------------------------------------------------------------
+# ✅ Step 1: Initiate Razorpay Payment (Stable + Correct)
+# ---------------------------------------------------------------------
 @login_required
-def payment_page(request,loan_id):
-    loan=get_object_or_404(LoanRequest,id=loan_id)
-    if request.user.role!="lender": return redirect("dashboard_router")
-    if request.method=="POST":
-        Payment.objects.create(lender=request.user,loan_request=loan,
-            payment_method=request.POST.get("payment_method") or "Unknown",
-            amount=49,status="Completed")
-        ls=get_object_or_404(LoanLenderStatus,loan=loan,lender=request.user)
-        ls.status,ls.remarks="Approved","Payment done, Loan Approved"; ls.save()
-        messages.success(request,f"✅ Loan {loan.loan_id} approved after payment.")
-        return redirect("dashboard_lender")
-    return render(request,"payment.html",{"loan":loan})
+@csrf_exempt
+def initiate_payment(request):
+    """
+    Initiate Razorpay payment safely and store transaction.
+    """
+    if request.method == "POST":
+        try:
+            user = request.user
+            amount_str = str(request.POST.get("amount", "49")).strip()
 
+            # ✅ Validate amount
+            try:
+                amount = Decimal(amount_str)
+                if amount <= 0:
+                    raise InvalidOperation("Amount must be positive")
+            except (InvalidOperation, ValueError):
+                logger.error(f"❌ Invalid amount: {amount_str}")
+                return JsonResponse({"ok": False, "error": "Invalid amount"}, status=400)
+
+            # ✅ Convert to paise (Razorpay uses smallest currency unit)
+            amount_paise = int(amount * 100)
+
+            # ✅ Short, safe order receipt ID (max 40 chars)
+            short_user_id = str(user.id)[:8].replace("-", "")
+            receipt_id = f"ORD{short_user_id}{uuid.uuid4().hex[:8].upper()}"[:40]
+
+            # ✅ Create Razorpay client
+            client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
+
+            # ✅ Create order at Razorpay
+            order = client.order.create({
+                "amount": amount_paise,
+                "currency": "INR",
+                "receipt": receipt_id,
+                "payment_capture": 1
+            })
+
+            # ✅ Save locally
+            with transaction.atomic():
+                PaymentTransaction.objects.create(
+                    user=user,
+                    txn_id=order["id"],
+                    amount=amount,
+                    status="Pending",
+                    payment_method="Razorpay",
+                )
+
+            logger.info(f"✅ Razorpay order created | OrderID={order['id']} | User={user.email}")
+
+            return JsonResponse({
+                "ok": True,
+                "order_id": order["id"],
+                "amount": amount_paise,
+                "currency": "INR",
+                "key": settings.RAZORPAY_KEY_ID
+            })
+
+        except razorpay.errors.BadRequestError as e:
+            logger.error(f"❌ Razorpay Authentication failed: {e}", exc_info=True)
+            return JsonResponse({"ok": False, "error": f"Razorpay Error: {e}"}, status=400)
+        except Exception as e:
+            logger.error(f"❌ Payment initiation failed: {e}", exc_info=True)
+            return JsonResponse({"ok": False, "error": str(e)}, status=400)
+
+    return render(request, "payments/initiate_payment.html")
+
+# ---------------------------------------------------------------------
+# ✅ Step 2: Razorpay Callback / Verification
+# ---------------------------------------------------------------------
+@csrf_exempt
+def payment_callback(request):
+    """
+    Handle Razorpay callback (or frontend handler POST)
+    and update PaymentTransaction.
+    """
+    try:
+        data = request.POST
+        razorpay_order_id = data.get("razorpay_order_id")
+        razorpay_payment_id = data.get("razorpay_payment_id")
+        razorpay_signature = data.get("razorpay_signature")
+
+        if not all([razorpay_order_id, razorpay_payment_id, razorpay_signature]):
+            logger.warning("⚠️ Incomplete callback data received")
+            return JsonResponse({"ok": False, "error": "Incomplete payment data"}, status=400)
+
+        client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
+
+        # ✅ Verify signature
+        try:
+            client.utility.verify_payment_signature({
+                "razorpay_order_id": razorpay_order_id,
+                "razorpay_payment_id": razorpay_payment_id,
+                "razorpay_signature": razorpay_signature
+            })
+            verified = True
+        except razorpay.errors.SignatureVerificationError:
+            verified = False
+
+        payment = PaymentTransaction.objects.filter(txn_id=razorpay_order_id).first()
+        if not payment:
+            logger.warning(f"⚠️ Transaction not found | OrderID={razorpay_order_id}")
+            return JsonResponse({"ok": False, "error": "Transaction not found"}, status=404)
+
+        # ✅ Update payment status
+        payment.status = "Completed" if verified else "Failed"
+        payment.raw_response = dict(data)
+        payment.updated_at = timezone.now()
+        payment.save(update_fields=["status", "raw_response", "updated_at"])
+
+        logger.info(f"✅ Payment updated | TxnID={payment.txn_id} | Status={payment.status}")
+
+        return render(request, "payments/success.html", {
+            "status": payment.status,
+            "txn_id": payment.txn_id
+        })
+
+    except Exception as e:
+        logger.error(f"❌ Error during callback handling: {e}", exc_info=True)
+        return JsonResponse({"ok": False, "error": str(e)}, status=400)
+
+# ---------------------------------------------------------------------
+# ✅ Step 3: Success Page
+# ---------------------------------------------------------------------
 @login_required
-def make_dummy_payment(request,loan_id):
-    loan=get_object_or_404(LoanRequest,id=loan_id)
-    if request.user.role!="lender": return redirect("dashboard_router")
-    Payment.objects.create(loan_request=loan,lender=request.user,
-        amount=loan.amount_requested,status="Completed",payment_method="Dummy")
-    ls=get_object_or_404(LoanLenderStatus,loan=loan,lender=request.user)
-    ls.status,ls.remarks="Approved","Dummy Payment done"; ls.save()
-    messages.success(request,f"✅ Dummy Payment done for Loan {loan.loan_id}.")
-    return redirect("dashboard_lender")
+def payment_success(request):
+    """
+    Show payment status to the user.
+    """
+    txn_id = request.GET.get("txn_id") or request.GET.get("order_id")
+
+    context = {
+        "message": "ℹ️ Payment details not found. Please check your transaction history.",
+        "status": "unknown",
+    }
+
+    try:
+        if txn_id:
+            payment = PaymentTransaction.objects.filter(txn_id=txn_id).first()
+            if payment:
+                if payment.status == "Completed":
+                    context["message"] = "✅ Payment Successful! Thank you for using Loan Saathi Hub."
+                    context["status"] = "success"
+                elif payment.status == "Pending":
+                    context["message"] = "⏳ Payment is still processing. Please wait."
+                    context["status"] = "pending"
+                else:
+                    context["message"] = "❌ Payment failed or cancelled. Please try again."
+                    context["status"] = "failed"
+            else:
+                context["message"] = f"⚠️ No transaction found for ID: {txn_id}"
+                context["status"] = "not_found"
+        else:
+            context["message"] = "⚠️ Invalid request. No transaction ID provided."
+            context["status"] = "invalid"
+    except Exception as e:
+        logger.error(f"❌ Error loading success page: {e}", exc_info=True)
+        context["message"] = "⚠️ Unexpected error while verifying payment."
+        context["status"] = "error"
+
+    return render(request, "payments/success.html", context)
+
+# ---------------------------------------------------------------------
+# ✅ Step 4: Failure Page
+# ---------------------------------------------------------------------
+@login_required
+@csrf_exempt
+def payment_failure(request):
+    """
+    Handle failed or cancelled Razorpay payments.
+    """
+    txn_id = request.GET.get("txn_id")
+    context = {
+        "message": "❌ Payment failed or was cancelled.",
+        "status": "failed",
+    }
+
+    try:
+        if txn_id:
+            payment = PaymentTransaction.objects.filter(txn_id=txn_id).first()
+            if payment and payment.status != "Completed":
+                payment.status = "Failed"
+                payment.updated_at = timezone.now()
+                payment.save(update_fields=["status", "updated_at"])
+                logger.warning(f"⚠️ Payment marked as Failed | TxnID={txn_id}")
+                context["message"] = "❌ Your payment was not successful. Please try again."
+            elif not payment:
+                context["message"] = f"⚠️ No transaction found for ID: {txn_id}"
+        else:
+            context["message"] = "⚠️ Invalid request: Transaction ID missing."
+
+    except Exception as e:
+        logger.error(f"❌ Error during failure handling: {e}", exc_info=True)
+        context["message"] = "⚠️ Something went wrong while processing payment failure."
+
+    return render(request, "payments/failure.html", context)
+
 
 # -------------------- View Profile (Lender side) --------------------
 @login_required
@@ -888,13 +1146,23 @@ def partial_profile(request, loan_id):
     applicant = loan.applicant
     profile = getattr(applicant, "profile", None)
     applicant_details = ApplicantDetails.objects.filter(user=applicant).first()
-    recent_cibil = CibilReport.objects.filter(loan=loan, lender=request.user).order_by("-created_at").first()
+    recent_cibil = CibilReport.objects.filter(
+        loan=loan, lender=request.user
+    ).order_by("-created_at").first()
 
     # ✅ Sensitive fields hidden
     hidden_fields = [
         "mobile", "email", "address", "gst_number",
         "company_name", "business_name", "aadhaar_number", "pancard_number"
     ]
+
+    # ✅ Dashboard redirect logic
+    if request.user.is_superuser:
+        dashboard_url = reverse("dashboard_admin")
+    elif hasattr(request.user, "lender_details"):
+        dashboard_url = reverse("dashboard_lender")
+    else:
+        dashboard_url = reverse("dashboard_applicant")
 
     return render(
         request,
@@ -907,8 +1175,10 @@ def partial_profile(request, loan_id):
             "recent_cibil": recent_cibil,
             "hide_sensitive": True,
             "hidden_fields": hidden_fields,
+            "dashboard_url": dashboard_url,   # ✅ add here
         }
     )
+
 # -------------------- Forgot / Reset Password --------------------
 def forgot_password_view(request):
     if request.method=="POST":

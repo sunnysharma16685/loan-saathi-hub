@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Make Payment | Loan Saathi Hub{% endblock %}
+
+{% block extra_head %}
+<style>
+  body { background-color: #f8fafc; }
+  .payment-box {
+    max-width: 480px;
+    margin: 80px auto;
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+    padding: 30px;
+  }
+  h2 {
+    font-weight: 600;
+    color: #0d6efd;
+    margin-bottom: 20px;
+  }
+  label { font-weight: 500; }
+  .btn-primary {
+    width: 100%;
+    padding: 10px;
+    border-radius: 8px;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="payment-box">
+  <h2>💳 Razorpay Payment</h2>
+  <p class="text-muted">Test a payment below (sandbox mode).</p>
+
+  <form id="payment-form">
+    {% csrf_token %}
+    <div class="mb-3">
+      <label for="amount" class="form-label">Enter Amount (₹)</label>
+      <input 
+        type="number" 
+        name="amount" 
+        id="amount" 
+        class="form-control" 
+        placeholder="Enter amount" 
+        value="10" 
+        min="1" 
+        required>
+    </div>
+    <button type="submit" class="btn btn-primary">🚀 Pay with Razorpay</button>
+  </form>
+</div>
+
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<script>
+document.getElementById('payment-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const amount = document.getElementById('amount').value;
+
+  const response = await fetch("{% url 'initiate_payment' %}", {
+    method: "POST",
+    headers: { "X-CSRFToken": "{{ csrf_token }}" },
+    body: new URLSearchParams({ amount })
+  });
+
+  const data = await response.json();
+
+  if (data.ok) {
+    const options = {
+      key: data.key,
+      amount: data.amount,
+      currency: data.currency,
+      name: "Loan Saathi Hub",
+      description: "Secure Payment",
+      order_id: data.order_id,
+      handler: function (res) {
+        fetch("{% url 'payment_callback' %}", {
+          method: "POST",
+          headers: { "Content-Type": "application/x-www-form-urlencoded" },
+          body: new URLSearchParams(res)
+        }).then(() => {
+          window.location.href = "/payment/success/?txn_id=" + data.order_id;
+        });
+      },
+      theme: { color: "#0d6efd" }
+    };
+    const rzp = new Razorpay(options);
+    rzp.open();
+  } else {
+    alert("Payment initialization failed: " + data.error);
+  }
+});
+</script>
+{% endblock %}

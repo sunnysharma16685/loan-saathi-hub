@@ -1,0 +1,145 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Payment Failed | Loan Saathi Hub{% endblock %}
+
+{% block extra_head %}
+<style>
+  body {
+    background-color: #f8fafc;
+    overflow-x: hidden;
+  }
+
+  .failure-box {
+    max-width: 520px;
+    margin: 80px auto;
+    background: #ffffff;
+    border-radius: 16px;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.08);
+    padding: 40px 30px;
+    text-align: center;
+    position: relative;
+    z-index: 10;
+  }
+
+  .failure-icon {
+    font-size: 80px;
+    color: #dc3545;
+    animation: shake 0.6s ease-in-out;
+  }
+
+  h2 {
+    font-weight: 600;
+    color: #842029;
+    margin-top: 20px;
+  }
+
+  p {
+    color: #444;
+    font-size: 15px;
+    margin-bottom: 20px;
+  }
+
+  .btn {
+    border-radius: 8px;
+    padding: 10px 22px;
+    margin: 6px;
+    font-weight: 500;
+  }
+
+  .btn-primary {
+    background-color: #0d6efd;
+    border: none;
+  }
+
+  .btn-primary:hover {
+    background-color: #0b5ed7;
+  }
+
+  .btn-outline-secondary:hover {
+    background-color: #f1f1f1;
+  }
+
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    20%, 60% { transform: translateX(-6px); }
+    40%, 80% { transform: translateX(6px); }
+  }
+
+  @keyframes fadeInDown {
+    0% { opacity: 0; transform: translateY(-20px); }
+    100% { opacity: 1; transform: translateY(0); }
+  }
+
+  .fade-in {
+    animation: fadeInDown 0.8s ease-out;
+  }
+
+  /* Floating sad emoji background */
+  .sad-emoji {
+    position: fixed;
+    top: -20px;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  .sad-emoji span {
+    position: absolute;
+    display: block;
+    font-size: 24px;
+    color: rgba(220, 53, 69, 0.2);
+    animation: floatDown linear infinite;
+  }
+
+  @keyframes floatDown {
+    0% {
+      transform: translateY(-10px) rotate(0deg);
+      opacity: 1;
+    }
+    100% {
+      transform: translateY(100vh) rotate(360deg);
+      opacity: 0;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="sad-emoji">
+  {% for i in "0123456789"|make_list %}
+    <span style="left:{{ forloop.counter|add:5|mul:8 }}%; animation-duration:{{ 6|add:forloop.counter|divisibleby:2|yesno:'4,7' }}s; animation-delay:{{ forloop.counter }}s;">😔</span>
+  {% endfor %}
+</div>
+
+<div class="failure-box fade-in">
+  <div class="failure-icon">❌</div>
+  <h2>Payment Failed</h2>
+  <p>Unfortunately, your Razorpay payment could not be completed.</p>
+
+  {% if message %}
+    <p class="text-muted"><small>{{ message }}</small></p>
+  {% endif %}
+
+  <div class="mt-3">
+    <a href="{% url 'initiate_payment' %}" class="btn btn-primary">🔁 Try Again</a>
+    <a href="{% url 'dashboard_router' %}" class="btn btn-outline-secondary">🏠 Go to Dashboard</a>
+  </div>
+</div>
+
+<script>
+  // 🎭 Add floating sad emojis for subtle animation
+  document.addEventListener('DOMContentLoaded', () => {
+    const emojis = document.querySelectorAll('.sad-emoji span');
+    emojis.forEach(span => {
+      span.style.left = Math.random() * 100 + '%';
+      span.style.fontSize = Math.random() * 20 + 20 + 'px';
+      span.style.animationDuration = (Math.random() * 3 + 4) + 's';
+      span.style.animationDelay = (Math.random() * 2) + 's';
+    });
+  });
+</script>
+{% endblock %}

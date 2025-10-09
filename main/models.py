@@ -49,7 +49,8 @@ class Profile(models.Model):
     user = models.OneToOneField(settings.AUTH_USER_MODEL,on_delete=models.CASCADE,related_name="profile")
     full_name = models.CharField(max_length=255); mobile=models.CharField(max_length=20,blank=True,null=True)
     dob=models.DateField(blank=True,null=True); gender=models.CharField(max_length=20,blank=True,null=True)
-    marital_status=models.CharField(max_length=50,blank=True,null=True); address=models.TextField(blank=True,null=True)
+    marital_status=models.CharField(max_length=50,blank=True,null=True)
+    address=models.TextField(blank=True,null=True)
     pancard_number=models.CharField(max_length=10,unique=True,help_text="ABCDE1234F")
     aadhaar_number=models.CharField(max_length=12,unique=True,help_text="12-digit Aadhaar")
     pincode=models.CharField(max_length=10,blank=True,null=True); city=models.CharField(max_length=50,blank=True,null=True)
@@ -121,13 +122,27 @@ class LoanLenderStatus(models.Model):
 # =====================================================
 # PAYMENT
 # =====================================================
-class Payment(models.Model):
-    id=models.UUIDField(primary_key=True,default=uuid.uuid4,editable=False)
-    loan_request=models.ForeignKey(LoanRequest,on_delete=models.CASCADE,related_name="payments")
-    lender=models.ForeignKey(User,on_delete=models.CASCADE,related_name="lender_payments")
-    amount=models.DecimalField(max_digits=12,decimal_places=2); status=models.CharField(max_length=20,default="Pending")
-    payment_method=models.CharField(max_length=50); created_at=models.DateTimeField(auto_now_add=True)
-    def __str__(self): return f"{self.loan_request.loan_id}-{self.amount}({self.status})"
+
+class PaymentTransaction(models.Model):
+    STATUS_CHOICES = [
+        ("Pending", "Pending"),
+        ("Completed", "Completed"),
+        ("Failed", "Failed"),
+    ]
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="payments")
+    loan_request = models.ForeignKey("main.LoanRequest", on_delete=models.SET_NULL, null=True, blank=True, related_name="payments")
+    txn_id = models.CharField(max_length=100, unique=True)
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    payment_method = models.CharField(max_length=50, default="PhonePe")
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="Pending")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    raw_response = models.JSONField(blank=True, null=True)
+
+    def __str__(self):
+        return f"{self.txn_id} ({self.status})"
 
 # =====================================================
 # SUPPORT / COMPLAINT / FEEDBACK / CIBIL

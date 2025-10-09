@@ -35,7 +35,7 @@
 {% block content %}
 <h1>Lender Dashboard</h1>
 
-<!-- ✅ Messages -->
+<!-- ✅ Django Messages -->
 {% if messages %}
   {% for message in messages %}
     <div class="alert alert-{{ message.tags }} alert-dismissible fade show shadow-sm">
@@ -45,13 +45,13 @@
   {% endfor %}
 {% endif %}
 
-<!-- Top Buttons -->
+<!-- ✅ Top Buttons -->
 <div class="d-flex justify-content-end mb-3">
   <a href="{% url 'dashboard_lender' %}" class="btn btn-secondary me-2">All Loans</a>
   <a href="{% url 'edit_profile' request.user.id %}" class="btn btn-warning">Edit Profile</a>
 </div>
 
-<!-- Stats -->
+<!-- ✅ Summary Cards -->
 <div class="row mb-3 px-3">
   <div class="col-md-3 mb-3">
     <div class="card text-center bg-primary text-white filter-box" data-filter="today">
@@ -75,7 +75,7 @@
   </div>
 </div>
 
-<!-- Loan Table -->
+<!-- ✅ Loan Requests Table -->
 <table class="table">
   <thead>
     <tr>
@@ -111,15 +111,25 @@
       <td>{{ fb.loan.reason_for_loan|default:"N/A" }}</td>
       <td>
         {% if fb.loan.status == "Accepted" and fb.loan.accepted_lender == request.user %}
-          <p class="text-success fw-bold">🎉 The Applicant choose you!</p>
+          <p class="text-success fw-bold">🎉 The Applicant chose you!</p>
           <a href="{% url 'view_profile' fb.loan.id %}" class="btn btn-view btn-sm">Full Profile</a>
+
         {% elif fb.loan.global_status == "Pending" %}
-          <a href="{% url 'make_dummy_payment' fb.loan.id %}" class="btn btn-approve btn-sm">Make Payment</a>
+          <!-- ✅ Razorpay Payment Integration -->
+          <button 
+            class="btn btn-approve btn-sm razorpay-btn"
+            data-amount="{{ fb.loan.amount_requested }}"
+            data-loan-id="{{ fb.loan.loan_id }}">
+            💳 Pay Now
+          </button>
+
           <button class="btn btn-reject btn-sm" data-bs-toggle="modal" data-bs-target="#rejectModal{{fb.loan.id}}">Reject</button>
           <a href="{% url 'partial_profile' fb.loan.id %}" class="btn btn-view btn-sm">Partial Profile</a>
+
         {% elif fb.loan.global_status == "Rejected" %}
-          <p class="text-danger fw-bold">❌ Applicant has chosen another lender</p>
+          <p class="text-danger fw-bold">❌ Applicant chose another lender</p>
           <a href="{% url 'partial_profile' fb.loan.id %}" class="btn btn-view btn-sm">Partial Profile</a>
+
         {% elif fb.loan.global_status == "Approved" %}
           <a href="{% url 'view_profile' fb.loan.id %}" class="btn btn-view btn-sm">Full Profile</a>
         {% endif %}
@@ -137,12 +147,12 @@
               <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
-              <p class="text-danger fw-bold"⚠️ Are you sure? This action cannot be undone.</p>
+              <p class="text-danger fw-bold">⚠️ Are you sure? This action cannot be undone.</p>
               <label><strong>Reason</strong></label>
               <select name="reason" class="form-control" required>
                 <option value="">-- Select Reason --</option>
                 <option>Low Credit Score</option>
-                <option>Profile not match</option>
+                <option>Profile Mismatch</option>
                 <option>Employment Issue</option>
                 <option>Insufficient Income</option>
                 <option>Large Existing EMI</option>
@@ -162,22 +172,100 @@
 {% endblock %}
 
 {% block extra_js %}
+<!-- ✅ Razorpay JS SDK -->
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+
 <script>
-document.addEventListener("DOMContentLoaded", function(){
+document.addEventListener("DOMContentLoaded", function () {
+  // ---------------------------
+  // ✅ Loan Filters (unchanged)
+  // ---------------------------
   const filterBoxes = document.querySelectorAll(".filter-box");
   const mainRows = document.querySelectorAll("table tbody tr[data-status]");
-  function applyFilter(kind){
+  function applyFilter(kind) {
     const todayISO = new Date().toISOString().split("T")[0];
-    mainRows.forEach(row=>{
-      const status=(row.dataset.status||"").toLowerCase();
-      const created=row.dataset.created;
-      let show=true;
-      if(kind==="today") show=(created===todayISO);
-      else if(["approved","rejected","pending"].includes(kind)) show=(status===kind);
-      row.style.display=show?"":"none";
+    mainRows.forEach(row => {
+      const status = (row.dataset.status || "").toLowerCase();
+      const created = row.dataset.created;
+      let show = true;
+      if (kind === "today") show = (created === todayISO);
+      else if (["approved", "rejected", "pending"].includes(kind)) show = (status === kind);
+      row.style.display = show ? "" : "none";
     });
   }
-  filterBoxes.forEach(box=>box.addEventListener("click",()=>applyFilter(box.dataset.filter)));
+  filterBoxes.forEach(box => box.addEventListener("click", () => applyFilter(box.dataset.filter)));
+
+  // ---------------------------
+  // ✅ Razorpay Integration
+  // ---------------------------
+  const payButtons = document.querySelectorAll(".razorpay-btn");
+  payButtons.forEach(button => {
+    button.addEventListener("click", async () => {
+      const amount = button.dataset.amount;
+      const loanId = button.dataset.loanId;
+
+      try {
+        // Call backend to create Razorpay order
+        const response = await fetch("{% url 'initiate_payment' %}", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+            "X-CSRFToken": "{{ csrf_token }}"
+          },
+          body: new URLSearchParams({ amount: amount })
+        });
+
+        const data = await response.json();
+        if (!data.ok) {
+          alert("❌ Payment initialization failed: " + (data.error || "Unknown error"));
+          return;
+        }
+
+        // Razorpay options
+        const options = {
+          key: data.key, // Razorpay public key from backend
+          amount: data.amount, // in paise
+          currency: data.currency || "INR",
+          name: "Loan Saathi Hub",
+          description: "Loan Payment for " + loanId,
+          order_id: data.order_id,
+          handler: function (response) {
+            // Send callback to server
+            fetch("{% url 'payment_callback' %}", {
+              method: "POST",
+              headers: { "Content-Type": "application/x-www-form-urlencoded" },
+              body: new URLSearchParams({
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_signature: response.razorpay_signature
+              })
+            }).then(() => {
+              window.location.href = "/payment/success/?txn_id=" + data.order_id;
+            });
+          },
+          prefill: {
+            name: "{{ request.user.profile.full_name|default:request.user.email }}",
+            email: "{{ request.user.email }}",
+            contact: "{{ request.user.profile.mobile|default:'9999999999' }}"
+          },
+          theme: { color: "#0d6efd" },
+          modal: {
+            ondismiss: function () {
+              alert("⚠️ Payment process was cancelled.");
+            }
+          }
+        };
+
+        // Open Razorpay popup
+        const rzp = new Razorpay(options);
+        rzp.open();
+
+      } catch (err) {
+        console.error("Razorpay Init Error:", err);
+        alert("⚠️ Something went wrong while initiating payment.");
+      }
+    });
+  });
 });
 </script>
 {% endblock %}

@@ -1,12 +1,13 @@
 from django.contrib import admin
 from .models import PageAd
+
 from .models import (
     User,
     Profile,
     ApplicantDetails,
     LenderDetails,
     LoanRequest,
-    Payment,
+    PaymentTransaction,
 )
 
 
@@ -44,11 +45,26 @@ class LoanRequestAdmin(admin.ModelAdmin):
     search_fields = ("loan_id", "applicant__username", "applicant__email")
 
 
-@admin.register(Payment)
-class PaymentAdmin(admin.ModelAdmin):
-    list_display = ("loan_request", "lender", "amount", "status", "created_at")
-    search_fields = ("loan_request__loan_id", "lender__email")
-    list_filter = ("status", "payment_method")
+@admin.register(PaymentTransaction)
+class PaymentTransactionAdmin(admin.ModelAdmin):
+    list_display = ("txn_id", "user", "loan_request", "amount", "payment_method", "status", "created_at")
+    search_fields = ("txn_id", "user__email", "loan_request__loan_id")
+    list_filter = ("status", "payment_method", "created_at")
+    readonly_fields = ("created_at", "updated_at", "raw_response")
+
+    fieldsets = (
+        ("Transaction Details", {
+            "fields": ("txn_id", "user", "loan_request", "amount", "payment_method", "status")
+        }),
+        ("Timestamps", {
+            "fields": ("created_at", "updated_at"),
+        }),
+        ("Raw Response (from PhonePe)", {
+            "classes": ("collapse",),
+            "fields": ("raw_response",),
+        }),
+    )
+
 
 
 @admin.register(PageAd)

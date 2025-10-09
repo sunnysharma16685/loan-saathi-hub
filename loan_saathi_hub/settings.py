@@ -258,3 +258,31 @@ TEMPLATES = [
     },
 ]
 
+# --------------------------- 
+# 💳 PAYMENT — Razorpay Integration
+# ---------------------------
+
+
+# ✅ Load .env file (important for local dev)
+load_dotenv()
+
+# ✅ Site URL (change when deployed)
+# e.g. SITE_URL = "https://www.loansaathihub.in"
+SITE_URL = os.getenv("SITE_URL", "http://127.0.0.1:8000")
+
+# ✅ Razorpay Keys (from .env or Render environment)
+RAZORPAY_KEY_ID = os.getenv("RAZORPAY_KEY_ID")
+RAZORPAY_KEY_SECRET = os.getenv("RAZORPAY_KEY_SECRET")
+
+# ✅ Sanity check — print safely
+if RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET:
+    print(f"[INFO] ✅ Environment loaded | RAZORPAY_KEY_ID: {RAZORPAY_KEY_ID[:8]}**** | Mode: development")
+else:
+    print("[WARN] ⚠️ Razorpay keys not loaded! Check your .env or environment settings.")
+
+# ✅ Razorpay URLs (optional, good for consistency)
+RAZORPAY_API_BASE = "https://api.razorpay.com/v1"
+RAZORPAY_ORDER_URL = f"{RAZORPAY_API_BASE}/orders"
+RAZORPAY_PAYMENT_URL = f"{RAZORPAY_API_BASE}/payments"
+
+

@@ -1,9 +1,11 @@
 from django.contrib import admin
 from django.urls import path
-from main import views
 from django.views.generic import TemplateView
 from django.conf import settings
 from django.conf.urls.static import static
+
+# ✅ Import all your main app views
+from main import views
 
 
 urlpatterns = [
@@ -30,52 +32,55 @@ urlpatterns = [
     path("dashboard/admin/", views.dashboard_admin, name="dashboard_admin"),
     path("dashboard/applicant/", views.dashboard_applicant, name="dashboard_applicant"),
     path("dashboard/lender/", views.dashboard_lender, name="dashboard_lender"),
-    path("dashboard/", views.dashboard_router, name="dashboard_router"),  # auto redirect based on role
+    path("dashboard/", views.dashboard_router, name="dashboard_router"),
 
-    # -----------------Advertisement-----------------------------------------
-    path("admin/", admin.site.urls),   # ✅ इससे admin namespace register होगा
-    
+    # ---------------- Advertisement ----------------
+    path("admin/", admin.site.urls),  # ✅ Django admin panel
 
     # ---------------- CIBIL ----------------
     path("generate_cibil/<uuid:loan_id>/", views.generate_cibil_score, name="generate_cibil_score"),
+
+    # ---------------------- Payment Gateway ---------------------
+    path("payment/initiate/", views.initiate_payment, name="initiate_payment"),
+    path("payment/callback/", views.payment_callback, name="payment_callback"),
+    path("payment/success/", views.payment_success, name="payment_success"),
+    path("payment/failure/", views.payment_failure, name="payment_failure"),
 
     # ---------------- Email OTP ----------------
     path("verify-email-otp/", views.verify_email_otp_view, name="verify_email_otp"),
     path("resend-email-otp/", views.resend_email_otp_view, name="resend_email_otp"),
 
-
     # ---------------- Loan + Payment ----------------
     path("loan/request/", views.loan_request, name="loan_request"),
-    path("dashboard/lender/payment/<uuid:loan_id>/", views.payment_page, name="payment_page"),
-    path("dashboard/lender/dummy-payment/<uuid:loan_id>/", views.make_dummy_payment, name="make_dummy_payment"),
     path("dashboard/lender/reject/<uuid:loan_id>/", views.reject_loan, name="reject_loan"),
     path("dashboard/lender/approve/<uuid:loan_id>/", views.approve_loan, name="approve_loan"),
 
     # ---------------- Applicant Loan Actions ----------------
     path("applicant/accept/<uuid:loan_id>/<uuid:lender_id>/", views.applicant_accept_loan, name="applicant_accept_loan"),
 
-    # ---------------- Custom Admin (app-level) ----------------
+    # ---------------- Custom Admin ----------------
     path("admin_login/", views.admin_login, name="admin_login"),
     path("admin_logout/", views.admin_logout, name="admin_logout"),
     path("admin/full_profile/<uuid:user_id>/", views.admin_view_profile, name="admin_full_profile"),
     path("admin/user_action/<uuid:user_id>/", views.admin_user_action, name="admin_user_action"),
-    
-    # ---------------- Gmail View (Admin Dashboard) ----------------
-    path("admin/emails/", views.admin_emails, name="admin_emails"),
-    path("admin/emails/compose/", views.admin_email_compose, name="admin_email_compose"), 
 
-    # ------- Support / Complaint / Feedback ----------------
+    # ---------------- Gmail (Admin Dashboard) ----------------
+    path("admin/emails/", views.admin_emails, name="admin_emails"),
+    path("admin/emails/compose/", views.admin_email_compose, name="admin_email_compose"),
+
+    # ---------------- Support / Complaint / Feedback ----------------
     path("support/", views.support_view, name="support"),
     path("complaint/", views.complaint_view, name="complaint"),
     path("feedback/", views.feedback_view, name="feedback"),
 
-    # ---------------- Footer static pages ----------------
+    # ---------------- Static Footer Pages ----------------
     path("about/", TemplateView.as_view(template_name="about.html"), name="about"),
     path("terms/", TemplateView.as_view(template_name="terms.html"), name="terms"),
     path("privacy/", TemplateView.as_view(template_name="privacy.html"), name="privacy"),
     path("faq/", TemplateView.as_view(template_name="faq.html"), name="faq"),
     path("contact/", TemplateView.as_view(template_name="contact.html"), name="contact"),
 ]
+
 
 # ---------------- Static & Media (development only) ----------------
 if settings.DEBUG:

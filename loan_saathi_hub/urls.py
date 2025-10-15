@@ -34,9 +34,6 @@ urlpatterns = [
     path("dashboard/lender/", views.dashboard_lender, name="dashboard_lender"),
     path("dashboard/", views.dashboard_router, name="dashboard_router"),
 
-    # ---------------- Advertisement ----------------
-    path("admin/", admin.site.urls),  # ✅ Django admin panel
-
     # ---------------- CIBIL ----------------
     path("generate_cibil/<uuid:loan_id>/", views.generate_cibil_score, name="generate_cibil_score"),
 

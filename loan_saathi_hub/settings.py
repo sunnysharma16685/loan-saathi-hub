@@ -6,7 +6,6 @@ import logging
 import traceback
 from decouple import config
 
-
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # ---------------------------
@@ -15,6 +14,10 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 local_env_file = BASE_DIR / ".env.local"
 if local_env_file.exists():
     load_dotenv(local_env_file)
+
+render_env_file = BASE_DIR / ".env.render"
+if render_env_file.exists():
+    load_dotenv(render_env_file, override=True)
 
 # ---------------------------
 # SECURITY
@@ -26,13 +29,13 @@ DEBUG = os.getenv("DJANGO_DEBUG", "0").strip().lower() in ("1", "true", "yes")
 ALLOWED_HOSTS = [
     h.strip()
     for h in os.getenv(
-        "DJANGO_ALLOWED_HOSTS",
-        "127.0.0.1,localhost,loansaathihub.in,www.loansaathihub.in"
+        "ALLOWED_HOSTS",
+        "127.0.0.1,localhost,0.0.0.0,loansaathihub.in,www.loansaathihub.in,loan-saathi-hub.onrender.com",
     ).split(",")
     if h.strip()
 ]
 
-# Render / proxy HTTPS fix
+# Render / proxy HTTPS fix (only used in production)
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
 # ---------------------------
@@ -46,11 +49,13 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-
-    # aapka app
+    "sslserver",  # optional local HTTPS testing (won’t auto-enable)
     "main.apps.MainConfig",
 ]
 
+# ---------------------------
+# MIDDLEWARE
+# ---------------------------
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
@@ -60,11 +65,12 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
-
-    # 🔥 Custom exception logging middleware (last)
     "loan_saathi_hub.middleware.ExceptionLoggingMiddleware",
 ]
 
+# ---------------------------
+# URLS & TEMPLATES
+# ---------------------------
 ROOT_URLCONF = "loan_saathi_hub.urls"
 
 TEMPLATES = [
@@ -80,6 +86,7 @@ TEMPLATES = [
                 "django.contrib.messages.context_processors.messages",
                 "main.context_processors.user_profile",
                 "main.context_processors.testing_mode",
+                "main.context_processors.ads_context",  # ✅ merged cleanly
             ],
         },
     },
@@ -109,6 +116,7 @@ elif os.getenv("DB_NAME"):
             "PASSWORD": os.getenv("DB_PASSWORD"),
             "HOST": os.getenv("DB_HOST", "localhost"),
             "PORT": os.getenv("DB_PORT", "5432"),
+            "OPTIONS": {"sslmode": "require"} if not DEBUG else {},
         }
     }
 else:
@@ -123,7 +131,6 @@ else:
 # AUTHENTICATION
 # ---------------------------
 AUTH_USER_MODEL = "main.User"
-
 LOGIN_URL = "/login/"
 LOGIN_REDIRECT_URL = "/dashboard/"
 LOGOUT_REDIRECT_URL = "/"
@@ -165,10 +172,7 @@ STATICFILES_STORAGE = (
 # ---------------------------
 # EMAIL
 # ---------------------------
-EMAIL_BACKEND = os.getenv(
-    "EMAIL_BACKEND",
-    "django.core.mail.backends.smtp.EmailBackend"   # default safe fallback
-)
+EMAIL_BACKEND = os.getenv("EMAIL_BACKEND", "django.core.mail.backends.smtp.EmailBackend")
 EMAIL_HOST = os.getenv("EMAIL_HOST", "smtp.gmail.com")
 EMAIL_PORT = int(os.getenv("EMAIL_PORT", 587))
 EMAIL_USE_TLS = os.getenv("EMAIL_USE_TLS", "True").strip().lower() in ("1", "true", "yes")
@@ -179,20 +183,23 @@ DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL", EMAIL_HOST_USER)
 # ---------------------------
 # SECURITY HEADERS
 # ---------------------------
-if not DEBUG:
+if DEBUG:
+    # 🧠 Local dev mode — only HTTP, no redirects, no SSL
+    SECURE_SSL_REDIRECT = False
+    SECURE_PROXY_SSL_HEADER = None
+    SESSION_COOKIE_SECURE = False
+    CSRF_COOKIE_SECURE = False
+    SECURE_HSTS_SECONDS = 0
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = False
+    SECURE_HSTS_PRELOAD = False
+else:
+    # 🌐 Production mode — enable full HTTPS
     SECURE_SSL_REDIRECT = True
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
     SECURE_HSTS_SECONDS = 31536000
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SECURE_HSTS_PRELOAD = True
-else:
-    SECURE_SSL_REDIRECT = False
-    SESSION_COOKIE_SECURE = False
-    CSRF_COOKIE_SECURE = False
-    SECURE_HSTS_SECONDS = 0
-    SECURE_HSTS_INCLUDE_SUBDOMAINS = False
-    SECURE_HSTS_PRELOAD = False
 
 X_FRAME_OPTIONS = "DENY"
 
@@ -202,38 +209,21 @@ X_FRAME_OPTIONS = "DENY"
 CSRF_TRUSTED_ORIGINS = [
     "https://www.loansaathihub.in",
     "https://loansaathihub.in",
-    "https://loansaathi-hub.onrender.com",
+    "https://loan-saathi-hub.onrender.com",
 ]
 
 # ---------------------------
-# DEFAULT PRIMARY KEY
-# ---------------------------
-DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
-
-# ---------------------------
-# AUTHENTICATION BACKENDS
-# ---------------------------
-AUTHENTICATION_BACKENDS = [
-    "django.contrib.auth.backends.ModelBackend",
-]
-
-# ---------------------------
-# LOGGING (🔥 Important for catching 500 errors)
+# LOGGING
 # ---------------------------
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
-    "handlers": {
-        "console": {
-            "class": "logging.StreamHandler",
-        },
-    },
-    "root": {
-        "handlers": ["console"],
-        "level": "DEBUG" if DEBUG else "ERROR",
-    },
+    "handlers": {"console": {"class": "logging.StreamHandler"}},
+    "root": {"handlers": ["console"], "level": "DEBUG" if DEBUG else "ERROR"},
 }
 
+DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+AUTHENTICATION_BACKENDS = ["django.contrib.auth.backends.ModelBackend"]
 
 
 # --------------------------- 

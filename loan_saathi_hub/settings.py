@@ -275,4 +275,16 @@ RAZORPAY_API_BASE = "https://api.razorpay.com/v1"
 RAZORPAY_ORDER_URL = f"{RAZORPAY_API_BASE}/orders"
 RAZORPAY_PAYMENT_URL = f"{RAZORPAY_API_BASE}/payments"
 
+# --------------------------- 
+# Load .env.local for local & # Load .env.render for production
+# ---------------------------
+
+local_env_file = BASE_DIR / ".env.local"
+if local_env_file.exists():
+    load_dotenv(local_env_file)
+
+
+render_env_file = BASE_DIR / ".env.render"
+if render_env_file.exists():
+    load_dotenv(render_env_file, override=True)
 

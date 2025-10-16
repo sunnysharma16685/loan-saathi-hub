@@ -233,23 +233,28 @@ LOGGING = {
 }
 
 # ---------------------------
-# RAZORPAY SETTINGS
+# 🔐 RAZORPAY SETTINGS
 # ---------------------------
-load_dotenv()  # ensure keys loaded
+from dotenv import load_dotenv
+load_dotenv()  # ensure env vars loaded
+
 SITE_URL = os.getenv("SITE_URL", "http://127.0.0.1:8000")
+
 RAZORPAY_KEY_ID = os.getenv("RAZORPAY_KEY_ID")
 RAZORPAY_KEY_SECRET = os.getenv("RAZORPAY_KEY_SECRET")
 
 if RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET:
-    print(f"[INFO] ✅ Environment loaded | RAZORPAY_KEY_ID: {RAZORPAY_KEY_ID[:8]}**** | Mode: {'development' if DEBUG else 'production'}")
+    print(
+        f"[INFO] ✅ Razorpay Keys Loaded | Mode: {'development' if DEBUG else 'production'} "
+        f"| Key ID: {RAZORPAY_KEY_ID[:8]}****"
+    )
 else:
-    print("[WARN] ⚠️ Razorpay keys not loaded! Check .env or Render environment.")
+    print("[WARN] ⚠️ Razorpay keys not loaded! Check your environment variables.")
 
+# ✅ Use live API base for production; test API behaves identically
 RAZORPAY_API_BASE = "https://api.razorpay.com/v1"
 RAZORPAY_ORDER_URL = f"{RAZORPAY_API_BASE}/orders"
 RAZORPAY_PAYMENT_URL = f"{RAZORPAY_API_BASE}/payments"
-
-
 
 
 # --------------------------- 

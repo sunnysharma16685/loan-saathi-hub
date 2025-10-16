@@ -905,41 +905,59 @@ def approve_loan(request,loan_id):
     messages.success(request,f"Loan {ls.loan.loan_id} approved.")
     return redirect("dashboard_lender")
 
+# ==============================================================
+# 💳 Razorpay Payment Integration — Live-Ready Version
+# ==============================================================
+
+import uuid
+import logging
+from decimal import Decimal
+from django.conf import settings
+from django.shortcuts import render, redirect
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+from django.db import transaction
+from django.utils import timezone
+from django.contrib.auth.decorators import login_required
+import razorpay
+
+from .models import PaymentTransaction  # ensure correct import
+
+logger = logging.getLogger(__name__)
+
 # ---------------------------------------------------------------------
-# ✅ Step 1: Initiate Razorpay Payment (Fixed ₹49 including GST)
+# ✅ Step 1: Initiate Razorpay Payment (₹49 fixed, includes 18% GST)
 # ---------------------------------------------------------------------
 @login_required
 @csrf_exempt
 def initiate_payment(request):
     """
-    Initiates a Razorpay payment for a fixed ₹49 (inclusive of 18% GST).
-    This replaces dynamic loan-based amounts.
+    Initiates a Razorpay payment for ₹49 (inclusive of 18% GST).
     """
     if request.method == "POST":
         try:
             user = request.user
 
-            # 🧾 Fixed pricing
-            total_amount = Decimal("49.00")  # ₹49 inclusive
-            base_amount = (total_amount / Decimal("1.18")).quantize(Decimal("0.01"))  # ₹41.53
-            gst_amount = (total_amount - base_amount).quantize(Decimal("0.01"))        # ₹7.47
-
-            # Razorpay uses paise
+            # Fixed pricing details
+            total_amount = Decimal("49.00")
+            base_amount = (total_amount / Decimal("1.18")).quantize(Decimal("0.01"))
+            gst_amount = (total_amount - base_amount).quantize(Decimal("0.01"))
             amount_paise = int(total_amount * 100)
             merchant_order_id = f"ORD-{user.id}-{uuid.uuid4().hex[:8].upper()}"
 
-            # ✅ Razorpay client
+            # ✅ Razorpay Client (LIVE keys loaded from Render environment)
             client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
+            client.set_app_details({"title": "Loan Saathi Hub", "version": "1.0"})
 
-            # ✅ Create order
+            # ✅ Create order on Razorpay
             order = client.order.create({
                 "amount": amount_paise,
                 "currency": "INR",
-                "receipt": merchant_order_id[:40],  # within Razorpay 40-char limit
+                "receipt": merchant_order_id[:40],
                 "payment_capture": 1,
             })
 
-            # ✅ Save transaction
+            # ✅ Save order locally
             with transaction.atomic():
                 PaymentTransaction.objects.create(
                     user=user,
@@ -949,7 +967,8 @@ def initiate_payment(request):
                     payment_method="Razorpay",
                 )
 
-            logger.info(f"✅ Razorpay order created | ₹{total_amount} | User={user.email}")
+            mode = "Live" if settings.RAZORPAY_KEY_ID.startswith("rzp_live") else "Test"
+            logger.info(f"✅ Razorpay order created ({mode}) | ₹{total_amount} | User={user.email}")
 
             return JsonResponse({
                 "ok": True,
@@ -959,15 +978,19 @@ def initiate_payment(request):
                 "key": settings.RAZORPAY_KEY_ID,
                 "base_amount": str(base_amount),
                 "gst_amount": str(gst_amount),
-                "gst_percent": "18%"
+                "gst_percent": "18%",
             })
+
+        except razorpay.errors.BadRequestError as e:
+            logger.error(f"❌ Razorpay API BadRequestError: {e}", exc_info=True)
+            return JsonResponse({"ok": False, "error": "Invalid payment request."}, status=400)
 
         except Exception as e:
             logger.error(f"❌ Payment initiation failed: {e}", exc_info=True)
             return JsonResponse({"ok": False, "error": str(e)}, status=400)
 
-    # Default render (GET request)
     return render(request, "payments/initiate_payment.html")
+
 
 # ---------------------------------------------------------------------
 # ✅ Step 2: Razorpay Callback / Verification
@@ -975,8 +998,7 @@ def initiate_payment(request):
 @csrf_exempt
 def payment_callback(request):
     """
-    Handle Razorpay callback (or frontend handler POST)
-    and update PaymentTransaction.
+    Verify Razorpay payment signature and update transaction status.
     """
     try:
         data = request.POST
@@ -985,90 +1007,83 @@ def payment_callback(request):
         razorpay_signature = data.get("razorpay_signature")
 
         if not all([razorpay_order_id, razorpay_payment_id, razorpay_signature]):
-            logger.warning("⚠️ Incomplete callback data received")
+            logger.warning("⚠️ Incomplete Razorpay callback data received")
             return JsonResponse({"ok": False, "error": "Incomplete payment data"}, status=400)
 
         client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
 
-        # ✅ Verify signature
+        # ✅ Verify the signature (prevents fake callbacks)
         try:
             client.utility.verify_payment_signature({
                 "razorpay_order_id": razorpay_order_id,
                 "razorpay_payment_id": razorpay_payment_id,
-                "razorpay_signature": razorpay_signature
+                "razorpay_signature": razorpay_signature,
             })
             verified = True
         except razorpay.errors.SignatureVerificationError:
             verified = False
 
+        # ✅ Retrieve stored transaction
         payment = PaymentTransaction.objects.filter(txn_id=razorpay_order_id).first()
         if not payment:
             logger.warning(f"⚠️ Transaction not found | OrderID={razorpay_order_id}")
             return JsonResponse({"ok": False, "error": "Transaction not found"}, status=404)
 
-        # ✅ Update payment status
+        # ✅ Update transaction record
         payment.status = "Completed" if verified else "Failed"
         payment.raw_response = dict(data)
         payment.updated_at = timezone.now()
         payment.save(update_fields=["status", "raw_response", "updated_at"])
 
-        logger.info(f"✅ Payment updated | TxnID={payment.txn_id} | Status={payment.status}")
+        logger.info(f"✅ Payment updated | TxnID={payment.txn_id} | Verified={verified}")
 
-        return render(request, "payments/success.html", {
-            "status": payment.status,
-            "txn_id": payment.txn_id
-        })
+        if verified:
+            return redirect(f"/payment/success/?txn_id={razorpay_order_id}")
+        else:
+            return redirect(f"/payment/failure/?txn_id={razorpay_order_id}")
 
     except Exception as e:
-        logger.error(f"❌ Error during callback handling: {e}", exc_info=True)
+        logger.error(f"❌ Error during Razorpay callback: {e}", exc_info=True)
         return JsonResponse({"ok": False, "error": str(e)}, status=400)
 
+
 # ---------------------------------------------------------------------
-# ✅ Step 3: Success Page (Updated with Invoice Context)
+# ✅ Step 3: Success Page
 # ---------------------------------------------------------------------
 @login_required
 def payment_success(request):
     """
-    Show payment status after completion and render success summary with invoice link.
+    Render payment success summary with invoice link.
     """
     txn_id = request.GET.get("txn_id") or request.GET.get("order_id")
-
-    context = {
-        "message": "ℹ️ Payment details not found. Please check your transaction history.",
-        "status": "unknown",
-        "txn_id": txn_id,
-    }
+    context = {"status": "unknown", "txn_id": txn_id}
 
     try:
-        if txn_id:
-            payment = PaymentTransaction.objects.filter(txn_id=txn_id).first()
-
-            if payment:
-                # ✅ If Razorpay callback succeeded, mark payment as completed
-                if payment.status not in ["Completed", "Failed"]:
-                    payment.status = "Completed"
-                    payment.save(update_fields=["status"])
-
-                context.update({
-                    "status": "success",
-                    "message": "✅ Payment Successful! Thank you for using Loan Saathi Hub.",
-                    "amount": payment.amount,
-                    "date": payment.created_at.strftime("%d %b %Y, %I:%M %p"),
-                    "payment_method": payment.payment_method or "Razorpay",
-                    "user_email": payment.user.email,
-                    "invoice_number": f"INV-{payment.txn_id[-8:].upper()}",
-                })
-            else:
-                context["message"] = f"⚠️ No transaction found for ID: {txn_id}"
-                context["status"] = "not_found"
-        else:
+        if not txn_id:
             context["message"] = "⚠️ Invalid request. No transaction ID provided."
-            context["status"] = "invalid"
+            return render(request, "payments/payment_success.html", context)
+
+        payment = PaymentTransaction.objects.filter(txn_id=txn_id).first()
+        if not payment:
+            context.update({"status": "not_found", "message": f"⚠️ No transaction found for ID: {txn_id}"})
+        else:
+            if payment.status not in ["Completed", "Failed"]:
+                payment.status = "Completed"
+                payment.save(update_fields=["status"])
+
+            context.update({
+                "status": payment.status,
+                "message": "✅ Payment Successful! Thank you for using Loan Saathi Hub.",
+                "amount": payment.amount,
+                "date": payment.created_at.strftime("%d %b %Y, %I:%M %p"),
+                "payment_method": payment.payment_method,
+                "user_email": payment.user.email,
+                "invoice_number": f"INV-{payment.txn_id[-8:].upper()}",
+            })
 
     except Exception as e:
         logger.error(f"❌ Error rendering payment_success: {e}", exc_info=True)
-        context["message"] = "⚠️ Unexpected error while verifying payment."
-        context["status"] = "error"
+        context.update({"status": "error", "message": "⚠️ Error verifying payment."})
 
     return render(request, "payments/payment_success.html", context)
 
@@ -1079,14 +1094,8 @@ def payment_success(request):
 @login_required
 @csrf_exempt
 def payment_failure(request):
-    """
-    Handle failed or cancelled Razorpay payments.
-    """
     txn_id = request.GET.get("txn_id")
-    context = {
-        "message": "❌ Payment failed or was cancelled.",
-        "status": "failed",
-    }
+    context = {"status": "failed", "message": "❌ Payment failed or cancelled."}
 
     try:
         if txn_id:
@@ -1095,18 +1104,19 @@ def payment_failure(request):
                 payment.status = "Failed"
                 payment.updated_at = timezone.now()
                 payment.save(update_fields=["status", "updated_at"])
-                logger.warning(f"⚠️ Payment marked as Failed | TxnID={txn_id}")
+                logger.warning(f"⚠️ Payment marked Failed | TxnID={txn_id}")
                 context["message"] = "❌ Your payment was not successful. Please try again."
             elif not payment:
                 context["message"] = f"⚠️ No transaction found for ID: {txn_id}"
         else:
-            context["message"] = "⚠️ Invalid request: Transaction ID missing."
+            context["message"] = "⚠️ Transaction ID missing."
 
     except Exception as e:
-        logger.error(f"❌ Error during failure handling: {e}", exc_info=True)
-        context["message"] = "⚠️ Something went wrong while processing payment failure."
+        logger.error(f"❌ Error handling payment_failure: {e}", exc_info=True)
+        context["message"] = "⚠️ Unexpected error during failure handling."
 
     return render(request, "payments/failure.html", context)
+
 
 # ---------------------------------------------------------------------
 # ✅ Step 5: Invoice View Page
@@ -1128,7 +1138,6 @@ def invoice_view(request):
         "payment_method": payment.payment_method or "Razorpay",
     }
     return render(request, "payments/invoice.html", context)
-
 
 # -------------------- View Profile (Lender side) --------------------
 @login_required

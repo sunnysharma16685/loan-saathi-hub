@@ -120,9 +120,8 @@ class LoanLenderStatus(models.Model):
     def __str__(self): return f"{self.lender}-{self.loan.loan_id}({self.status})"
 
 # =====================================================
-# PAYMENT
+# PAYMENT TRANSACTIONS (Razorpay Integrated)
 # =====================================================
-
 class PaymentTransaction(models.Model):
     STATUS_CHOICES = [
         ("Pending", "Pending"),
@@ -131,11 +130,21 @@ class PaymentTransaction(models.Model):
     ]
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="payments")
-    loan_request = models.ForeignKey("main.LoanRequest", on_delete=models.SET_NULL, null=True, blank=True, related_name="payments")
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="payments",
+    )
+    loan_request = models.ForeignKey(
+        "main.LoanRequest",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="payments",
+    )
     txn_id = models.CharField(max_length=100, unique=True)
-    amount = models.DecimalField(max_digits=49, decimal_places=2)
-    payment_method = models.CharField(max_length=50, default="PhonePe")
+    amount = models.DecimalField(max_digits=12, decimal_places=2)
+    payment_method = models.CharField(max_length=50, default="Razorpay")
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="Pending")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -143,6 +152,11 @@ class PaymentTransaction(models.Model):
 
     def __str__(self):
         return f"{self.txn_id} ({self.status})"
+
+    class Meta:
+        ordering = ["-created_at"]
+
+
 
 # =====================================================
 # SUPPORT / COMPLAINT / FEEDBACK / CIBIL

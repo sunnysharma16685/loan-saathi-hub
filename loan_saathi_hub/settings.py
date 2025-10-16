@@ -4,7 +4,6 @@ from dotenv import load_dotenv
 import dj_database_url
 import logging
 import traceback
-from decouple import config
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -14,10 +13,6 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 local_env_file = BASE_DIR / ".env.local"
 if local_env_file.exists():
     load_dotenv(local_env_file)
-
-render_env_file = BASE_DIR / ".env.render"
-if render_env_file.exists():
-    load_dotenv(render_env_file, override=True)
 
 # ---------------------------
 # SECURITY
@@ -29,13 +24,13 @@ DEBUG = os.getenv("DJANGO_DEBUG", "0").strip().lower() in ("1", "true", "yes")
 ALLOWED_HOSTS = [
     h.strip()
     for h in os.getenv(
-        "ALLOWED_HOSTS",
-        "127.0.0.1,localhost,0.0.0.0,loansaathihub.in,www.loansaathihub.in,loan-saathi-hub.onrender.com",
+        "DJANGO_ALLOWED_HOSTS",
+        "127.0.0.1,localhost,loansaathihub.in,www.loansaathihub.in"
     ).split(",")
     if h.strip()
 ]
 
-# Render / proxy HTTPS fix (only used in production)
+# Render / proxy HTTPS fix
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
 # ---------------------------
@@ -49,13 +44,11 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    "sslserver",  # optional local HTTPS testing (won’t auto-enable)
+
+    # aapka app
     "main.apps.MainConfig",
 ]
 
-# ---------------------------
-# MIDDLEWARE
-# ---------------------------
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
@@ -65,12 +58,11 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+
+    # 🔥 Custom exception logging middleware (last)
     "loan_saathi_hub.middleware.ExceptionLoggingMiddleware",
 ]
 
-# ---------------------------
-# URLS & TEMPLATES
-# ---------------------------
 ROOT_URLCONF = "loan_saathi_hub.urls"
 
 TEMPLATES = [
@@ -86,7 +78,6 @@ TEMPLATES = [
                 "django.contrib.messages.context_processors.messages",
                 "main.context_processors.user_profile",
                 "main.context_processors.testing_mode",
-                "main.context_processors.ads_context",  # ✅ merged cleanly
             ],
         },
     },
@@ -116,7 +107,6 @@ elif os.getenv("DB_NAME"):
             "PASSWORD": os.getenv("DB_PASSWORD"),
             "HOST": os.getenv("DB_HOST", "localhost"),
             "PORT": os.getenv("DB_PORT", "5432"),
-            "OPTIONS": {"sslmode": "require"} if not DEBUG else {},
         }
     }
 else:
@@ -131,6 +121,7 @@ else:
 # AUTHENTICATION
 # ---------------------------
 AUTH_USER_MODEL = "main.User"
+
 LOGIN_URL = "/login/"
 LOGIN_REDIRECT_URL = "/dashboard/"
 LOGOUT_REDIRECT_URL = "/"
@@ -172,7 +163,10 @@ STATICFILES_STORAGE = (
 # ---------------------------
 # EMAIL
 # ---------------------------
-EMAIL_BACKEND = os.getenv("EMAIL_BACKEND", "django.core.mail.backends.smtp.EmailBackend")
+EMAIL_BACKEND = os.getenv(
+    "EMAIL_BACKEND",
+    "django.core.mail.backends.console.EmailBackend" if DEBUG else "django.core.mail.backends.smtp.EmailBackend",
+)
 EMAIL_HOST = os.getenv("EMAIL_HOST", "smtp.gmail.com")
 EMAIL_PORT = int(os.getenv("EMAIL_PORT", 587))
 EMAIL_USE_TLS = os.getenv("EMAIL_USE_TLS", "True").strip().lower() in ("1", "true", "yes")
@@ -183,23 +177,20 @@ DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL", EMAIL_HOST_USER)
 # ---------------------------
 # SECURITY HEADERS
 # ---------------------------
-if DEBUG:
-    # 🧠 Local dev mode — only HTTP, no redirects, no SSL
-    SECURE_SSL_REDIRECT = False
-    SECURE_PROXY_SSL_HEADER = None
-    SESSION_COOKIE_SECURE = False
-    CSRF_COOKIE_SECURE = False
-    SECURE_HSTS_SECONDS = 0
-    SECURE_HSTS_INCLUDE_SUBDOMAINS = False
-    SECURE_HSTS_PRELOAD = False
-else:
-    # 🌐 Production mode — enable full HTTPS
+if not DEBUG:
     SECURE_SSL_REDIRECT = True
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
     SECURE_HSTS_SECONDS = 31536000
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SECURE_HSTS_PRELOAD = True
+else:
+    SECURE_SSL_REDIRECT = False
+    SESSION_COOKIE_SECURE = False
+    CSRF_COOKIE_SECURE = False
+    SECURE_HSTS_SECONDS = 0
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = False
+    SECURE_HSTS_PRELOAD = False
 
 X_FRAME_OPTIONS = "DENY"
 
@@ -209,21 +200,56 @@ X_FRAME_OPTIONS = "DENY"
 CSRF_TRUSTED_ORIGINS = [
     "https://www.loansaathihub.in",
     "https://loansaathihub.in",
-    "https://loan-saathi-hub.onrender.com",
+    "https://loansaathi-hub.onrender.com",
 ]
 
 # ---------------------------
-# LOGGING
+# DEFAULT PRIMARY KEY
+# ---------------------------
+DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+# ---------------------------
+# AUTHENTICATION BACKENDS
+# ---------------------------
+AUTHENTICATION_BACKENDS = [
+    "django.contrib.auth.backends.ModelBackend",
+]
+
+# ---------------------------
+# LOGGING (🔥 Important for catching 500 errors)
 # ---------------------------
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
-    "handlers": {"console": {"class": "logging.StreamHandler"}},
-    "root": {"handlers": ["console"], "level": "DEBUG" if DEBUG else "ERROR"},
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+        },
+    },
+    "root": {
+        "handlers": ["console"],
+        "level": "DEBUG" if DEBUG else "ERROR",
+    },
 }
 
-DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
-AUTHENTICATION_BACKENDS = ["django.contrib.auth.backends.ModelBackend"]
+# ---------------------------
+# RAZORPAY SETTINGS
+# ---------------------------
+load_dotenv()  # ensure keys loaded
+SITE_URL = os.getenv("SITE_URL", "http://127.0.0.1:8000")
+RAZORPAY_KEY_ID = os.getenv("RAZORPAY_KEY_ID")
+RAZORPAY_KEY_SECRET = os.getenv("RAZORPAY_KEY_SECRET")
+
+if RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET:
+    print(f"[INFO] ✅ Environment loaded | RAZORPAY_KEY_ID: {RAZORPAY_KEY_ID[:8]}**** | Mode: {'development' if DEBUG else 'production'}")
+else:
+    print("[WARN] ⚠️ Razorpay keys not loaded! Check .env or Render environment.")
+
+RAZORPAY_API_BASE = "https://api.razorpay.com/v1"
+RAZORPAY_ORDER_URL = f"{RAZORPAY_API_BASE}/orders"
+RAZORPAY_PAYMENT_URL = f"{RAZORPAY_API_BASE}/payments"
+
+
 
 
 # --------------------------- 
@@ -247,44 +273,4 @@ TEMPLATES = [
         },
     },
 ]
-
-# --------------------------- 
-# 💳 PAYMENT — Razorpay Integration
-# ---------------------------
-
-
-# ✅ Load .env file (important for local dev)
-load_dotenv()
-
-# ✅ Site URL (change when deployed)
-# e.g. SITE_URL = "https://www.loansaathihub.in"
-SITE_URL = os.getenv("SITE_URL", "http://127.0.0.1:8000")
-
-# ✅ Razorpay Keys (from .env or Render environment)
-RAZORPAY_KEY_ID = os.getenv("RAZORPAY_KEY_ID")
-RAZORPAY_KEY_SECRET = os.getenv("RAZORPAY_KEY_SECRET")
-
-# ✅ Sanity check — print safely
-if RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET:
-    print(f"[INFO] ✅ Environment loaded | RAZORPAY_KEY_ID: {RAZORPAY_KEY_ID[:8]}**** | Mode: development")
-else:
-    print("[WARN] ⚠️ Razorpay keys not loaded! Check your .env or environment settings.")
-
-# ✅ Razorpay URLs (optional, good for consistency)
-RAZORPAY_API_BASE = "https://api.razorpay.com/v1"
-RAZORPAY_ORDER_URL = f"{RAZORPAY_API_BASE}/orders"
-RAZORPAY_PAYMENT_URL = f"{RAZORPAY_API_BASE}/payments"
-
-# --------------------------- 
-# Load .env.local for local & # Load .env.render for production
-# ---------------------------
-
-local_env_file = BASE_DIR / ".env.local"
-if local_env_file.exists():
-    load_dotenv(local_env_file)
-
-
-render_env_file = BASE_DIR / ".env.render"
-if render_env_file.exists():
-    load_dotenv(render_env_file, override=True)
 

@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Payment Failed | Loan Saathi Hub{% endblock %}
+
+{% block extra_head %}
+<style>
+  body {
+    background-color: #f8fafc;
+    font-family: 'Poppins', sans-serif;
+  }
+
+  .failure-box {
+    max-width: 520px;
+    margin: 80px auto;
+    background: #ffffff;
+    border-radius: 16px;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.08);
+    padding: 40px 30px;
+    text-align: center;
+    animation: fadeInDown 0.8s ease-out;
+  }
+
+  .failure-icon {
+    font-size: 80px;
+    color: #dc3545;
+    animation: shake 0.6s ease-in-out;
+  }
+
+  h2 {
+    font-weight: 600;
+    color: #842029;
+    margin-top: 20px;
+  }
+
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    20%, 60% { transform: translateX(-6px); }
+    40%, 80% { transform: translateX(6px); }
+  }
+
+  @keyframes fadeInDown {
+    0% { opacity: 0; transform: translateY(-20px); }
+    100% { opacity: 1; transform: translateY(0); }
+  }
+
+  .sad-emoji span {
+    position: absolute;
+    display: block;
+    font-size: 24px;
+    color: rgba(220, 53, 69, 0.15);
+    animation: floatDown linear infinite;
+  }
+
+  @keyframes floatDown {
+    0% { transform: translateY(-10px) rotate(0deg); opacity: 1; }
+    100% { transform: translateY(100vh) rotate(360deg); opacity: 0; }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="sad-emoji">
+  {% for i in "0123456789"|make_list %}
+    <span>😔</span>
+  {% endfor %}
+</div>
+
+<div class="failure-box">
+  <div class="failure-icon">❌</div>
+  <h2>Payment Failed</h2>
+  <p>Unfortunately, your payment could not be completed. Please try again or contact support.</p>
+
+  {% if message %}
+    <p class="text-muted"><small>{{ message }}</small></p>
+  {% endif %}
+
+  <div class="mt-4">
+    <a href="{% url 'initiate_payment' %}" class="btn btn-primary">🔁 Try Again</a>
+    <a href="{% url 'dashboard_router' %}" class="btn btn-outline-secondary">🏠 Go to Dashboard</a>
+  </div>
+</div>
+
+<script>
+  // Floating sad emojis
+  document.addEventListener('DOMContentLoaded', () => {
+    const emojis = document.querySelectorAll('.sad-emoji span');
+    emojis.forEach(span => {
+      span.style.left = Math.random() * 100 + '%';
+      span.style.fontSize = Math.random() * 20 + 20 + 'px';
+      span.style.animationDuration = (Math.random() * 3 + 4) + 's';
+      span.style.animationDelay = (Math.random() * 2) + 's';
+    });
+  });
+</script>
+{% endblock %}

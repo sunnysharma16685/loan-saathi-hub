@@ -16,8 +16,6 @@
   .btn-view:hover { background:#31d2f2; }
   .btn-warning { background:#ffc107; color:#212529; }
   .btn-warning:hover { background:#e0a800; }
-  .btn-paid { background:#198754; color:#fff; }
-  .btn-paid:hover { background:#157347; }
 
   .card { border-radius:12px; box-shadow:0 8px 20px rgba(0,0,0,0.08); transition:.2s; }
   .card:hover { transform:translateY(-3px); }
@@ -29,6 +27,7 @@
   th { background:#0d6efd; color:#fff; font-weight:600; }
   tbody tr:hover { background:#f1f3f5; }
   .badge { font-size:.9em; font-weight:600; }
+
   .filter-box { cursor:pointer; }
 </style>
 {% endblock %}
@@ -106,30 +105,100 @@
         {% endif %}
       </td>
       <td>{{ fb.loan.reason_for_loan|default:"N/A" }}</td>
-      <td>
-        {% if fb.loan.status == "Accepted" and fb.loan.accepted_lender == request.user %}
-          <p class="fw-bold text-success">🎉 The Applicant chose you!</p>
-          <a href="{% url 'view_profile' fb.loan.id %}" class="btn btn-view btn-sm">👤 Full Profile</a>
+<td>
+  {% if fb.loan.status == "Accepted" and fb.loan.accepted_lender == request.user %}
+    <p class="text-success fw-bold">🎉 The Applicant choose you!</p>
+    <a href="{% url 'view_profile' fb.loan.id %}" class="btn btn-view btn-sm">Full Profile</a>
 
-        {% elif fb.loan.global_status == "Pending" %}
-          {% if fb.payment_done %}
-            <a href="{% url 'view_profile' fb.loan.id %}" class="btn btn-view btn-sm">👤 Full Profile</a>
-            <a href="{% url 'invoice' %}?txn_id={{ fb.payment_txn }}" class="btn btn-paid btn-sm" target="_blank">✅ Paid — View Invoice</a>
-          {% else %}
-            <button class="btn btn-approve btn-sm razorpay-btn" data-loan-id="{{ fb.loan.id }}">💳 Make Payment ₹49</button>
-            <button class="btn btn-reject btn-sm" data-bs-toggle="modal" data-bs-target="#rejectModal{{ fb.loan.id }}">Reject</button>
-            <a href="{% url 'partial_profile' fb.loan.id %}" class="btn btn-view btn-sm">👁️ Partial Profile</a>
-          {% endif %}
+  {% elif fb.loan.global_status == "Pending" %}
+    {% if fb.payment_done %}
+      <!-- ✅ After Payment Done -->
+      <a href="{% url 'invoice' %}?txn_id={{ fb.payment_txn }}" 
+         class="btn btn-success btn-sm" target="_blank">✅ Paid (Invoice)</a>
+      <a href="{% url 'view_profile' fb.loan.id %}" 
+         class="btn btn-view btn-sm">👤 Full Profile</a>
+      <button class="btn btn-reject btn-sm" 
+              data-bs-toggle="modal" 
+              data-bs-target="#rejectModal{{ fb.loan.id }}">
+        Reject
+      </button>
+    {% else %}
+      <!-- 💳 Before Payment -->
+      <button class="btn btn-approve btn-sm razorpay-btn" data-loan-id="{{ fb.loan.id }}">
+        💳 Make Payment ₹49
+      </button>
+      <button class="btn btn-reject btn-sm" 
+              data-bs-toggle="modal" 
+              data-bs-target="#rejectModal{{ fb.loan.id }}">
+        Reject
+      </button>
+      <a href="{% url 'partial_profile' fb.loan.id %}" class="btn btn-view btn-sm">
+        👁️ Partial Profile
+      </a>
+    {% endif %}
 
-        {% elif fb.loan.global_status == "Rejected" %}
-          <p class="text-danger fw-bold">❌ Applicant has chosen another lender</p>
-          <a href="{% url 'partial_profile' fb.loan.id %}" class="btn btn-view btn-sm">👁️ Partial Profile</a>
+  {% elif fb.loan.global_status == "Rejected" %}
+    <p class="text-danger fw-bold">❌ Applicant has chosen another lender</p>
+    <a href="{% url 'partial_profile' fb.loan.id %}" class="btn btn-view btn-sm">
+      Partial Profile
+    </a>
 
-        {% elif fb.loan.global_status == "Approved" %}
-          <a href="{% url 'view_profile' fb.loan.id %}" class="btn btn-view btn-sm">👤 Full Profile</a>
-        {% endif %}
-      </td>
+{% elif fb.loan.global_status == "Approved" %}
+  {% if fb.payment_done %}
+    <!-- ✅ If payment done and loan approved -->
+    <a href="{% url 'invoice' %}?txn_id={{ fb.payment_txn }}" 
+       class="btn btn-success btn-sm" target="_blank">
+       ✅ Paid (Invoice)
+    </a>
+    <a href="{% url 'view_profile' fb.loan.id %}" class="btn btn-view btn-sm">
+      👤 Full Profile
+    </a>
+    <button class="btn btn-reject btn-sm" 
+            data-bs-toggle="modal" 
+            data-bs-target="#rejectModal{{ fb.loan.id }}">
+      Reject
+    </button>
+  {% else %}
+    <!-- Just in case status approved but payment missing -->
+    <a href="{% url 'view_profile' fb.loan.id %}" class="btn btn-view btn-sm">
+      👤 Full Profile
+    </a>
+  {% endif %}
+{% endif %}
+
+
     </tr>
+
+    <!-- Reject Modal -->
+    <div class="modal fade" id="rejectModal{{fb.loan.id}}" tabindex="-1">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <form method="post" action="{% url 'reject_loan' fb.loan.id %}">
+            {% csrf_token %}
+            <div class="modal-header bg-danger text-white">
+              <h5 class="modal-title">Reject Loan</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+              <p class="text-danger fw-bold">⚠️ Are you sure? This action cannot be undone.</p>
+              <label><strong>Reason</strong></label>
+              <select name="reason" class="form-control" required>
+                <option value="">-- Select Reason --</option>
+                <option>Low Credit Score</option>
+                <option>Profile not match</option>
+                <option>Employment Issue</option>
+                <option>Insufficient Income</option>
+                <option>Large Existing EMI</option>
+                <option>Other</option>
+              </select>
+            </div>
+            <div class="modal-footer">
+              <button type="submit" class="btn btn-danger">Confirm Reject</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
     {% endfor %}
   </tbody>
 </table>
@@ -138,27 +207,28 @@
 {% block extra_js %}
 <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 <script>
-document.addEventListener("DOMContentLoaded", function () {
+document.addEventListener("DOMContentLoaded", function(){
+  // ✅ Filters (unchanged)
   const filterBoxes = document.querySelectorAll(".filter-box");
   const mainRows = document.querySelectorAll("table tbody tr[data-status]");
-  function applyFilter(kind) {
+  function applyFilter(kind){
     const todayISO = new Date().toISOString().split("T")[0];
-    mainRows.forEach(row => {
-      const status = (row.dataset.status || "").toLowerCase();
-      const created = row.dataset.created;
-      let show = true;
-      if (kind === "today") show = (created === todayISO);
-      else if (["approved", "rejected", "pending"].includes(kind)) show = (status === kind);
-      row.style.display = show ? "" : "none";
+    mainRows.forEach(row=>{
+      const status=(row.dataset.status||"").toLowerCase();
+      const created=row.dataset.created;
+      let show=true;
+      if(kind==="today") show=(created===todayISO);
+      else if(["approved","rejected","pending"].includes(kind)) show=(status===kind);
+      row.style.display=show?"":"none";
     });
   }
-  filterBoxes.forEach(box => box.addEventListener("click", () => applyFilter(box.dataset.filter)));
+  filterBoxes.forEach(box=>box.addEventListener("click",()=>applyFilter(box.dataset.filter)));
 
-  // ✅ Razorpay Integration (per-loan)
+  // ✅ Razorpay Integration (replaces dummy payment)
   const payButtons = document.querySelectorAll(".razorpay-btn");
-  payButtons.forEach(button => {
-    button.addEventListener("click", async () => {
-      try {
+  payButtons.forEach(button=>{
+    button.addEventListener("click", async ()=>{
+      try{
         const loanId = button.dataset.loanId;
         const response = await fetch("{% url 'initiate_payment' %}", {
           method: "POST",
@@ -169,7 +239,7 @@ document.addEventListener("DOMContentLoaded", function () {
           body: new URLSearchParams({ amount: "49", loan_id: loanId })
         });
         const data = await response.json();
-        if (!data.ok) return alert("❌ Payment initiation failed!");
+        if(!data.ok) return alert("❌ Payment initiation failed!");
         const options = {
           key: data.key,
           amount: data.amount,
@@ -177,25 +247,25 @@ document.addEventListener("DOMContentLoaded", function () {
           name: "Loan Saathi Hub",
           description: "Lender Access Fee",
           order_id: data.order_id,
-          handler: function (response) {
+          handler: function (response){
             response.loan_id = loanId;
             fetch("{% url 'payment_callback' %}", {
               method: "POST",
               headers: { "Content-Type": "application/x-www-form-urlencoded" },
               body: new URLSearchParams(response)
-            }).then(() => {
-              window.location.href = "/payment/success/?txn_id=" + data.order_id;
+            }).then(()=>{
+              window.location.href="/payment/success/?txn_id="+data.order_id;
             });
           },
-          prefill: {
-            name: "{{ request.user.profile.full_name|default:request.user.email }}",
-            email: "{{ request.user.email }}",
-            contact: "{{ request.user.profile.mobile|default:'9999999999' }}"
+          prefill:{
+            name:"{{ request.user.profile.full_name|default:request.user.email }}",
+            email:"{{ request.user.email }}",
+            contact:"{{ request.user.profile.mobile|default:'9999999999' }}"
           },
-          theme: { color: "#0d6efd" }
+          theme:{ color:"#0d6efd" }
         };
         new Razorpay(options).open();
-      } catch (err) {
+      }catch(err){
         alert("⚠️ Payment initiation error!");
         console.error(err);
       }

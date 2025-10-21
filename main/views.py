@@ -774,27 +774,38 @@ def dashboard_router(request):
 # -------------------- Applicant Dashboard --------------------
 @login_required
 def dashboard_applicant(request):
-    profile=getattr(request.user,"profile",None)
+    profile = getattr(request.user, "profile", None)
     if profile and not profile.is_reviewed:
-        return render(request,"review_profile.html",{"profile":profile})
+        # 🚨 Block until admin approves
+        return render(request, "review_profile.html", {"profile": profile})
 
-    loans=LoanRequest.objects.filter(applicant=request.user).prefetch_related("lender_statuses").order_by("-created_at")
-    today=date.today()
+    loans = LoanRequest.objects.filter(applicant=request.user).prefetch_related("lender_statuses").order_by("-created_at")
+    today = date.today()
+
     for loan in loans:
-        statuses=loan.lender_statuses.all() if hasattr(loan,"lender_statuses") else []
-        if loan.status=="Accepted": loan.global_status="Approved"
-        elif loan.status=="Finalised": loan.global_status="Rejected"
-        elif not statuses or all(ls.status=="Pending" for ls in statuses): loan.global_status="Pending"
-        elif any(ls.status=="Approved" for ls in statuses): loan.global_status="Approved"
-        elif all(ls.status=="Rejected" for ls in statuses): loan.global_status="Rejected"
-        else: loan.global_status="Pending"
+        statuses = loan.lender_statuses.all() if hasattr(loan, "lender_statuses") else []
+        if loan.status == "Accepted":
+            loan.global_status, loan.global_remarks = "Approved", "✅ You accepted this lender."
+        elif loan.status == "Finalised":
+            loan.global_status, loan.global_remarks = "Rejected", "❌ You finalised another lender."
+        elif not statuses or all(ls.status == "Pending" for ls in statuses):
+            loan.global_status, loan.global_remarks = "Pending", "⌛ Lender reviewing your loan."
+        elif any(ls.status == "Approved" for ls in statuses):
+            loan.global_status, loan.global_remarks = "Approved", "✅ A lender approved your loan."
+        elif all(ls.status == "Rejected" for ls in statuses):
+            loan.global_status, loan.global_remarks = "Rejected", "❌ All lenders rejected this loan."
+        else:
+            loan.global_status, loan.global_remarks = "Pending", "⌛ Lender reviewing your loan."
 
-    ctx={"loans":loans,
-         "total_today":loans.filter(created_at__date=today).count(),
-         "total_approved":loans.filter(status="Accepted").count(),
-         "total_rejected":loans.filter(status="Finalised").count(),
-         "total_pending":loans.filter(status="Pending").count()}
-    return render(request,"dashboard_applicant.html",ctx)
+    context = {
+        "loans": loans,
+        "total_today": loans.filter(created_at__date=today).count(),
+        "total_approved": loans.filter(status="Accepted").count(),
+        "total_rejected": loans.filter(status="Finalised").count(),
+        "total_pending": loans.filter(status="Pending").count(),
+    }
+    return render(request, "dashboard_applicant.html", context)
+
 
 # -------------------- Lender Dashboard --------------------
 @login_required
@@ -802,20 +813,22 @@ def dashboard_lender(request):
     user = request.user
     profile = getattr(user, "profile", None)
 
-    # ✅ Step 1: If profile not reviewed, redirect to review page
+    # ✅ Step 1: Block until admin approves
     if profile and not profile.is_reviewed:
         return render(request, "review_profile.html", {"profile": profile})
 
-    # ✅ Step 2: Fetch lender feedbacks
-    feedbacks = (
+    # ✅ Step 2: Fetch all feedbacks for this lender
+    lender_feedbacks = (
         LoanLenderStatus.objects.filter(lender=user)
         .select_related("loan", "loan__applicant")
         .order_by("-updated_at")
     )
 
-    # ✅ Step 3: Annotate global loan status
-    for fb in feedbacks:
+    # ✅ Step 3: Annotate loan statuses per feedback
+    for fb in lender_feedbacks:
         loan = fb.loan
+
+        # Base status logic
         if loan.status == "Accepted" and loan.accepted_lender == user:
             fb.loan.global_status = "Approved"
         elif loan.status in ["Accepted", "Finalised"] and loan.accepted_lender != user:
@@ -823,65 +836,57 @@ def dashboard_lender(request):
         else:
             fb.loan.global_status = fb.status
 
-    # ✅ Step 4: Get today’s date
+        # ✅ Step 3A: Check per-loan payment (specific to lender + that loan)
+        payment = (
+            PaymentTransaction.objects.filter(
+                user=user,
+                loan_request=loan,        # ✅ Correct FK name
+                status="Completed"
+            )
+            .order_by("-created_at")
+            .first()
+        )
+
+        fb.payment_done = bool(payment)
+        fb.payment_txn = payment.txn_id if payment else None
+
+        # ✅ Step 3B: If payment exists for this loan, mark Approved
+        if fb.payment_done:
+            fb.loan.global_status = "Approved"
+
+    # ✅ Step 4: Dashboard stats (unchanged)
     today = timezone.now().date()
+    total_today = lender_feedbacks.filter(loan__created_at__date=today).count()
+    total_approved = sum(1 for fb in lender_feedbacks if fb.loan.global_status == "Approved")
+    total_rejected = sum(1 for fb in lender_feedbacks if fb.loan.global_status == "Rejected")
+    total_pending = sum(1 for fb in lender_feedbacks if fb.loan.global_status == "Pending")
 
-    # ✅ Step 5: Payment check for this lender
-    latest_payment = (
-        PaymentTransaction.objects.filter(user=user, status="Completed")
-        .order_by("-created_at")
-        .first()
-    )
-    payment_done = bool(latest_payment)
-    payment_txn = latest_payment.txn_id if latest_payment else None
-
-    # ✅ Add payment status flags to each feedback (for template)
-    for fb in feedbacks:
-        fb.payment_done = payment_done
-        fb.payment_txn = payment_txn
-
-    # ✅ Step 6: Loans handled and pending
-    handled = LoanLenderStatus.objects.filter(lender=user).values_list("loan_id", flat=True)
-    pending = (
+    # ✅ Step 5: Pending & finalised loans
+    handled_loans = LoanLenderStatus.objects.filter(lender=user).values_list("loan_id", flat=True)
+    pending_loans = (
         LoanRequest.objects.filter(status="Pending", accepted_lender__isnull=True)
-        .exclude(id__in=handled)
+        .exclude(id__in=handled_loans)
         .select_related("applicant")
         .order_by("-created_at")
     )
-    finalised = (
+    finalised_loans = (
         LoanRequest.objects.filter(status__in=["Accepted", "Finalised"])
         .select_related("applicant", "accepted_lender")
     )
 
-    # ✅ Step 7: Payment summary for dashboard stats
-    total_paid = (
-        PaymentTransaction.objects.filter(user=user, status="Completed")
-        .aggregate(total=models.Sum("amount"))["total"]
-        or 0
-    )
-    total_pending = PaymentTransaction.objects.filter(user=user, status="Pending").count()
-    total_failed = PaymentTransaction.objects.filter(user=user, status="Failed").count()
-
-    # ✅ Step 8: Stats
-    ctx = {
+    # ✅ Step 6: Render context
+    context = {
         "profile": profile,
-        "lender_feedbacks": feedbacks,
-        "pending_loans": pending,
-        "finalised_loans": finalised,
-        "payment_done": payment_done,
-        "payment_txn": payment_txn,
-        "total_today": feedbacks.filter(loan__created_at__date=today).count(),
-        "total_approved": sum(1 for fb in feedbacks if fb.loan.global_status == "Approved"),
-        "total_rejected": sum(1 for fb in feedbacks if fb.loan.global_status == "Rejected"),
-        "total_pending": sum(1 for fb in feedbacks if fb.loan.global_status == "Pending"),
-        "razorpay_summary": {
-            "total_paid": total_paid,
-            "total_pending": total_pending,
-            "total_failed": total_failed,
-        },
+        "lender_feedbacks": lender_feedbacks,
+        "total_today": total_today,
+        "total_approved": total_approved,
+        "total_rejected": total_rejected,
+        "total_pending": total_pending,
+        "pending_loans": pending_loans,
+        "finalised_loans": finalised_loans,
     }
 
-    return render(request, "dashboard_lender.html", ctx)
+    return render(request, "dashboard_lender.html", context)
 
 
 # -------------------- Applicant Accept Loan --------------------
@@ -998,28 +1003,27 @@ def initiate_payment(request):
 
 
 # ---------------------------------------------------------------------
-# ✅ Step 2: Razorpay Callback / Verification (Updated for per-loan logic)
+# ✅ Step 2: Razorpay Callback / Verification (Final Polished Version)
 # ---------------------------------------------------------------------
 @csrf_exempt
 def payment_callback(request):
     """
-    Verify Razorpay payment signature and update transaction status
-    for the specific loan ID and lender only.
+    Verify Razorpay payment signature, update transaction,
+    and sync lender/applicant loan statuses (auto-approve lender feedback).
     """
     try:
         data = request.POST
         razorpay_order_id = data.get("razorpay_order_id")
         razorpay_payment_id = data.get("razorpay_payment_id")
         razorpay_signature = data.get("razorpay_signature")
-        loan_id = data.get("loan_id")  # ✅ must be passed from frontend JS
+        loan_id = data.get("loan_id")  # ✅ Sent from front-end JS handler
 
         if not all([razorpay_order_id, razorpay_payment_id, razorpay_signature]):
-            logger.warning("⚠️ Incomplete Razorpay callback data received")
+            logger.warning("⚠️ Incomplete Razorpay callback data received.")
             return JsonResponse({"ok": False, "error": "Incomplete payment data"}, status=400)
 
+        # ✅ Verify Razorpay signature
         client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
-
-        # ✅ Step 1: Verify signature (security check)
         verified = True
         try:
             client.utility.verify_payment_signature({
@@ -1030,43 +1034,61 @@ def payment_callback(request):
         except razorpay.errors.SignatureVerificationError:
             verified = False
 
-        # ✅ Step 2: Retrieve stored transaction
+        # ✅ Find existing transaction
         payment = PaymentTransaction.objects.filter(txn_id=razorpay_order_id).first()
         if not payment:
             logger.warning(f"⚠️ Transaction not found | OrderID={razorpay_order_id}")
             return JsonResponse({"ok": False, "error": "Transaction not found"}, status=404)
 
-        # ✅ Step 3: Fetch the loan (must exist)
-        loan = None
+        # ✅ Attach correct loan reference if missing
+        from main.models import LoanRequest, LoanLenderStatus
         if loan_id:
-            try:
-                loan = LoanRequest.objects.get(id=loan_id)
-            except LoanRequest.DoesNotExist:
-                logger.warning(f"⚠️ Loan not found for LoanID={loan_id}")
-        else:
-            logger.warning("⚠️ Missing loan_id in callback payload")
+            # Handle both integer ID and loan_id string
+            loan = LoanRequest.objects.filter(Q(id=loan_id) | Q(loan_id=loan_id)).first()
+            if loan and not payment.loan_request:
+                payment.loan_request = loan
+                payment.save(update_fields=["loan_request"])
+                logger.info(f"🔗 Linked payment {payment.txn_id} → Loan {loan.loan_id}")
 
-        # ✅ Step 4: Update transaction record
+        # ✅ Update payment details
         payment.status = "Completed" if verified else "Failed"
         payment.raw_response = dict(data)
         payment.updated_at = timezone.now()
-        if loan:
-            payment.loan = loan  # ensure linkage to correct loan
-        payment.save(update_fields=["status", "raw_response", "updated_at", "loan"])
+        payment.save(update_fields=["status", "raw_response", "updated_at"])
+
+        # ✅ If verified, sync dashboards (auto approve lender)
+        if verified and payment.loan_request:
+            loan = payment.loan_request
+            lender = payment.user
+
+            # 🔹 Mark loan as Accepted (for applicant dashboard)
+            if loan.accepted_lender != lender:
+                loan.accepted_lender = lender
+                loan.status = "Accepted"
+                loan.save(update_fields=["accepted_lender", "status"])
+                logger.info(f"📢 Loan {loan.loan_id} marked Accepted by applicant for {lender.email}")
+
+            # 🔹 Update lender feedback (for lender dashboard)
+            updated_rows = LoanLenderStatus.objects.filter(
+                lender=lender,
+                loan=loan
+            ).update(
+                status="Approved",
+                updated_at=timezone.now()
+            )
+
+            # ✅ If feedback didn’t exist, create one (failsafe)
+            if updated_rows == 0:
+                LoanLenderStatus.objects.create(
+                    lender=lender,
+                    loan=loan,
+                    status="Approved"
+                )
+                logger.info(f"🆕 Created lender feedback entry for {lender.email} → {loan.loan_id}")
 
         logger.info(f"✅ Payment updated | TxnID={payment.txn_id} | Verified={verified}")
 
-        # ✅ Step 5: On successful payment, restrict status to this loan + lender
-        if verified and loan:
-            # Mark this specific lender-loan pair as paid
-            LoanLenderStatus.objects.update_or_create(
-                loan=loan,
-                lender=payment.user,
-                defaults={"status": "Paid", "updated_at": timezone.now()},
-            )
-            logger.info(f"💰 Payment applied to loan {loan.loan_id} for lender {payment.user.email}")
-
-        # ✅ Step 6: Redirect to result page
+        # ✅ Redirect appropriately
         if verified:
             return redirect(f"/payment/success/?txn_id={razorpay_order_id}")
         else:
@@ -1075,8 +1097,6 @@ def payment_callback(request):
     except Exception as e:
         logger.error(f"❌ Error during Razorpay callback: {e}", exc_info=True)
         return JsonResponse({"ok": False, "error": str(e)}, status=400)
-
-
 
 # ---------------------------------------------------------------------
 # ✅ Step 3: Payment Success Page (Auto Invoice + Redirect)

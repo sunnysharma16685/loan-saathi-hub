@@ -771,40 +771,67 @@ def dashboard_router(request):
     if role=="applicant": return redirect("dashboard_applicant")
     return redirect("index")
 
-# -------------------- Applicant Dashboard --------------------
+# -------------------- Applicant Dashboard (Manual Finalisation Fixed) --------------------
 @login_required
 def dashboard_applicant(request):
     profile = getattr(request.user, "profile", None)
     if profile and not profile.is_reviewed:
-        # 🚨 Block until admin approves
         return render(request, "review_profile.html", {"profile": profile})
 
-    loans = LoanRequest.objects.filter(applicant=request.user).prefetch_related("lender_statuses").order_by("-created_at")
+    loans = (
+        LoanRequest.objects.filter(applicant=request.user)
+        .prefetch_related("lender_statuses", "accepted_lender")
+        .order_by("-created_at")
+    )
     today = date.today()
 
     for loan in loans:
-        statuses = loan.lender_statuses.all() if hasattr(loan, "lender_statuses") else []
-        if loan.status == "Accepted":
-            loan.global_status, loan.global_remarks = "Approved", "✅ You accepted this lender."
-        elif loan.status == "Finalised":
-            loan.global_status, loan.global_remarks = "Rejected", "❌ You finalised another lender."
-        elif not statuses or all(ls.status == "Pending" for ls in statuses):
-            loan.global_status, loan.global_remarks = "Pending", "⌛ Lender reviewing your loan."
-        elif any(ls.status == "Approved" for ls in statuses):
-            loan.global_status, loan.global_remarks = "Approved", "✅ A lender approved your loan."
-        elif all(ls.status == "Rejected" for ls in statuses):
-            loan.global_status, loan.global_remarks = "Rejected", "❌ All lenders rejected this loan."
-        else:
-            loan.global_status, loan.global_remarks = "Pending", "⌛ Lender reviewing your loan."
+        statuses = list(loan.lender_statuses.all()) if hasattr(loan, "lender_statuses") else []
+        approved_lenders = [ls for ls in statuses if ls.status == "Approved"]
+        rejected_lenders = [ls for ls in statuses if ls.status == "Rejected"]
+
+        # 🧩 1️⃣: If applicant has manually accepted a lender (manual finalisation)
+        if loan.status == "Finalised" and loan.accepted_lender:
+            loan.global_status = "Finalised"
+            loan.global_remarks = f"✅ You finalised {loan.accepted_lender.profile.full_name or 'the lender'}."
+            continue
+
+        # 🧩 2️⃣: Lender(s) approved, but applicant hasn’t finalised yet
+        if approved_lenders and loan.status in ["Pending", "AutoApproved", "Accepted"]:
+            loan.global_status = "Approved"
+            loan.global_remarks = f"✅ {len(approved_lenders)} lender(s) approved your loan. Please review and choose one."
+            continue
+
+        # 🧩 3️⃣: No lender response yet
+        if not statuses or all(ls.status == "Pending" for ls in statuses):
+            loan.global_status = "Pending"
+            loan.global_remarks = "⌛ Awaiting lender responses."
+            continue
+
+        # 🧩 4️⃣: All lenders rejected
+        if len(rejected_lenders) == len(statuses):
+            loan.global_status = "Rejected"
+            loan.global_remarks = "❌ All lenders rejected your loan."
+            continue
+
+        # 🧩 5️⃣: In review
+        loan.global_status = "Pending"
+        loan.global_remarks = "⌛ Lenders are reviewing your loan."
+
+    total_today = loans.filter(created_at__date=today).count()
+    total_approved = sum(1 for loan in loans if loan.global_status == "Approved")
+    total_rejected = sum(1 for loan in loans if loan.global_status == "Rejected")
+    total_pending = sum(1 for loan in loans if loan.global_status == "Pending")
 
     context = {
         "loans": loans,
-        "total_today": loans.filter(created_at__date=today).count(),
-        "total_approved": loans.filter(status="Accepted").count(),
-        "total_rejected": loans.filter(status="Finalised").count(),
-        "total_pending": loans.filter(status="Pending").count(),
+        "total_today": total_today,
+        "total_approved": total_approved,
+        "total_rejected": total_rejected,
+        "total_pending": total_pending,
     }
     return render(request, "dashboard_applicant.html", context)
+
 
 
 # -------------------- Lender Dashboard --------------------
@@ -824,23 +851,46 @@ def dashboard_lender(request):
         .order_by("-updated_at")
     )
 
-    # ✅ Step 3: Annotate loan statuses per feedback
+    # ✅ Step 3: Annotate each feedback with enhanced display logic
     for fb in lender_feedbacks:
         loan = fb.loan
 
-        # Base status logic
+        # -------------------------
+        # 🌐 Unified Display Logic
+        # -------------------------
         if loan.status == "Accepted" and loan.accepted_lender == user:
+            # Applicant finalised this lender
+            fb.display_status = "Finalised"
             fb.loan.global_status = "Approved"
-        elif loan.status in ["Accepted", "Finalised"] and loan.accepted_lender != user:
-            fb.loan.global_status = "Rejected"
-        else:
-            fb.loan.global_status = fb.status
 
-        # ✅ Step 3A: Check per-loan payment (specific to lender + that loan)
+        elif loan.status == "Accepted" and loan.accepted_lender != user:
+            # Applicant finalised another lender
+            fb.display_status = "Closed"
+            fb.loan.global_status = "Rejected"
+
+        elif loan.status == "Finalised":
+            # Loan completely closed off
+            fb.display_status = "Closed"
+            fb.loan.global_status = "Rejected"
+
+        elif fb.status == "Approved":
+            # Lender approved the request; awaiting applicant
+            fb.display_status = "Approved"
+            fb.loan.global_status = "Approved"
+
+        elif fb.status == "Rejected":
+            fb.display_status = "Rejected"
+            fb.loan.global_status = "Rejected"
+
+        else:
+            fb.display_status = "Pending"
+            fb.loan.global_status = "Pending"
+
+        # ✅ Step 3A: Payment check per loan
         payment = (
             PaymentTransaction.objects.filter(
                 user=user,
-                loan_request=loan,        # ✅ Correct FK name
+                loan_request=loan,
                 status="Completed"
             )
             .order_by("-created_at")
@@ -850,18 +900,19 @@ def dashboard_lender(request):
         fb.payment_done = bool(payment)
         fb.payment_txn = payment.txn_id if payment else None
 
-        # ✅ Step 3B: If payment exists for this loan, mark Approved
-        if fb.payment_done:
+        # ✅ Step 3B: Mark Approved if payment done but still pending
+        if fb.payment_done and fb.display_status == "Pending":
+            fb.display_status = "Approved"
             fb.loan.global_status = "Approved"
 
-    # ✅ Step 4: Dashboard stats (unchanged)
+    # ✅ Step 4: Dashboard counts (updated with new states)
     today = timezone.now().date()
     total_today = lender_feedbacks.filter(loan__created_at__date=today).count()
-    total_approved = sum(1 for fb in lender_feedbacks if fb.loan.global_status == "Approved")
-    total_rejected = sum(1 for fb in lender_feedbacks if fb.loan.global_status == "Rejected")
-    total_pending = sum(1 for fb in lender_feedbacks if fb.loan.global_status == "Pending")
+    total_approved = sum(1 for fb in lender_feedbacks if fb.display_status == "Approved")
+    total_rejected = sum(1 for fb in lender_feedbacks if fb.display_status == "Rejected")
+    total_pending = sum(1 for fb in lender_feedbacks if fb.display_status == "Pending")
 
-    # ✅ Step 5: Pending & finalised loans
+    # ✅ Step 5: Pending and finalised loan sections
     handled_loans = LoanLenderStatus.objects.filter(lender=user).values_list("loan_id", flat=True)
     pending_loans = (
         LoanRequest.objects.filter(status="Pending", accepted_lender__isnull=True)
@@ -874,7 +925,7 @@ def dashboard_lender(request):
         .select_related("applicant", "accepted_lender")
     )
 
-    # ✅ Step 6: Render context
+    # ✅ Step 6: Render everything
     context = {
         "profile": profile,
         "lender_feedbacks": lender_feedbacks,
@@ -891,12 +942,44 @@ def dashboard_lender(request):
 
 # -------------------- Applicant Accept Loan --------------------
 @login_required
-def applicant_accept_loan(request,loan_id,lender_id):
-    loan=get_object_or_404(LoanRequest,id=loan_id,applicant=request.user)
-    lender=get_object_or_404(User,id=lender_id,role="lender")
-    loan.status,loan.accepted_lender="Accepted",lender; loan.save()
-    messages.success(request,"✅ You accepted this lender.")
-    return redirect("dashboard_applicant")
+@require_POST
+def applicant_accept_loan(request, loan_id, lender_id):
+    try:
+        loan = get_object_or_404(LoanRequest, id=loan_id, applicant=request.user)
+        lender = get_object_or_404(User, id=lender_id, is_lender=True)
+
+        # ✅ Ensure lender approved this loan
+        if not LoanLenderStatus.objects.filter(loan=loan, lender=lender, status="Approved").exists():
+            return JsonResponse({
+                "ok": False,
+                "msg": "This lender has not approved your loan yet."
+            }, status=400)
+
+        # ✅ Prevent duplicate finalisation
+        if loan.status == "Finalised" and loan.accepted_lender:
+            return JsonResponse({
+                "ok": False,
+                "msg": f"You already finalised {loan.accepted_lender.profile.full_name or 'another lender'}."
+            }, status=400)
+
+        # ✅ Finalise this loan manually
+        loan.accepted_lender = lender
+        loan.status = "Finalised"
+        loan.save(update_fields=["accepted_lender", "status"])
+
+        # ✅ Lock other lenders
+        LoanLenderStatus.objects.exclude(lender=lender).filter(loan=loan).update(status="Finalised")
+
+        return JsonResponse({
+            "ok": True,
+            "msg": f"🎉 You have finalised {lender.profile.full_name or 'this lender'}.",
+            "lender_name": lender.profile.full_name or "Selected Lender"
+        })
+
+    except Exception as e:
+        # Always return clean JSON error
+        return JsonResponse({"ok": False, "msg": f"Server error: {str(e)}"}, status=500)
+
 
 # -------------------- Loan Request --------------------
 @login_required
@@ -1287,13 +1370,12 @@ def partial_profile(request, loan_id):
         loan=loan, lender=request.user
     ).order_by("-created_at").first()
 
-    # ✅ Sensitive fields hidden
     hidden_fields = [
         "mobile", "email", "address", "gst_number",
-        "company_name", "business_name", "aadhaar_number", "pancard_number"
+        "company_name", "business_name", "aadhaar_number", "pancard_number",
     ]
 
-    # ✅ Dashboard redirect logic
+    # ✅ Dynamic redirect
     if request.user.is_superuser:
         dashboard_url = reverse("dashboard_admin")
     elif hasattr(request.user, "lender_details"):
@@ -1312,10 +1394,9 @@ def partial_profile(request, loan_id):
             "recent_cibil": recent_cibil,
             "hide_sensitive": True,
             "hidden_fields": hidden_fields,
-            "dashboard_url": dashboard_url,   # ✅ add here
-        }
+            "dashboard_url": dashboard_url,
+        },
     )
-
 # -------------------- Forgot / Reset Password --------------------
 def forgot_password_view(request):
     if request.method=="POST":
@@ -1364,19 +1445,92 @@ def feedback_view(request):
         return render(request,"feedback.html",{"form":FeedbackForm(),"success":True})
     return render(request,"feedback.html",{"form":form})
 
-# -------------------- CIBIL Generate --------------------
+# -------------------- Partial Profile --------------------
 @login_required
-def generate_cibil_score(request,loan_id):
-    loan=get_object_or_404(LoanRequest,id=loan_id)
-    if request.user.role!="lender": return JsonResponse({"ok":False,"msg":"Only lenders allowed"},status=403)
-    details=getattr(loan.applicant,"applicantdetails",None)
-    if not details: return JsonResponse({"ok":False,"msg":"Applicant details missing"},status=404)
-    if details.cibil_last_generated and (timezone.now()-details.cibil_last_generated).days<31:
-        return JsonResponse({"ok":False,"msg":"CIBIL already generated, try later"},status=400)
-    score=random.randint(300,900)
-    CibilReport.objects.create(loan=loan,lender=request.user,score=score)
-    details.cibil_score=score; details.cibil_last_generated=timezone.now(); details.cibil_generated_by=request.user
-    details.save(); return JsonResponse({"ok":True,"score":score,"msg":"✅ CIBIL generated"})
+def partial_profile(request, loan_id):
+    loan = get_object_or_404(LoanRequest, id=loan_id)
+    applicant = loan.applicant
+    profile = getattr(applicant, "profile", None)
+    applicant_details = ApplicantDetails.objects.filter(user=applicant).first()
+    recent_cibil = CibilReport.objects.filter(
+        loan=loan, lender=request.user
+    ).order_by("-created_at").first()
+
+    hidden_fields = [
+        "mobile", "email", "address", "gst_number",
+        "company_name", "business_name", "aadhaar_number", "pancard_number",
+    ]
+
+    # ✅ Dynamic redirect
+    if request.user.is_superuser:
+        dashboard_url = reverse("dashboard_admin")
+    elif hasattr(request.user, "lender_details"):
+        dashboard_url = reverse("dashboard_lender")
+    else:
+        dashboard_url = reverse("dashboard_applicant")
+
+    return render(
+        request,
+        "partial_profile.html",
+        {
+            "loan": loan,
+            "applicant": applicant,
+            "profile": profile,
+            "applicant_details": applicant_details,
+            "recent_cibil": recent_cibil,
+            "hide_sensitive": True,
+            "hidden_fields": hidden_fields,
+            "dashboard_url": dashboard_url,
+        },
+    )
+
+
+# -------------------- Manual CIBIL for Profile --------------------
+@login_required
+def generate_cibil_score_manual(request):
+    """
+    Allow applicants to manually enter or update their CIBIL score
+    from the Profile Form or Edit Profile page.
+    """
+    if request.method != "POST":
+        return JsonResponse({"ok": False, "msg": "Invalid request method."}, status=405)
+
+    score = request.POST.get("cibil_score")
+    if not score:
+        return JsonResponse({"ok": False, "msg": "Please enter your CIBIL score."}, status=400)
+
+    try:
+        score = int(score)
+        if score < 350 or score > 950:
+            return JsonResponse({"ok": False, "msg": "CIBIL score must be between 350 and 950."}, status=400)
+    except ValueError:
+        return JsonResponse({"ok": False, "msg": "Invalid input. Please enter a numeric value."}, status=400)
+
+    # ✅ Get or create ApplicantDetails record
+    details, _ = ApplicantDetails.objects.get_or_create(user=request.user)
+
+    # ✅ Update with timestamp
+    details.cibil_score = score
+    details.cibil_last_generated = timezone.now()
+    details.cibil_generated_by = None  # manual input → no lender
+    details.save(update_fields=["cibil_score", "cibil_last_generated", "cibil_generated_by"])
+
+    # ✅ Set success message for redirect pages
+    messages.success(request, f"✅ CIBIL score {score} updated successfully!")
+
+    # ✅ Return appropriate response for AJAX / normal requests
+    if request.headers.get("x-requested-with") == "XMLHttpRequest":
+        return JsonResponse({
+            "ok": True,
+            "score": score,
+            "msg": f"CIBIL score {score} updated successfully.",
+            "redirect_url": reverse("edit_profile", args=[request.user.id])
+        })
+
+    return redirect("edit_profile", user_id=request.user.id)
+
+
+
 
 # -------------------- OTP Resend --------------------
 def resend_email_otp_view(request):
@@ -1387,8 +1541,6 @@ def resend_email_otp_view(request):
         request.session["otp"]=otp_data["otp"]; request.session["otp_expiry"]=(now()+timedelta(minutes=5)).isoformat()
         return JsonResponse({"ok":True,"msg":"New OTP sent"})
     return JsonResponse({"ok":False,"msg":"Failed to resend OTP"})
-
-
 
 
 # --------------- Gmail View in Admin Dashboard ---------------

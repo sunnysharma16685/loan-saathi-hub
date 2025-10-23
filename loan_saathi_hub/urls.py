@@ -34,9 +34,7 @@ urlpatterns = [
     path("dashboard/lender/", views.dashboard_lender, name="dashboard_lender"),
     path("dashboard/", views.dashboard_router, name="dashboard_router"),
 
-    # ---------------- CIBIL ----------------
-    path("generate_cibil/<uuid:loan_id>/", views.generate_cibil_score, name="generate_cibil_score"),
-
+  
     # ---------------------- Payment Gateway ---------------------
     path("payment/initiate/", views.initiate_payment, name="initiate_payment"),
     path("payment/callback/", views.payment_callback, name="payment_callback"),
@@ -82,6 +80,7 @@ urlpatterns = [
 
     # ---------------- Django Admin (keep this at bottom) ----------------
     path("admin/", admin.site.urls),
+    
 ]
 
 

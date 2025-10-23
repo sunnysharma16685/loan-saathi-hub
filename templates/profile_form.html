@@ -277,22 +277,48 @@
             </div>
           </div>
 
-          <!-- CIBIL Score Display -->
+<!-- ✅ Manual CIBIL Score Input -->
 <div class="mb-3">
-  <label class="form-label">CIBIL Score (300-900)</label>
-  {% if applicant_details.cibil_score %}
-    <input type="number" class="form-control" value="{{ applicant_details.cibil_score }}" readonly style="background:#f8f9fa; cursor:not-allowed;">
-    <small class="text-muted">
-      Generated on {{ applicant_details.cibil_last_generated|date:"d M Y, H:i" }}
-    </small>
-  {% else %}
-    <input type="text" class="form-control" value="Not generated yet" readonly style="background:#f8f9fa; cursor:not-allowed;">
-    <small class="text-muted">
-      A lender will generate your CIBIL score during loan review.
-    </small>
-  {% endif %}
-</div>
+  <label for="cibil_score" class="form-label fw-bold">
+    CIBIL Score <span class="text-muted small">(Range: 350–950)</span>
+  </label>
 
+  <div class="d-flex align-items-center gap-2">
+    <input
+      type="number"
+      id="cibil_score"
+      name="cibil_score"
+      class="form-control"
+      min="350"
+      max="950"
+      value="{{ applicant_details.cibil_score|default:'' }}"
+      placeholder="Enter your CIBIL score (350 - 950)"
+      {% if form_disabled %}readonly style="background:#f8f9fa; cursor:not-allowed;"{% endif %}
+      required
+    >
+    <a href="#cibilHelp" data-bs-toggle="collapse" class="small text-primary text-decoration-none">
+      Don’t know?
+    </a>
+  </div>
+
+  <!-- Help Links -->
+  <div id="cibilHelp" class="collapse mt-2">
+    <p class="small text-muted mb-1">You can check your CIBIL score for free on:</p>
+    <ul class="small ps-3 mb-1">
+      <li><a href="https://www.cibil.com/freecibilscore" target="_blank" rel="noopener">CIBIL Official Site</a></li>
+      <li><a href="https://www.paisabazaar.com/cibil-credit-score/" target="_blank" rel="noopener">Paisabazaar</a></li>
+      <li><a href="https://moneyview.in/check-credit-score-free/login" target="_blank" rel="noopener">MoneyView</a></li>
+      <li><a href="https://www.bankbazaar.com/cibil/credit-score.html" target="_blank" rel="noopener">BankBazaar</a></li>
+    </ul>
+    <p class="small text-muted">
+      After checking, please enter your CIBIL score above manually (350–950).
+    </p>
+  </div>
+
+  <small class="form-text text-muted">
+    Your CIBIL score helps lenders evaluate your creditworthiness. A score above <strong>750</strong> is generally considered good.
+  </small>
+</div>
 
           <!-- Job Fields -->
           <div id="jobFields" class="mb-3">
@@ -445,22 +471,51 @@
 {% endblock %}
 
 {% block extra_js %}
-<!-- SweetAlert2 -->
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <script>
   // 🔹 Aadhaar auto-formatting (1234 5678 9012)
   function formatAadhaar(input) {
-    let value = input.value.replace(/\D/g, "");   // only digits
-    value = value.substring(0, 12);               // max 12 digits
-    let formatted = value.replace(/(.{4})(?=.)/g, "$1 "); // space after 4,8
+    let value = input.value.replace(/\D/g, "");
+    value = value.substring(0, 12);
+    let formatted = value.replace(/(.{4})(?=.)/g, "$1 ");
     input.value = formatted;
   }
 
-  // 🔹 Intercept form submit for AJAX + SweetAlert
   document.addEventListener("DOMContentLoaded", function () {
     const form = document.querySelector("form");
+    const cibilInput = document.getElementById("cibil_score");
 
+    // ⚠️ Honest warning when user fills CIBIL score
+    if (cibilInput) {
+      cibilInput.addEventListener("change", function () {
+        const val = parseInt(this.value);
+        if (val && val >= 350 && val <= 950) {
+          Swal.fire({
+            title: "⚠ Please be honest!",
+            html: `
+              <p class="text-start">
+                Make sure your entered CIBIL score is <b>genuine</b> and checked from an 
+                <b>authorized and trusted website</b> like:
+              </p>
+              <ul class="text-start small">
+                <li><a href="https://www.cibil.com/freecibilscore" target="_blank">CIBIL Official Site</a></li>
+                <li><a href="https://moneyview.in/check-credit-score-free/login" target="_blank">MoneyView</a></li>
+                <li><a href="https://www.paisabazaar.com/cibil-credit-score/" target="_blank">Paisabazaar</a></li>
+              </ul>
+              <p class="small text-muted">
+                Fake or incorrect CIBIL entries may affect your loan approval chances.
+              </p>
+            `,
+            icon: "warning",
+            confirmButtonText: "I Understand",
+            confirmButtonColor: "#3085d6"
+          });
+        }
+      });
+    }
+
+    // 🔹 AJAX + SweetAlert Form Submission
     form.addEventListener("submit", function (e) {
       e.preventDefault();
 
@@ -470,7 +525,6 @@
         headers: { "X-Requested-With": "XMLHttpRequest" }
       })
       .then(res => {
-        // 🔹 अगर redirect आया है तो भी JSON parse कराओ
         const ct = res.headers.get("content-type");
         if (ct && ct.indexOf("application/json") !== -1) {
           return res.json();
@@ -490,18 +544,14 @@
           });
         } else {
           let html = "";
-
           if (data.errors) {
             for (let field in data.errors) {
               html += `<b>${field}:</b> ${data.errors[field].join(", ")}<br>`;
             }
           }
-
           if (data.warnings && data.warnings.length > 0) {
-            html += `<hr><b>⚠️ Warning:</b> You haven't filled required fields:<br>`;
-            html += data.warnings.join(", ");
+            html += `<hr><b>⚠️ Warning:</b> Missing fields:<br>${data.warnings.join(", ")}`;
           }
-
           Swal.fire({
             title: "Form Issues",
             html: html || "Something went wrong!",
@@ -510,9 +560,7 @@
             confirmButtonText: "Save Anyway",
             cancelButtonText: "Back"
           }).then((result) => {
-            if (result.isConfirmed) {
-              form.submit(); // fallback normal submit
-            }
+            if (result.isConfirmed) form.submit();
           });
         }
       })

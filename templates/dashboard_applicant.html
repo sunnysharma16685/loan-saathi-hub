@@ -13,7 +13,6 @@
     font-weight: 700;
   }
 
-  /* Buttons */
   .btn-request {
     border: 2px solid #0d6efd;
     background: linear-gradient(90deg,#ff9933,#ffb84d);
@@ -34,7 +33,6 @@
   .btn-info { background:#0dcaf0; color:#212529; }
   .btn-info:hover { background:#31d2f2; }
 
-  /* Cards */
   .card {
     border-radius: 12px;
     box-shadow: 0 6px 18px rgba(0,0,0,0.08);
@@ -45,7 +43,6 @@
   .card-body h5 { font-weight:600; }
   .card-body h3 { font-weight:700; margin:0; }
 
-  /* Tables */
   table {
     width:95%;
     margin:20px auto;
@@ -73,7 +70,6 @@
 
 {% block content %}
 <h1>Applicant Dashboard</h1>
-
 
 <!-- ✅ Messages -->
 {% if messages %}
@@ -154,11 +150,15 @@
       <td>{{ loan.interest_rate }}%</td>
       <td>
         {% if loan.global_status == "Approved" %}
-          <span class="badge bg-success">Approved</span>
+          <span class="badge bg-success">Pending — Compare Lenders</span>
+        {% elif loan.global_status == "ComparePending" %}
+          <span class="badge bg-warning text-dark">Pending — Compare Lenders (Rejected)</span>
+        {% elif loan.global_status == "Finalised" %}
+          <span class="badge bg-info text-dark">Finalised by You</span>
         {% elif loan.global_status == "Rejected" %}
           <span class="badge bg-danger">Rejected</span>
         {% elif loan.global_status == "Pending" %}
-          <span class="badge bg-warning text-dark">Pending</span>
+          <span class="badge bg-secondary">Pending — Lenders Reviewing</span>
         {% endif %}
       </td>
       <td>{{ loan.reason_for_loan }}</td>
@@ -173,6 +173,13 @@
     <!-- ✅ Feedback Row -->
     <tr class="collapse" id="lenderFeedback{{loan.id}}">
       <td colspan="10">
+
+        {% if loan.global_status in "Approved ComparePending" %}
+        <div class="alert alert-info mb-2 small text-center">
+          💡 Tip: You can compare lender offers and choose one to finalise your loan.
+        </div>
+        {% endif %}
+
         <table class="table table-sm table-bordered mb-0">
           <thead class="table-light">
             <tr>
@@ -201,7 +208,7 @@
                   {% if fb.status == "Rejected" %}
                     {{ fb.remarks|default:"Reason not provided" }}
                   {% elif fb.status == "Approved" %}
-                    <button class="btn btn-sm btn-outline-info {% if loan.status == 'Accepted' and loan.accepted_lender.id == fb.lender.id %}active{% endif %}"
+                    <button class="btn btn-sm btn-outline-info {% if loan.status == 'Finalised' and loan.accepted_lender.id == fb.lender.id %}active{% endif %}"
                             data-bs-toggle="modal" data-bs-target="#lenderContacts{{fb.id}}">
                       Lender Contacts
                     </button>
@@ -214,12 +221,12 @@
               <div class="modal fade" id="lenderContacts{{fb.id}}" tabindex="-1" aria-hidden="true">
                 <div class="modal-dialog modal-md modal-dialog-scrollable">
                   <div class="modal-content">
-                    <div class="modal-header {% if loan.status == 'Accepted' and loan.accepted_lender.id == fb.lender.id %}bg-info text-white{% else %}bg-light{% endif %}">
+                    <div class="modal-header {% if loan.status == 'Finalised' and loan.accepted_lender.id == fb.lender.id %}bg-info text-white{% else %}bg-light{% endif %}">
                       <h5 class="modal-title">Lender Contacts</h5>
                       <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                     </div>
                     <div class="modal-body text-start">
-                      {% if loan.status == "Accepted" %}
+                      {% if loan.status == "Finalised" %}
                         {% if loan.accepted_lender.id == fb.lender.id %}
                           <div class="alert alert-success">🎉 Congratulations! This lender is selected.</div>
                           <p><strong>Name:</strong> {{ fb.lender.profile.full_name|default:"N/A" }}</p>
@@ -236,7 +243,7 @@
                         <p><strong>Mobile:</strong> {{ fb.lender.profile.mobile|default:"N/A" }}</p>
                         <p><strong>Bank/Firm:</strong> {{ fb.lender.lender_details.bank_firm_name|default:"N/A" }}</p>
                         <p><strong>Branch:</strong> {{ fb.lender.lender_details.branch_name|default:"N/A" }}</p>
-                        <form method="post" action="{% url 'applicant_accept_loan' loan.id fb.lender.id %}">
+                        <form class="ajax-accept-form" data-loan-id="{{ loan.id }}" data-lender-id="{{ fb.lender.id }}">
                           {% csrf_token %}
                           <button type="submit" class="btn btn-accept w-100 mt-3">Accept</button>
                         </form>
@@ -263,11 +270,13 @@
 {% endblock %}
 
 {% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
 document.addEventListener("DOMContentLoaded", function () {
   const filterBoxes = document.querySelectorAll(".filter-box");
   const rows = document.querySelectorAll("table tbody tr[data-status]");
 
+  // ✅ Filter Function
   function applyFilter(kind) {
     const todayISO = new Date().toISOString().split("T")[0];
     rows.forEach(row => {
@@ -275,13 +284,85 @@ document.addEventListener("DOMContentLoaded", function () {
       const created = row.dataset.created;
       let show = true;
       if (kind === "today") show = (created === todayISO);
-      else if (["approved","rejected","pending","accepted"].includes(kind)) show = (status === kind);
+      else if (["approved","rejected","pending","accepted","finalised","comparepending"].includes(kind))
+        show = (status === kind);
       row.style.display = show ? "" : "none";
     });
   }
+  filterBoxes.forEach(box => box.addEventListener("click", () => applyFilter(box.dataset.filter)));
 
-  filterBoxes.forEach(box => {
-    box.addEventListener("click", () => applyFilter(box.dataset.filter));
+  // ✅ AJAX Accept Loan Finalisation
+  document.querySelectorAll(".ajax-accept-form").forEach(form => {
+    form.addEventListener("submit", async function(e) {
+      e.preventDefault();
+
+      const loanId = this.dataset.loanId;
+      const lenderId = this.dataset.lenderId;
+      const csrfToken = this.querySelector('[name=csrfmiddlewaretoken]').value;
+      const url = `/applicant/accept-loan/${loanId}/${lenderId}/`;
+
+      try {
+        const res = await fetch(url, {
+          method: "POST",
+          headers: {
+            "X-CSRFToken": csrfToken,
+            "X-Requested-With": "XMLHttpRequest",
+          },
+        });
+
+        // 🧩 Validate JSON response properly
+        const text = await res.text();
+        let data;
+        try { data = JSON.parse(text); }
+        catch { throw new Error("Invalid server response."); }
+
+        if (data.ok) {
+          Swal.fire({
+            icon: "success",
+            title: "Loan Finalised!",
+            text: data.msg,
+            timer: 2500,
+            showConfirmButton: false,
+          });
+
+          // ✅ Update table badge
+          const badge = document.querySelector(
+            `[data-bs-target="#lenderFeedback${loanId}"]`
+          )?.closest("tr")?.querySelector("td span.badge");
+          if (badge) {
+            badge.className = "badge bg-info text-dark";
+            badge.textContent = "Finalised by You";
+          }
+
+          // ✅ Disable all accept buttons for this loan
+          document.querySelectorAll(`#lenderFeedback${loanId} .btn-accept`).forEach(btn => {
+            btn.textContent = "Locked";
+            btn.disabled = true;
+            btn.classList.remove("btn-accept");
+            btn.classList.add("btn-secondary");
+          });
+
+          // ✅ Close the modal
+          const modalEl = this.closest(".modal");
+          const activeModal = bootstrap.Modal.getInstance(modalEl);
+          if (activeModal) activeModal.hide();
+
+        } else {
+          Swal.fire({
+            icon: "warning",
+            title: "Oops!",
+            text: data.msg || "Something went wrong.",
+          });
+        }
+
+      } catch (err) {
+        Swal.fire({
+          icon: "error",
+          title: "Error",
+          text: err.message || "Unexpected error occurred.",
+        });
+      }
+    });
   });
 });
 </script>

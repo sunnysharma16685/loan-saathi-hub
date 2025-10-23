@@ -2,14 +2,10 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <link rel="stylesheet" href="{% static 'css/site.css' %}">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-  <title>
-    {% block title %}Loan Saathi Hub{% endblock %}
-    {% if DEBUG or IS_TESTING %} | TESTING VERSION{% endif %}
-  </title>
+  <link rel="stylesheet" href="{% static 'css/site.css' %}">
+  <title>{% block title %}Loan Saathi Hub{% endblock %}</title>
 
   <!-- Fonts & Icons -->
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -18,177 +14,222 @@
 
   <style>
     :root {
-      --brand:#0d6efd;
-      --brand-dark:#0a58ca;
-      --muted:#6c757d;
-      --bg:#f6f8fb;
+      --navy: #001f54;
+      --navy-light: #003d99;
+      --accent: #00c6ff;
+      --text-light: #f8f9fa;
+      --gold: #ffcc00;
     }
 
     body {
-      font-family:'Poppins', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
-      background:var(--bg);
-      color:#212529;
-      line-height:1.6;
+      font-family: 'Poppins', sans-serif;
+      background: #f4f6fa;
+      color: #212529;
+      line-height: 1.6;
     }
 
     /* Navbar */
     .navbar {
-      font-weight:500;
-      padding:0.8rem 1rem;
-    }
-    .navbar-brand {
-      font-weight:700;
-      letter-spacing:0.3px;
-      font-size:1.35rem;
-      color:var(--brand) !important;
-    }
-    .nav-link {
-      margin:0 0.25rem;
-      padding:0.5rem 0.75rem;
-      position:relative;
-      transition:all 0.2s ease;
-    }
-    .nav-link:hover::after {
-      content:"";
-      position:absolute;
-      bottom:0; left:0;
-      width:100%;
-      height:2px;
-      background:var(--brand);
+      background: linear-gradient(90deg, var(--navy), var(--navy-light));
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+      padding: 0.75rem 1rem;
+      transition: all 0.3s ease;
     }
 
+    .navbar-brand {
+      color: var(--gold) !important;
+      font-size: 1.5rem;
+      font-weight: 700;
+      letter-spacing: 0.3px;
+      display: flex;
+      align-items: center;
+    }
+
+    .navbar-brand i {
+      font-size: 1.8rem;
+      margin-right: 8px;
+      color: var(--gold);
+    }
+
+    .nav-link {
+      font-weight: 600;
+      color: var(--text-light) !important;
+      margin: 0 0.4rem;
+      position: relative;
+      transition: all 0.3s ease;
+    }
+
+    .nav-link:hover {
+      color: var(--accent) !important;
+    }
+
+    .nav-link.active {
+      color: var(--accent) !important;
+    }
+
+    .nav-link::after {
+      content: "";
+      position: absolute;
+      left: 0; bottom: -4px;
+      width: 0%;
+      height: 2px;
+      background: var(--accent);
+      transition: width 0.3s ease;
+    }
+
+    .nav-link:hover::after,
+    .nav-link.active::after {
+      width: 100%;
+    }
+
+    .nav-welcome {
+      color: var(--gold);
+      font-weight: 600;
+      margin-right: 10px;
+    }
+
+    /* Buttons */
     .btn-login {
-      border:1px solid var(--brand);
-      color:var(--brand);
-      font-weight:600;
-      padding:0.35rem 0.9rem;
-      border-radius:6px;
+      border: 1px solid var(--accent);
+      color: var(--accent);
+      font-weight: 600;
+      border-radius: 6px;
+      padding: 6px 12px;
+      transition: 0.3s;
     }
     .btn-login:hover {
-      background:var(--brand);
-      color:#fff;
+      background: var(--accent);
+      color: #fff;
     }
 
     .btn-register {
-      background:var(--brand);
-      color:#fff !important;
-      font-weight:600;
-      padding:0.35rem 0.9rem;
-      border-radius:6px;
-      margin-left:0.5rem;
+      background: var(--accent);
+      color: #fff !important;
+      border-radius: 6px;
+      padding: 6px 12px;
+      font-weight: 600;
+      margin-left: 0.5rem;
+      transition: 0.3s;
     }
     .btn-register:hover {
-      background:var(--brand-dark);
-    }
-
-    /* Messages */
-    .alert {
-      border-radius:8px;
-      font-weight:500;
-      margin-bottom:1rem;
+      background: #00a2d6;
     }
 
     /* Footer */
     footer {
-      background:#fff;
-      border-top:1px solid #dee2e6;
-      margin-top:3rem;
-      padding:2rem 0;
-    }
-    footer .links a {
-      text-decoration:none;
-      color:var(--muted);
-      font-weight:500;
-      margin:0 0.75rem;
-      transition:color 0.2s ease;
-    }
-    footer .links a:hover {
-      color:var(--brand);
+      background: var(--navy);
+      color: var(--text-light);
+      padding: 2rem 0;
+      margin-top: 3rem;
+      font-size: 0.95rem;
     }
 
-    /* Max Container */
-    .container-max { max-width:1200px; }
+    footer a {
+      color: #ddd;
+      text-decoration: none;
+      margin: 0 10px;
+      transition: 0.3s;
+      font-weight: 500;
+    }
 
-    /* Testing Banner */
+    footer a:hover {
+      color: var(--accent);
+      text-decoration: underline;
+    }
+
+    footer .footer-logo {
+      color: var(--gold);
+      font-weight: 700;
+      font-size: 1.2rem;
+    }
+
+    /* Mobile */
+    .navbar-toggler {
+      border-color: var(--accent);
+    }
+    .navbar-toggler-icon {
+      background-color: var(--text-light);
+    }
+
     .testing-banner {
-      background:#ffe8a1;
-      font-size:0.95rem;
-      letter-spacing:0.3px;
+      background: #fff3cd;
+      color: #856404;
+      font-weight: 600;
+      text-align: center;
+      padding: 6px 0;
     }
   </style>
 
   {% block extra_head %}{% endblock %}
 </head>
-<body>
 
+<body>
   {% if DEBUG or IS_TESTING %}
-  <div class="testing-banner text-center py-2 fw-semibold">
+  <div class="testing-banner">
     🚧 This is a <span class="text-danger">TESTING VERSION</span> of Loan Saathi Hub
   </div>
   {% endif %}
 
   <!-- Navbar -->
-  <nav class="navbar navbar-expand-lg bg-white shadow-sm sticky-top">
+  <nav class="navbar navbar-expand-lg sticky-top">
     <div class="container container-max">
       <a class="navbar-brand" href="{% url 'index' %}">
-        <i class="bi bi-bank2 me-1"></i> Loan Saathi Hub
+        <i class="bi bi-bank2"></i> Loan Saathi Hub
       </a>
+
       <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
         <span class="navbar-toggler-icon"></span>
       </button>
 
       <div class="collapse navbar-collapse" id="navbarNav">
-        {% block navbar %}
         <ul class="navbar-nav ms-auto align-items-center">
 
           {% if not request.user.is_authenticated %}
-            <!-- Guest -->
-            <li class="nav-item"><a class="nav-link" href="{% url 'index' %}">Home</a></li>
+            <li class="nav-item">
+              <a class="nav-link {% if request.resolver_match.url_name == 'index' %}active{% endif %}" href="{% url 'index' %}">Home</a>
+            </li>
             <li class="nav-item"><a class="btn btn-login" href="{% url 'login' %}">Login</a></li>
             <li class="nav-item"><a class="btn btn-register" href="{% url 'register' %}">Register</a></li>
 
           {% else %}
-            <!-- ✅ Welcome First -->
+            <li class="nav-item">
+              <span class="nav-link nav-welcome">
+                👋 Hi, {{ request.user.profile.full_name|default:request.user.email }}
+                {% if request.user.role %}<small class="text-light-50">({{ request.user.role|title }})</small>{% endif %}
+              </span>
+            </li>
+
+            <li class="nav-item">
+              <a class="nav-link {% if request.resolver_match.url_name == 'index' %}active{% endif %}" href="{% url 'index' %}">Home</a>
+            </li>
+
             {% if request.user.is_superuser %}
               <li class="nav-item">
-                <span class="nav-link fw-semibold" style="color:#001f54;">
-                  Welcome, {{ request.user.get_full_name|default:request.user.email }}
-                </span>
+                <a class="nav-link {% if request.resolver_match.url_name == 'dashboard_admin' %}active{% endif %}" href="{% url 'dashboard_admin' %}">Dashboard</a>
               </li>
-              <li class="nav-item"><a class="nav-link" href="{% url 'index' %}">Home</a></li>
-              <li class="nav-item"><a class="nav-link" href="{% url 'dashboard_admin' %}">Admin Dashboard</a></li>
-
-            {% else %}
-              {% if request.user.profile and request.user.profile.status == "Active" %}
+            {% elif request.user.profile and request.user.profile.is_reviewed %}
+              {% if request.user.role == "applicant" %}
                 <li class="nav-item">
-                  <span class="nav-link fw-semibold" style="color:#001f54;">
-                    Welcome, {{ request.user.profile.full_name }}
-                  </span>
+                  <a class="nav-link {% if request.resolver_match.url_name == 'dashboard_applicant' %}active{% endif %}" href="{% url 'dashboard_applicant' %}">Dashboard</a>
                 </li>
-                <li class="nav-item"><a class="nav-link" href="{% url 'index' %}">Home</a></li>
-                {% if request.user.role == "applicant" %}
-                  <li class="nav-item"><a class="nav-link" href="{% url 'dashboard_applicant' %}">Dashboard</a></li>
-                {% elif request.user.role == "lender" %}
-                  <li class="nav-item"><a class="nav-link" href="{% url 'dashboard_lender' %}">Dashboard</a></li>
-                {% endif %}
-              {% else %}
+              {% elif request.user.role == "lender" %}
                 <li class="nav-item">
-                  <span class="nav-link text-warning">Profile pending approval</span>
+                  <a class="nav-link {% if request.resolver_match.url_name == 'dashboard_lender' %}active{% endif %}" href="{% url 'dashboard_lender' %}">Dashboard</a>
                 </li>
-                <li class="nav-item"><a class="nav-link" href="{% url 'index' %}">Home</a></li>
               {% endif %}
+            {% else %}
+              <li class="nav-item">
+                <a class="nav-link {% if request.resolver_match.url_name == 'profile_form' %}active{% endif %}" href="{% url 'profile_form' %}">Profile Form</a>
+              </li>
             {% endif %}
 
-            <!-- ✅ Logout (always last for authenticated users) -->
             <li class="nav-item">
-              <a class="nav-link text-danger fw-semibold" href="{% url 'logout' %}">
+              <a class="nav-link text-danger fw-bold" href="{% url 'logout' %}">
                 <i class="bi bi-box-arrow-right me-1"></i> Logout
               </a>
             </li>
           {% endif %}
-
         </ul>
-        {% endblock %}
       </div>
     </div>
   </nav>
@@ -209,10 +250,10 @@
   <!-- Footer -->
   <footer>
     <div class="container container-max d-flex flex-column flex-md-row justify-content-between align-items-center">
-      <div class="mb-3 mb-md-0 text-muted">
-        © 2025 LoanSaathiHub. All rights reserved.
+      <div class="footer-logo mb-2 mb-md-0">
+        <i class="bi bi-bank2 me-2"></i> Loan Saathi Hub
       </div>
-      <div class="links d-flex flex-wrap justify-content-center">
+      <div>
         <a href="{% url 'about' %}">About</a>
         <a href="{% url 'terms' %}">Terms</a>
         <a href="{% url 'privacy' %}">Privacy</a>

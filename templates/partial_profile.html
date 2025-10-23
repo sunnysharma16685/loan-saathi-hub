@@ -5,33 +5,77 @@
 
 {% block extra_head %}
 <style>
-  .profile-container { max-width: 950px; margin: 30px auto; }
-  h2, h4 { color:#0d6efd; font-weight:600; }
+  body { background:#f6f8fb; font-family:'Poppins',sans-serif; }
+  .profile-container { max-width: 960px; margin: 30px auto; }
+  h2 { color:#001f54; font-weight:700; margin-bottom:1rem; }
+  h4 { color:#003d99; font-weight:600; margin-bottom:1rem; }
+
   .card {
-    background:#fff; padding:20px; border-radius:12px;
-    box-shadow:0 6px 18px rgba(0,0,0,0.08); margin-bottom:20px;
+    background:#fff; padding:24px; border-radius:14px;
+    box-shadow:0 8px 20px rgba(0,0,0,0.08); margin-bottom:24px;
   }
-  .card h4 { margin-bottom:15px; }
-  .card p { margin-bottom:8px; color:#444; }
+  .card p { margin-bottom:8px; color:#333; }
+  .card strong { color:#001f54; }
+
   table { width:100%; border-collapse:collapse; margin-top:10px; }
-  table th, table td { border:1px solid #e9ecef; padding:10px; }
-  table th { background:#0d6efd; color:#fff; font-weight:600; }
-  .btn-generate { background:#0d6efd; color:#fff; font-weight:600; padding:6px 14px; border-radius:6px; }
+  table th, table td { border:1px solid #dee2e6; padding:10px; text-align:left; }
+  table th {
+    background:linear-gradient(90deg,#001f54,#003d99);
+    color:#fff; font-weight:600;
+  }
+
+  .btn-generate {
+    background:linear-gradient(135deg,#0d6efd,#2563eb);
+    color:#fff; font-weight:600;
+    padding:8px 16px; border-radius:6px; border:none;
+    transition: all .3s ease;
+  }
+  .btn-generate:hover { opacity:0.9; }
   .btn-generate:disabled { background:#adb5bd; cursor:not-allowed; }
-  .btn-back { background:#6c757d; color:#fff; font-weight:600; padding:10px 16px; border-radius:6px; text-decoration:none; }
+
+  .btn-history {
+    background:#198754; color:#fff; font-weight:600;
+    padding:8px 14px; border-radius:6px; border:none;
+    margin-left:8px; transition:0.3s;
+  }
+  .btn-history:hover { background:#157347; }
+
+  .btn-back {
+    background:#001f54; color:#fff; font-weight:600;
+    padding:10px 18px; border-radius:6px; text-decoration:none; transition:0.3s;
+  }
+  .btn-back:hover { background:#003d99; color:#fff; }
+
+  .cibil-box { display:flex; align-items:center; gap:1rem; flex-wrap:wrap; margin-top:.5rem; }
+  .cibil-score {
+    font-size:1.5rem; font-weight:700;
+    background:#f1f8ff; color:#0d6efd;
+    padding:6px 14px; border-radius:6px;
+  }
+
+  .modal-content { border-radius:12px; box-shadow:0 8px 24px rgba(0,0,0,0.2); }
+  .modal-header {
+    background:linear-gradient(135deg,#001f54,#003d99);
+    color:#fff; border-top-left-radius:12px; border-top-right-radius:12px;
+  }
+  .modal-title { font-weight:600; }
+
+  table th { text-align:center; }
+  table td { text-align:center; }
+
+  .alert { border-radius:10px; }
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="profile-container">
-  <h2>Partial Profile (Limited Access)</h2>
+  <h2><i class="bi bi-person-badge me-2"></i> Partial Profile (Limited Access)</h2>
 
-  <!-- ✅ Alerts -->
   <div id="alertBox"></div>
 
   <!-- ✅ Basic Info -->
   <div class="card">
-    <h4>Basic Information</h4>
+    <h4><i class="bi bi-person-circle me-2"></i> Basic Information</h4>
     <p><strong>Full Name:</strong> {{ profile.full_name|default:"N/A" }}</p>
     <p><strong>Email:</strong> **********</p>
     <p><strong>Mobile:</strong> **********</p>
@@ -43,43 +87,46 @@
     <p><strong>Date of Birth:</strong> {{ profile.dob|date:"d-m-Y"|default:"N/A" }}</p>
   </div>
 
-  <!-- ✅ Applicant Details -->
   {% if applicant_details %}
   <div class="card">
-    <h4>Applicant Details</h4>
-    <p><strong>Job Type:</strong> {{ applicant_details.job_type|default:"N/A" }}</p>
+    <h4><i class="bi bi-person-lines-fill me-2"></i> Applicant Details</h4>
     <p><strong>Employment Type:</strong> {{ applicant_details.employment_type|default:"N/A" }}</p>
 
-    <!-- ✅ CIBIL Score Section -->
-    <p><strong>CIBIL Score:</strong></p>
-    <div id="cibilSection">
-      {% if applicant_details.cibil_score %}
-        <input type="text" id="cibilScoreInput" class="form-control" 
-               value="{{ applicant_details.cibil_score }}" readonly style="max-width:220px; background:#f8f9fa;">
-        <small class="text-muted d-block mt-1" id="cibilMeta">
-          Generated on {{ applicant_details.cibil_last_generated|date:"d/m/Y h:i A"|default:"N/A" }}
-          {% if applicant_details.cibil_locked_until %}
-            <br>🔒 Next generation available after:
-            <strong>{{ applicant_details.cibil_locked_until|date:"d-m-Y" }}</strong>
-          {% endif %}
-        </small>
-      {% else %}
-        {% if request.user.role == "lender" %}
-          <button id="generateCibilBtn" 
-                  data-url="{% url 'generate_cibil_score' loan.id %}" 
-                  class="btn btn-generate mt-2">
-            ⚡ Generate CIBIL
-          </button>
-        {% else %}
-          <span class="text-muted">Not generated yet</span>
-        {% endif %}
-      {% endif %}
+<!-- ✅ CIBIL Section -->
+<p><strong>CIBIL Score:</strong></p>
+<div id="cibilSection" class="cibil-box">
+  {% if applicant_details.cibil_score %}
+    <div>
+      <span class="cibil-score">{{ applicant_details.cibil_score }}</span>
+      <small class="text-muted d-block mt-1">
+        Generated on {{ applicant_details.cibil_last_generated|date:"d/m/Y h:i A"|default:"N/A" }}
+      </small>
     </div>
+
+    {% if request.user.role == "lender" %}
+      <button id="viewHistoryBtn" class="btn-history">
+        📜 View CIBIL History
+      </button>
+    {% endif %}
+  
+  {% else %}
+    {% if request.user.role == "lender" %}
+      <button id="generateCibilBtn"
+              data-url="{% url 'generate_cibil_score' loan.id %}"
+              class="btn btn-generate mt-2">
+        ⚡ Generate Dummy CIBIL
+      </button>
+    {% else %}
+      <span class="text-muted">Not generated yet</span>
+    {% endif %}
+  {% endif %}
+</div>
+.985369
   </div>
 
   <!-- ✅ Job Information -->
   <div class="card">
-    <h4>Job Information</h4>
+    <h4><i class="bi bi-building-check me-2"></i> Job Information</h4>
     <p><strong>Company Name:</strong> **********</p>
     <p><strong>Company Type:</strong> {{ applicant_details.company_type|default:"N/A" }}</p>
     <p><strong>Designation:</strong> {{ applicant_details.designation|default:"N/A" }}</p>
@@ -89,9 +136,8 @@
     <p><strong>Total EMI:</strong> ₹{{ applicant_details.total_emi|default:"0" }}</p>
   </div>
 
-  <!-- ✅ Business Information -->
   <div class="card">
-    <h4>Business Information</h4>
+    <h4><i class="bi bi-briefcase me-2"></i> Business Information</h4>
     <p><strong>Business Name:</strong> **********</p>
     <p><strong>Business Type:</strong> {{ applicant_details.business_type|default:"N/A" }}</p>
     <p><strong>Business Sector:</strong> {{ applicant_details.business_sector|default:"N/A" }}</p>
@@ -104,7 +150,7 @@
 
   <!-- ✅ Loan Info -->
   <div class="card">
-    <h4>Loan Details</h4>
+    <h4><i class="bi bi-cash-coin me-2"></i> Loan Details</h4>
     <table>
       <tbody>
         <tr><th>Loan ID</th><td>{{ loan.loan_id|default:"N/A" }}</td></tr>
@@ -118,56 +164,103 @@
     </table>
   </div>
 
-  <!-- ✅ Back -->
-  <div class="mt-3">
+  <div class="mt-4 text-center">
     <a href="{{ dashboard_url }}" class="btn-back">⬅ Back to Dashboard</a>
   </div>
 </div>
 
+<!-- ✅ CIBIL History Modal -->
+<div class="modal fade" id="cibilHistoryModal" tabindex="-1" aria-labelledby="cibilHistoryModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title"><i class="bi bi-clock-history me-2"></i> CIBIL History</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        {% if cibil_history %}
+        <table class="table table-bordered table-striped">
+          <thead>
+            <tr>
+              <th>#</th><th>Score</th><th>Lender</th><th>Date Generated</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for report in cibil_history %}
+            <tr>
+              <td>{{ forloop.counter }}</td>
+              <td><strong>{{ report.score }}</strong></td>
+              <td>{{ report.lender.username|default:"N/A" }}</td>
+              <td>{{ report.created_at|date:"d/m/Y h:i A" }}</td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="4" class="text-muted text-center">No previous records found.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        {% else %}
+        <p class="text-muted text-center mb-0">No previous CIBIL history found.</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ✅ SweetAlert + Bootstrap Modal Integration -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
 <script>
 document.addEventListener("DOMContentLoaded", function(){
   const btn = document.getElementById("generateCibilBtn");
-  if(btn){
-    btn.addEventListener("click", function(){
-      const url = btn.dataset.url;
+  const viewHistoryBtn = document.getElementById("viewHistoryBtn");
+
+  // ✅ Ensure absolute URL for fetch requests
+  function getAbsoluteUrl(url) {
+    if (!url.startsWith("/")) return "/" + url;
+    return url;
+  }
+
+  // ✅ Generate Dummy CIBIL
+  if (btn) {
+    btn.addEventListener("click", async function() {
+      const url = getAbsoluteUrl(btn.dataset.url);
       btn.disabled = true;
       btn.textContent = "⏳ Generating...";
-      
-      fetch(url, {headers: {"X-Requested-With":"XMLHttpRequest"}})
-        .then(res => res.json())
-        .then(data => {
-          let alertBox = document.getElementById("alertBox");
-          alertBox.innerHTML = "";
-          if(data.ok){
-            alertBox.innerHTML = `
-              <div class="alert alert-success alert-dismissible fade show shadow-sm mt-3">
-                ✅ ${data.message} (Score: <strong>${data.score}</strong>)
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-              </div>`;
-            document.getElementById("cibilSection").innerHTML = `
-              <input type="text" class="form-control" value="${data.score}" readonly 
-                     style="max-width:220px; background:#f8f9fa;">
-              <small class="text-muted d-block mt-1">
-                Generated on ${new Date(data.created_at).toLocaleString()}
-                <br>🔒 Next generation available after: <strong>31 days</strong>
-              </small>`;
-          } else {
-            alertBox.innerHTML = `
-              <div class="alert alert-danger alert-dismissible fade show shadow-sm mt-3">
-                ⚠️ ${data.message}
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-              </div>`;
-            btn.disabled = false;
-            btn.textContent = "⚡ Generate CIBIL";
-          }
-        })
-        .catch(err => {
-          console.error(err);
+
+      try {
+        const res = await fetch(url, { headers: { "X-Requested-With": "XMLHttpRequest" } });
+        const data = await res.json();
+
+        if (data.ok) {
+          Swal.fire({
+            title: "✅ Dummy CIBIL Generated!",
+            html: `
+              <div style="font-size:1.1rem;">
+                Your generated CIBIL score is: 
+                <b style="font-size:1.4rem; color:#0d6efd;">${data.score}</b><br>
+                <small class="text-muted">(This is a dummy/test score for demo use only)</small>
+              </div>
+            `,
+            icon: "success",
+            confirmButtonText: "View History"
+          }).then(() => {
+            // Auto-show modal with history after generation
+            const modal = new bootstrap.Modal(document.getElementById("cibilHistoryModal"));
+            modal.show();
+          });
+        } else {
+          Swal.fire("⚠️ Warning", data.msg || "Unable to generate CIBIL.", "warning");
           btn.disabled = false;
-          btn.textContent = "⚡ Generate CIBIL";
-        });
+          btn.textContent = "⚡ Generate Dummy CIBIL";
+        }
+      } catch (err) {
+        console.error("CIBIL generation error:", err);
+        Swal.fire("Error", "Something went wrong while generating CIBIL.", "error");
+        btn.disabled = false;
+        btn.textContent = "⚡ Generate Dummy CIBIL";
+      }
     });
   }
-});
-</script>
+
+ </script>
 {% endblock %}

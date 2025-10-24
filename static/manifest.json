@@ -3,11 +3,11 @@
   "short_name": "LSH",
   "description": "Connecting Borrowers with Lenders Seamlessly.",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
+  "orientation": "portrait-primary",
   "background_color": "#001f54",
   "theme_color": "#001f54",
-  "orientation": "portrait-primary",
-  "scope": "/",
   "icons": [
     {
       "src": "/static/icons/icon-192.png",

@@ -80,6 +80,12 @@ urlpatterns = [
 
     # ---------------- Django Admin (keep this at bottom) ----------------
     path("admin/", admin.site.urls),
+
+    # ---------------- logo and images ---------------
+    path('manifest.json', TemplateView.as_view(template_name='manifest.json', content_type='application/json')),
+
+    # ----------------Offline fallback message ---------------
+    path("offline/", views.offline_page, name="offline_page"),
     
 ]
 

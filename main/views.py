@@ -1746,3 +1746,10 @@ def pricing_projection(request):
         "profit_data": profit_data,
     }
     return render(request, "admin/pricing_projection.html", ctx)
+
+
+# ----------------Offline fallback message-------------------
+def offline_page(request):
+    """Simple offline fallback page."""
+    return render(request, "offline.html")
+

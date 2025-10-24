@@ -1,0 +1,28 @@
+{
+  "name": "Loan Saathi Hub",
+  "short_name": "LSH",
+  "description": "Connecting Borrowers with Lenders Seamlessly.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#001f54",
+  "theme_color": "#001f54",
+  "orientation": "portrait-primary",
+  "scope": "/",
+  "icons": [
+    {
+      "src": "/static/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/static/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "/static/icons/favicon.ico",
+      "sizes": "48x48",
+      "type": "image/x-icon"
+    }
+  ]
+}

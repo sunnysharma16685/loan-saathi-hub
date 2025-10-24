@@ -5,16 +5,15 @@
   <meta charset="UTF-8">
   <meta name="viewport"
         content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-
   <title>{% block title %}Loan Saathi Hub{% endblock %}</title>
 
-  <!-- ✅ PWA Support -->
+  <!-- ✅ PWA Essentials -->
   <link rel="manifest" href="{% static 'manifest.json' %}">
   <meta name="theme-color" content="#001f54">
   <link rel="icon" sizes="192x192" href="{% static 'icons/icon-192.png' %}">
   <link rel="apple-touch-icon" href="{% static 'icons/icon-512.png' %}">
 
-  <!-- Fonts & Styles -->
+  <!-- Fonts & CSS -->
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
@@ -25,86 +24,73 @@
       --navy-light: #003d99;
       --gold: #ffcc00;
       --accent: #00c6ff;
-      --text-light: #f8f9fa;
-      --radius: 20px;
+      --bg-light: #f4f6fa;
+      --bg-dark: #0d1117;
+      --text-dark: #e8e8e8;
     }
 
-    /* ✅ Body reset for full app mode */
     body {
       font-family: 'Poppins', sans-serif;
-      background: #f1f3f7;
+      background: var(--bg-light);
+      color: #212529;
       margin: 0;
       padding: env(safe-area-inset-top) env(safe-area-inset-right)
-               calc(env(safe-area-inset-bottom) + 60px) env(safe-area-inset-left);
-      overflow-x: hidden;
-      overscroll-behavior-y: contain;
+               env(safe-area-inset-bottom) env(safe-area-inset-left);
       -webkit-tap-highlight-color: transparent;
-      transition: background 0.3s ease;
+      transition: background 0.3s ease, color 0.3s ease;
     }
 
     /* ✅ Navbar */
     .navbar {
       background: linear-gradient(90deg, var(--navy), var(--navy-light));
-      box-shadow: 0 2px 10px rgba(0,0,0,0.25);
-      padding: 0.6rem 1rem;
-      transition: top 0.4s ease-in-out;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.25);
+      padding: 0.75rem 1rem;
     }
-
     .navbar-brand {
-      font-weight: 700;
       color: var(--gold) !important;
-      font-size: 1.4rem;
-      display: flex;
-      align-items: center;
+      font-size: 1.5rem;
+      font-weight: 700;
+      display: flex; align-items: center;
     }
+    .navbar-brand i { color: var(--gold); margin-right: 8px; font-size: 1.8rem; }
+    .nav-link { color: #fff !important; font-weight: 600; transition: 0.3s; }
+    .nav-link:hover, .nav-link.active { color: var(--accent) !important; }
 
-    .nav-link {
-      font-weight: 600;
-      color: var(--text-light) !important;
-      transition: 0.3s;
-    }
-
-    .nav-link:hover,
-    .nav-link.active {
-      color: var(--accent) !important;
-    }
-
-    /* ✅ Main content card layout */
+    /* ✅ Main Section */
     main {
       animation: fadeIn 0.4s ease-in-out;
-      margin-bottom: 60px;
+      margin-top: 1rem;
+      margin-bottom: 70px;
     }
-
-    .content-card {
-      background: #fff;
-      border-radius: var(--radius);
-      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
-      padding: 1rem 1.25rem;
-      margin-bottom: 1.2rem;
-    }
-
     @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(10px); }
+      from { opacity: 0; transform: translateY(8px); }
       to { opacity: 1; transform: translateY(0); }
     }
 
-    /* ✅ Bottom Navigation Bar */
+    /* ✅ Footer */
+    footer {
+      background: var(--navy);
+      color: #fff;
+      padding: 1.5rem 0;
+      text-align: center;
+      font-size: 0.9rem;
+    }
+    footer a { color: #ddd; text-decoration: none; margin: 0 6px; }
+    footer a:hover { color: var(--accent); }
+
+    /* ✅ Bottom Navigation */
     .bottom-nav {
       position: fixed;
-      bottom: 0;
-      left: 0;
-      width: 100%;
+      bottom: 0; left: 0; width: 100%;
       background: #fff;
       border-top: 1px solid #ddd;
       display: flex;
       justify-content: space-around;
       align-items: center;
-      height: 60px;
+      height: 58px;
       z-index: 9999;
-      box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
-      transition: all 0.3s ease;
+      box-shadow: 0 -2px 8px rgba(0,0,0,0.08);
     }
-
     .bottom-nav a {
       flex: 1;
       text-align: center;
@@ -112,58 +98,48 @@
       color: #555;
       font-size: 0.8rem;
       font-weight: 500;
+      padding-top: 4px;
     }
+    .bottom-nav a i { display: block; font-size: 1.3rem; }
+    .bottom-nav a.active { color: var(--navy-light); font-weight: 700; }
 
-    .bottom-nav a i {
-      display: block;
-      font-size: 1.3rem;
-      margin-bottom: 2px;
-    }
-
-    .bottom-nav a.active {
-      color: var(--navy-light);
-      font-weight: 700;
-    }
-
-    /* ✅ Floating install button */
+    /* ✅ Floating Install Button */
     #installAppBtn {
       position: fixed;
-      bottom: 80px;
-      right: 25px;
-      z-index: 9999;
-      background: linear-gradient(90deg, var(--navy), var(--navy-light));
+      bottom: 80px; right: 25px;
+      background: linear-gradient(90deg, #001f54, #003d99);
       color: #fff;
       border-radius: 50px;
       font-weight: 600;
       padding: 10px 18px;
       display: none;
       box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      z-index: 9999;
+      animation: slideUp 0.5s ease;
     }
+    @keyframes slideUp { from{opacity:0;transform:translateY(15px);}to{opacity:1;transform:none;} }
 
-    footer {
-      background: var(--navy);
-      color: var(--text-light);
-      text-align: center;
-      padding: 1rem;
-      font-size: 0.9rem;
-      margin-top: 2rem;
-    }
-
-    footer a {
-      color: #ddd;
-      text-decoration: none;
-      margin: 0 8px;
-    }
-
-    footer a:hover {
-      color: var(--accent);
-    }
-
-    /* ✅ Responsive adjustments */
+    /* ✅ Mobile App Layout */
     @media (max-width: 768px) {
-      .navbar-brand { font-size: 1.2rem; }
-      main.container { padding: 0.5rem !important; }
-      .content-card { border-radius: 14px; }
+      .navbar { border-radius: 0 0 16px 16px; }
+      main.container {
+        background: #fff;
+        border-radius: 20px 20px 0 0;
+        box-shadow: 0 -4px 10px rgba(0,0,0,0.06);
+        padding: 1rem;
+      }
+      footer { padding-bottom: 4rem; }
+    }
+
+    /* ✅ Dark Mode */
+    @media (prefers-color-scheme: dark) {
+      body { background: var(--bg-dark); color: var(--text-dark); }
+      .navbar { background: linear-gradient(90deg,#0a192f,#112240); }
+      main.container { background: #161b22; color: var(--text-dark); }
+      .bottom-nav { background: #161b22; border-color: #2c2c2c; }
+      .bottom-nav a { color: #ccc; }
+      .bottom-nav a.active { color: var(--gold); }
+      footer { background: #0a192f; color: var(--text-dark); }
     }
   </style>
 
@@ -171,24 +147,24 @@
 </head>
 
 <body>
+
   <!-- Navbar -->
   <nav class="navbar navbar-expand-lg sticky-top">
     <div class="container">
       <a class="navbar-brand" href="{% url 'index' %}">
-        <i class="bi bi-bank2 me-2"></i> Loan Saathi Hub
+        <i class="bi bi-bank2"></i> Loan Saathi Hub
       </a>
       <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
         <span class="navbar-toggler-icon"></span>
       </button>
-
       <div class="collapse navbar-collapse" id="navbarNav">
         <ul class="navbar-nav ms-auto align-items-center">
           {% if not request.user.is_authenticated %}
             <li class="nav-item"><a class="nav-link" href="{% url 'index' %}">Home</a></li>
-            <li class="nav-item"><a class="btn btn-login" href="{% url 'login' %}">Login</a></li>
-            <li class="nav-item"><a class="btn btn-register" href="{% url 'register' %}">Register</a></li>
+            <li class="nav-item"><a class="btn btn-outline-info btn-sm me-2" href="{% url 'login' %}">Login</a></li>
+            <li class="nav-item"><a class="btn btn-info btn-sm" href="{% url 'register' %}">Register</a></li>
           {% else %}
-            <li class="nav-item"><span class="nav-link text-warning">👋 Hi, {{ request.user.profile.full_name|default:request.user.email }}</span></li>
+            <li class="nav-item"><span class="nav-link text-warning">👋 {{ request.user.profile.full_name|default:request.user.email }}</span></li>
             {% if request.user.role == "applicant" %}
               <li class="nav-item"><a class="nav-link" href="{% url 'dashboard_applicant' %}">Dashboard</a></li>
             {% elif request.user.role == "lender" %}
@@ -203,54 +179,64 @@
 
   <!-- Main -->
   <main class="container mt-3">
-    {% block content %}
-    {% endblock %}
+    {% if messages %}
+      {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} alert-dismissible fade show shadow-sm">
+          {{ message }}
+          <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+      {% endfor %}
+    {% endif %}
+    {% block content %}{% endblock %}
   </main>
 
-  <!-- ✅ Bottom Navigation (App style) -->
-  <div id="bottomNav" class="bottom-nav">
+  <!-- ✅ Bottom App Navigation -->
+  <div class="bottom-nav">
     <a href="{% url 'index' %}" class="{% if request.resolver_match.url_name == 'index' %}active{% endif %}">
-      <i class="bi bi-house"></i> Home
+      <i class="bi bi-house"></i>Home
     </a>
     {% if request.user.is_authenticated %}
       {% if request.user.role == 'applicant' %}
         <a href="{% url 'dashboard_applicant' %}" class="{% if request.resolver_match.url_name == 'dashboard_applicant' %}active{% endif %}">
-          <i class="bi bi-grid"></i> Dashboard
+          <i class="bi bi-grid"></i>Dashboard
         </a>
       {% elif request.user.role == 'lender' %}
         <a href="{% url 'dashboard_lender' %}" class="{% if request.resolver_match.url_name == 'dashboard_lender' %}active{% endif %}">
-          <i class="bi bi-grid"></i> Dashboard
+          <i class="bi bi-grid"></i>Dashboard
         </a>
       {% endif %}
       <a href="{% url 'edit_profile' request.user.id %}">
-        <i class="bi bi-person-circle"></i> Profile
+        <i class="bi bi-person-circle"></i>Profile
       </a>
       <a href="{% url 'support' %}">
-        <i class="bi bi-headset"></i> Support
+        <i class="bi bi-headset"></i>Support
       </a>
     {% endif %}
   </div>
 
-  <!-- Floating Install App Button -->
+  <!-- Footer -->
+  <footer>
+    <i class="bi bi-bank2 me-2"></i> Loan Saathi Hub • Connecting Borrowers & Lenders Seamlessly
+  </footer>
+
+  <!-- Floating Install Button -->
   <button id="installAppBtn"><i class="bi bi-download me-1"></i> Install App</button>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
-  <!-- ✅ PWA + App Feel Script -->
+  <!-- ✅ Service Worker + Install Logic -->
   <script>
-    // Register Service Worker
     if ("serviceWorker" in navigator) {
-      window.addEventListener("load", function () {
+      window.addEventListener("load", () => {
         navigator.serviceWorker.register("{% static 'service-worker.js' %}")
           .then(reg => console.log("✅ Service Worker registered:", reg))
           .catch(err => console.log("⚠️ Service Worker failed:", err));
       });
     }
 
-    // PWA install prompt
     let deferredPrompt;
     const installBtn = document.getElementById("installAppBtn");
-    const bottomNav = document.getElementById("bottomNav");
+    installBtn.style.display = "none";
 
     window.addEventListener("beforeinstallprompt", (e) => {
       e.preventDefault();
@@ -259,6 +245,7 @@
     });
 
     installBtn.addEventListener("click", async () => {
+      if (!deferredPrompt) return;
       installBtn.style.display = "none";
       deferredPrompt.prompt();
       await deferredPrompt.userChoice;
@@ -267,13 +254,11 @@
 
     window.addEventListener("appinstalled", () => {
       installBtn.style.display = "none";
-      console.log("📱 Loan Saathi Hub installed");
+      console.log("📱 Loan Saathi Hub Installed");
     });
 
-    // Hide bottom nav on desktop
-    if (window.innerWidth > 992) {
-      bottomNav.style.display = "none";
-    }
+    // Hide bottom nav on large screens
+    if (window.innerWidth > 992) document.querySelector(".bottom-nav").style.display = "none";
   </script>
 
   {% block extra_js %}{% endblock %}

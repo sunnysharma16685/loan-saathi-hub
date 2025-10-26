@@ -7,171 +7,154 @@
         content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 
   <title>{% block title %}Loan Saathi Hub{% endblock %}</title>
-  <link rel="stylesheet" href="{% static 'css/site.css' %}">
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- ✅ Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Manrope:wght@400;600;700&display=swap" rel="stylesheet">
+
+  <!-- ✅ Bootstrap & Icons -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
 
-  <!-- ✅ PWA -->
-  <link rel="manifest" href="{% static 'manifest.json' %}">
-  <link rel="icon" type="image/png" sizes="192x192" href="{% static 'icons/icon-192.png' %}">
-  <link rel="apple-touch-icon" href="{% static 'icons/icon-512.png' %}">
-  <meta name="theme-color" content="#001f54">
-
+  <!-- ✅ Global Styles -->
   <style>
     :root {
-      --navy: #001f54;
-      --navy-light: #003d99;
-      --accent: #00c6ff;
-      --text-light: #f8f9fa;
-      --gold: #ffcc00;
+      --primary: #0f766e;
+      --primary-dark: #0a3b3c;
+      --accent: #06b6d4;
+      --text-dark: #0f172a;
+      --text-light: #f8fafc;
+      --gray: #f1f5f9;
     }
 
     body {
-      font-family: 'Poppins', sans-serif;
-      background: #f4f6fa;
+      font-family: 'Inter', sans-serif;
+      background: #f9fafb;
       margin: 0;
-      padding: 0;
-      color: #212529;
+      color: var(--text-dark);
       overflow-x: hidden;
     }
 
     /* ✅ Navbar */
     .navbar {
-      background: linear-gradient(90deg, var(--navy), var(--navy-light));
-      padding: 0.75rem 1rem;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+      background: #ffffffcc;
+      backdrop-filter: blur(20px);
+      box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+      padding: 0.8rem 1.2rem;
+      transition: all 0.3s ease;
     }
 
     .navbar-brand {
-      color: var(--gold) !important;
-      font-size: 1.5rem;
+      font-family: 'Manrope', sans-serif;
       font-weight: 700;
+      font-size: 1.6rem;
+      color: var(--primary);
       display: flex;
       align-items: center;
-    }
-
-    .navbar-toggler {
-      border: none;
-    }
-
-    .navbar-toggler:focus {
-      box-shadow: none;
-    }
-
-    .navbar-toggler-icon {
-      filter: invert(1);
+      gap: 0.4rem;
     }
 
     .nav-link {
       font-weight: 600;
-      color: var(--text-light) !important;
-      transition: all 0.3s;
-      margin: 0 0.4rem;
+      color: #1e293b !important;
+      margin: 0 0.5rem;
+      transition: all 0.3s ease;
+      border-radius: 8px;
+      padding: 8px 14px;
     }
 
-    .nav-link:hover,
-    .nav-link.active {
-      color: var(--accent) !important;
+    .nav-link:hover, .nav-link.active {
+      background: var(--accent);
+      color: #fff !important;
     }
 
     .btn-login, .btn-register {
+      border-radius: 10px;
       font-weight: 600;
-      border-radius: 8px;
-      padding: 8px 14px;
-      transition: 0.3s;
+      padding: 8px 18px;
+      transition: all 0.3s;
     }
 
     .btn-login {
-      border: 1px solid var(--accent);
+      border: 2px solid var(--accent);
       color: var(--accent);
     }
-
     .btn-login:hover {
       background: var(--accent);
       color: #fff;
     }
 
     .btn-register {
-      background: var(--accent);
+      background: var(--primary);
       color: #fff !important;
+      border: 2px solid var(--primary);
     }
-
     .btn-register:hover {
-      background: #00a2d6;
+      background: var(--accent);
+      border-color: var(--accent);
     }
 
     /* ✅ Footer */
     footer {
-      background: var(--navy);
+      background: linear-gradient(135deg, var(--primary-dark), var(--primary));
       color: var(--text-light);
       text-align: center;
-      padding: 2rem 0;
-      margin-top: 3rem;
+      padding: 3rem 1rem;
+      border-top-left-radius: 24px;
+      border-top-right-radius: 24px;
+      box-shadow: 0 -4px 20px rgba(0,0,0,0.1);
+    }
+
+    footer .footer-logo {
+      font-family: 'Manrope', sans-serif;
+      font-weight: 700;
+      font-size: 1.4rem;
+      color: #ffffff;
+      margin-bottom: 1rem;
     }
 
     footer a {
-      color: #ddd;
-      margin: 0 8px;
+      color: #cbd5e1;
       text-decoration: none;
-      transition: color 0.3s;
+      margin: 0 10px;
+      font-weight: 500;
+      transition: color 0.3s ease;
     }
-
     footer a:hover {
       color: var(--accent);
     }
 
-    footer .footer-logo {
-      font-weight: 700;
-      color: var(--gold);
-      font-size: 1.3rem;
+    footer small {
+      display: block;
+      color: #9ca3af;
+      margin-top: 0.8rem;
+      font-size: 0.85rem;
     }
 
-    /* ✅ Floating PWA Button */
+    /* ✅ PWA Button */
     #installAppBtn {
       position: fixed;
       bottom: 20px;
       right: 20px;
       display: none;
-      background: linear-gradient(90deg, var(--navy), var(--navy-light));
+      background: var(--primary);
       color: #fff;
       border-radius: 50px;
-      padding: 12px 20px;
+      padding: 12px 24px;
       font-weight: 600;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      box-shadow: 0 4px 14px rgba(0,0,0,0.3);
     }
 
-    /* ✅ Responsive Adjustments */
+    /* ✅ Responsive */
     @media (max-width: 992px) {
       .navbar-nav {
-        text-align: center;
-        background: var(--navy);
-        border-radius: 8px;
-        padding: 10px 0;
+        background: #fff;
+        border-radius: 12px;
+        padding: 1rem;
+        box-shadow: 0 8px 20px rgba(0,0,0,0.05);
       }
-
       .nav-link {
         display: block;
-        margin: 6px 0;
-      }
-
-      .navbar-brand {
-        font-size: 1.3rem;
-      }
-
-      footer {
-        font-size: 0.9rem;
-      }
-    }
-
-    @media (max-width: 576px) {
-      .btn-login, .btn-register {
-        font-size: 0.9rem;
-        padding: 6px 10px;
-      }
-
-      .footer-logo {
-        font-size: 1rem;
+        margin: 0.4rem 0;
       }
     }
   </style>
@@ -182,29 +165,32 @@
 <body>
 
   <!-- ✅ Navbar -->
-  <nav class="navbar navbar-expand-lg sticky-top">
+  <nav class="navbar navbar-expand-lg fixed-top">
     <div class="container-fluid">
       <a class="navbar-brand" href="{% url 'index' %}">
-        <i class="bi bi-bank2 me-1"></i> Loan Saathi Hub
+        <i class="bi bi-bank2"></i> Loan Saathi Hub
       </a>
-      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+
+      <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
         <span class="navbar-toggler-icon"></span>
       </button>
 
-      <div class="collapse navbar-collapse" id="navbarNav">
-        <ul class="navbar-nav ms-auto align-items-lg-center">
+      <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
+        <ul class="navbar-nav align-items-lg-center">
           {% if not request.user.is_authenticated %}
             <li class="nav-item"><a class="nav-link" href="{% url 'index' %}">Home</a></li>
-            <li class="nav-item"><a class="btn btn-login mx-1" href="{% url 'login' %}">Login</a></li>
-            <li class="nav-item"><a class="btn btn-register mx-1" href="{% url 'register' %}">Register</a></li>
+            <li class="nav-item"><a class="nav-link" href="{% url 'about' %}">About</a></li>
+            <li class="nav-item"><a class="nav-link" href="{% url 'support' %}">Support</a></li>
+            <li class="nav-item ms-2"><a class="btn btn-login" href="{% url 'login' %}">Login</a></li>
+            <li class="nav-item ms-2"><a class="btn btn-register" href="{% url 'register' %}">Register</a></li>
           {% else %}
-            <li class="nav-item"><span class="nav-link text-warning fw-semibold">👋 {{ request.user.profile.full_name|default:request.user.email }}</span></li>
+            <li class="nav-item"><span class="nav-link fw-semibold text-primary">👋 {{ request.user.profile.full_name|default:request.user.email }}</span></li>
             {% if request.user.role == "applicant" %}
               <li class="nav-item"><a class="nav-link" href="{% url 'dashboard_applicant' %}">Dashboard</a></li>
             {% elif request.user.role == "lender" %}
               <li class="nav-item"><a class="nav-link" href="{% url 'dashboard_lender' %}">Dashboard</a></li>
             {% endif %}
-            <li class="nav-item"><a class="nav-link text-danger fw-bold" href="{% url 'logout' %}"><i class="bi bi-box-arrow-right me-1"></i>Logout</a></li>
+            <li class="nav-item ms-2"><a class="btn btn-login text-danger border-danger" href="{% url 'logout' %}"><i class="bi bi-box-arrow-right me-1"></i> Logout</a></li>
           {% endif %}
         </ul>
       </div>
@@ -212,10 +198,10 @@
   </nav>
 
   <!-- ✅ Main Content -->
-  <main class="container my-4">
+  <main class="container" style="padding-top: 100px;">
     {% if messages %}
       {% for message in messages %}
-        <div class="alert alert-{{ message.tags }} alert-dismissible fade show shadow-sm">
+        <div class="alert alert-{{ message.tags }} alert-dismissible fade show mt-3">
           {{ message }}
           <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
@@ -226,8 +212,7 @@
 
   <!-- ✅ Footer -->
   <footer>
-    <div class="footer-logo"><i class="bi bi-bank2 me-2"></i> Loan Saathi Hub</div>
-    <div class="mt-2">
+    <div>
       <a href="{% url 'about' %}">About</a> |
       <a href="{% url 'terms' %}">Terms</a> |
       <a href="{% url 'privacy' %}">Privacy</a> |
@@ -235,17 +220,18 @@
       <a href="{% url 'support' %}">Support</a> |
       <a href="{% url 'feedback' %}">Feedback</a>
     </div>
+    <small>© {{ now|date:"Y" }} Loan Saathi Hub. All Rights Reserved.</small>
   </footer>
 
-  <!-- ✅ PWA Install -->
+  <!-- ✅ Install App Button -->
   <button id="installAppBtn"><i class="bi bi-download me-1"></i> Install App</button>
 
+  <!-- ✅ Scripts -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-
   <script>
     if ("serviceWorker" in navigator) {
       navigator.serviceWorker.register("{% static 'service-worker.js' %}")
-        .then(() => console.log("✅ Service Worker Registered"));
+        .then(() => console.log("✅ PWA Registered"));
     }
 
     let deferredPrompt;
@@ -260,8 +246,7 @@
     installBtn.addEventListener("click", async () => {
       deferredPrompt.prompt();
       const { outcome } = await deferredPrompt.userChoice;
-      if (outcome === "accepted") console.log("App installed!");
-      deferredPrompt = null;
+      if (outcome === "accepted") console.log("✅ App Installed!");
       installBtn.style.display = "none";
     });
   </script>

@@ -46,15 +46,30 @@ SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "dev-secret-key")
 DEBUG = os.getenv("DJANGO_DEBUG", "0").strip().lower() in ("1", "true", "yes")
 
 ALLOWED_HOSTS = [
-    h.strip()
-    for h in os.getenv(
-        "DJANGO_ALLOWED_HOSTS",
-        "127.0.0.1,localhost,loansaathihub.in,www.loansaathihub.in"
-    ).split(",")
-    if h.strip()
+    "127.0.0.1",
+    "localhost",
+    "loansaathihub.in",
+    "www.loansaathihub.in",
+    "0.0.0.0",
+    "[::1]",  # for IPv6 local testing
 ]
 
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+
+# =====================================================
+# 🔹 ALLOWED HOSTS
+# =====================================================
+if os.getenv("DJANGO_DEBUG", "0").strip().lower() in ("1", "true", "yes"):
+    # Local development mode
+    ALLOWED_HOSTS = ["*", "127.0.0.1", "localhost", "0.0.0.0", "[::1]"]
+else:
+    # Production (Render/live)
+    ALLOWED_HOSTS = [
+        "loansaathihub.in",
+        "www.loansaathihub.in",
+        "loansaathi-hub.onrender.com",
+    ]
+
 
 # =====================================================
 # 🔹 APPLICATIONS

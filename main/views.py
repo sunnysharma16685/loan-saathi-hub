@@ -48,6 +48,12 @@ from email.mime.text import MIMEText
 from dotenv import load_dotenv
 import math
 import razorpay
+from django.views.decorators.clickjacking import xframe_options_deny
+from django.utils.html import escape
+from django.contrib.auth.decorators import user_passes_test
+from django.http import HttpResponseForbidden
+from django_ratelimit.decorators import ratelimit
+
 
 from main.models import PaymentTransaction
 
@@ -75,15 +81,58 @@ def index(request): return render(request, 'index.html')
 
 # -------------------- Profile Completion Check --------------------
 def is_profile_complete(user):
-    profile = getattr(user, "profile", None) or Profile.objects.filter(user=user).first()
-    if not profile or not profile.full_name or not profile.pancard_number or not getattr(profile, "mobile", None):
+    """
+    Checks whether a user's profile is sufficiently complete for dashboard access.
+    Includes stricter validation for both applicant and lender roles.
+    """
+
+    # ✅ Ensure valid authenticated user object
+    if not user or not getattr(user, "is_authenticated", False):
         return False
+
+    # ✅ Get or fallback to Profile
+    profile = getattr(user, "profile", None) or Profile.objects.filter(user=user).first()
+    if not profile:
+        return False
+
+    # ✅ Basic identity fields required for all
+    if not all([
+        profile.full_name,
+        profile.pancard_number,
+        getattr(profile, "mobile", None),
+        getattr(profile, "aadhaar_number", None),
+    ]):
+        return False
+
+    # ✅ Validate PAN & Aadhaar formats (extra security)
+    if not re.match(r"^[A-Z]{5}[0-9]{4}[A-Z]$", profile.pancard_number.upper()):
+        return False
+    if not re.match(r"^\d{12}$", str(profile.aadhaar_number)):
+        return False
+
+    # ✅ Applicant-specific completeness
     if user.role == "applicant":
         details = getattr(user, "applicantdetails", None) or ApplicantDetails.objects.filter(user=user).first()
-        return bool(details and (details.employment_type or details.company_name or details.business_name))
-    if user.role == "lender":
+        if not details:
+            return False
+        if not any([
+            details.employment_type,
+            details.company_name,
+            details.business_name,
+        ]):
+            return False
+
+    # ✅ Lender-specific completeness
+    elif user.role == "lender":
         details = getattr(user, "lenderdetails", None) or LenderDetails.objects.filter(user=user).first()
-        return bool(details and (details.lender_type or details.bank_firm_name))
+        if not details:
+            return False
+        if not any([
+            details.lender_type,
+            details.bank_firm_name,
+        ]):
+            return False
+
     return True
 
 # =====================================================
@@ -1752,4 +1801,19 @@ def pricing_projection(request):
 def offline_page(request):
     """Simple offline fallback page."""
     return render(request, "offline.html")
+
+# ----------------Rate Limit-------------------
+from django_ratelimit.decorators import ratelimit
+from django.shortcuts import render
+from django.http import HttpResponseForbidden
+
+@ratelimit(key='ip', rate='5/m', block=True)
+def login_view(request):
+    # This allows only 5 attempts per minute per IP
+    # The rest of your login logic here
+    if request.method == 'POST':
+        # authenticate logic
+        ...
+    return render(request, 'login.html')
+
 

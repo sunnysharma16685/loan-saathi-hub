@@ -1,0 +1,48 @@
+# ------------------------------------
+# DJANGO PRODUCTION / RENDER SETTINGS
+# ------------------------------------
+DJANGO_SECRET_KEY=j3!v%oh9ju!kp=lg1*t98n!fm#$lnon@d&v_f10^bo%u=@il*b
+DJANGO_DEBUG=False
+DJANGO_ALLOWED_HOSTS=loansaathihub.in,www.loansaathihub.in,loan-saathi-hub.onrender.com
+
+RENDER=1
+DJANGO_ENV=production
+
+# ------------------------------------
+# Database (Render PostgreSQL)
+# Use your Render connection string
+# ------------------------------------
+DATABASE_URL=postgresql://loansaathi_user:zWU0d5C3mZMJTKjXNTSsHoRG2ze6Tgyu@dpg-d31hnradbo4c73fqo6ig-a.oregon-postgres.render.com/loansaathi?sslmode=require
+
+# ------------------------------------
+# Razorpay (Live mode)
+# ------------------------------------
+RAZORPAY_KEY_ID=rzp_live_RU5x3wZMVflEX9
+RAZORPAY_KEY_SECRET=tkJ2YWBxA8ezZMEYAr7OTNHN
+
+# ------------------------------------
+# Email (Gmail SMTP or whichever you use)
+# ------------------------------------
+EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend
+EMAIL_HOST=smtp.gmail.com
+EMAIL_PORT=587
+EMAIL_USE_TLS=True
+EMAIL_HOST_USER=loansaathihub@gmail.com
+EMAIL_HOST_PASSWORD=vbik uaho dnfa jmtk
+DEFAULT_FROM_EMAIL=loansaathihub@gmail.com
+
+# ------------------------------------
+# Security / HTTPS settings (force SSL)
+# ------------------------------------
+SECURE_SSL_REDIRECT=True
+SESSION_COOKIE_SECURE=True
+CSRF_COOKIE_SECURE=True
+SECURE_HSTS_SECONDS=31536000
+SECURE_HSTS_INCLUDE_SUBDOMAINS=True
+SECURE_HSTS_PRELOAD=True
+X_FRAME_OPTIONS=DENY
+
+# ------------------------------------
+# Other settings
+# ------------------------------------
+SITE_URL=https://www.loansaathihub.in

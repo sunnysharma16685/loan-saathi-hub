@@ -27,8 +27,9 @@ media/
 .env
 .env.local
 .env.*.local
+# ✅ Ignore local dev config but include production Render config
 local.py
-render.py
+!loan_saathi_hub/settings/render.py
 
 # ------------------------
 # Static & Build

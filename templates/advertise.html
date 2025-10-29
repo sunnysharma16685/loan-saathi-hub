@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Advertise With Us — Loan Saathi Hub{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+  <div class="card shadow-lg border-0 rounded-4 p-4">
+    <h3 class="fw-bold mb-3 text-center text-success">
+      Advertise With Loan Saathi Hub
+    </h3>
+    <p class="text-muted text-center mb-4">
+      Reach thousands of financial professionals and customers.
+    </p>
+
+    <form id="adForm" method="POST">
+      {% csrf_token %}
+      <div class="row g-3">
+        <div class="col-md-6">
+          <label class="form-label">Full Name</label>
+          <input type="text" name="name" class="form-control" required>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Email</label>
+          <input type="email" name="email" class="form-control" required>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Phone (optional)</label>
+          <input type="text" name="phone" class="form-control">
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Ad Position</label>
+          <select name="position" class="form-select" required>
+            <option value="">-- Select Position --</option>
+            <option>Top Banner</option>
+            <option>Left Sidebar</option>
+            <option>Right Sidebar</option>
+            <option>Bottom Banner</option>
+          </select>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Ad Size</label>
+          <select name="size" class="form-select" required>
+            <option value="">-- Select Size --</option>
+            <option>Small (300x100)</option>
+            <option>Medium (728x90)</option>
+            <option>Large (1080x200)</option>
+          </select>
+        </div>
+        <div class="col-12">
+          <label class="form-label">Message / Requirements</label>
+          <textarea name="message" rows="3" class="form-control" placeholder="Describe your ad request..."></textarea>
+        </div>
+      </div>
+
+      <div class="d-grid mt-4">
+        <button type="submit" class="btn btn-success btn-lg rounded-3 shadow-sm">
+          <i class="bi bi-send me-2"></i> Submit Advertisement Request
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+document.getElementById("adForm").addEventListener("submit", async function(e) {
+  e.preventDefault();
+  const form = e.target;
+  const data = new FormData(form);
+  try {
+    const res = await fetch(window.location.pathname, {
+      method: "POST",
+      headers: { "X-Requested-With": "XMLHttpRequest" },
+      body: data
+    });
+    const json = await res.json();
+    if (json.ok) {
+      Swal.fire("✅ Success", json.msg, "success");
+      form.reset();
+    } else {
+      Swal.fire("⚠️ Error", json.msg || "Something went wrong", "error");
+    }
+  } catch (err) {
+    Swal.fire("⚠️ Error", "Network error. Try again.", "error");
+  }
+});
+</script>
+{% endblock %}

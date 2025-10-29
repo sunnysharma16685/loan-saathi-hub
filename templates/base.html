@@ -179,8 +179,7 @@
         <ul class="navbar-nav align-items-lg-center">
           {% if not request.user.is_authenticated %}
             <li class="nav-item"><a class="nav-link" href="{% url 'index' %}">Home</a></li>
-            <li class="nav-item"><a class="nav-link" href="{% url 'about' %}">About</a></li>
-            <li class="nav-item"><a class="nav-link" href="{% url 'support' %}">Support</a></li>
+            <li class="nav-item"><a class="nav-link fw-semibold" href="{% url 'advertise' %}">Advertise</a></li>
             <li class="nav-item ms-2"><a class="btn btn-login" href="{% url 'login' %}">Login</a></li>
             <li class="nav-item ms-2"><a class="btn btn-register" href="{% url 'register' %}">Register</a></li>
           {% else %}

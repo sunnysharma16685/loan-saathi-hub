@@ -1,13 +1,32 @@
 import os
 from pathlib import Path
 from dotenv import load_dotenv
+import dj_database_url
+import logging
 
+# =====================================================
+# 🔹 PATHS
+# =====================================================
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
-load_dotenv(BASE_DIR / ".env", override=False)
 
+# =====================================================
+# 🔹 ENVIRONMENT
+# =====================================================
+env_path = BASE_DIR / ".env"
+if env_path.exists():
+    load_dotenv(env_path)
+
+# =====================================================
+# 🔹 BASIC SETTINGS
+# =====================================================
 SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "dev-secret-key")
-DEBUG = False
+DEBUG = os.getenv("DJANGO_DEBUG", "1").strip().lower() in ("1", "true", "yes")
 
+ALLOWED_HOSTS = []
+
+# =====================================================
+# 🔹 APPLICATIONS
+# =====================================================
 INSTALLED_APPS = [
     "whitenoise.runserver_nostatic",
     "django.contrib.admin",
@@ -20,7 +39,9 @@ INSTALLED_APPS = [
     "main.apps.MainConfig",
 ]
 
-# 🔹 Only essential middlewares here.
+# =====================================================
+# 🔹 MIDDLEWARE
+# =====================================================
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
@@ -30,10 +51,15 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "main.middleware.security_monitor.SecurityMonitorMiddleware",
+    "loan_saathi_hub.middleware.ExceptionLoggingMiddleware",
 ]
 
 ROOT_URLCONF = "loan_saathi_hub.urls"
 
+# =====================================================
+# 🔹 TEMPLATES
+# =====================================================
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
@@ -46,7 +72,6 @@ TEMPLATES = [
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
                 "main.context_processors.user_profile",
-                "main.context_processors.testing_mode",
                 "main.context_processors.ads_context",
             ],
         },
@@ -54,28 +79,46 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = "loan_saathi_hub.wsgi.application"
-AUTH_USER_MODEL = "main.User"
 
-LANGUAGE_CODE = "en-us"
-TIME_ZONE = "Asia/Kolkata"
-USE_I18N = True
-USE_TZ = True
+# =====================================================
+# 🔹 DEFAULT DATABASE (override in local/render)
+# =====================================================
+DATABASES = {
+    "default": {
+        "ENGINE": "django.db.backends.sqlite3",
+        "NAME": BASE_DIR / "db.sqlite3",
+    }
+}
 
+# =====================================================
+# 🔹 STATIC & MEDIA
+# =====================================================
 STATIC_URL = "/static/"
 STATICFILES_DIRS = [BASE_DIR / "static"]
 STATIC_ROOT = BASE_DIR / "staticfiles"
+
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
-DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-AUTHENTICATION_BACKENDS = ["django.contrib.auth.backends.ModelBackend"]
+# =====================================================
+# 🔹 AUTH
+# =====================================================
+AUTH_USER_MODEL = "main.User"
 LOGIN_URL = "/login/"
 LOGIN_REDIRECT_URL = "/dashboard/"
 LOGOUT_REDIRECT_URL = "/"
 
-CACHES = {
-    "default": {
-        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
-        "LOCATION": "loan-saathi-hub-cache",
-    }
+# =====================================================
+# 🔹 DEFAULT AUTO FIELD
+# =====================================================
+DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+# =====================================================
+# 🔹 LOGGING
+# =====================================================
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "handlers": {"console": {"class": "logging.StreamHandler"}},
+    "root": {"handlers": ["console"], "level": "INFO"},
 }

@@ -86,6 +86,9 @@ urlpatterns = [
 
     # ----------------Offline fallback message ---------------
     path("offline/", views.offline_page, name="offline_page"),
+
+    # ----------------Advertisement ---------------
+    path("advertise/", views.advertise_view, name="advertise"),
     
 ]
 

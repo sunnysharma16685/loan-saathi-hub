@@ -1816,4 +1816,48 @@ def login_view(request):
         ...
     return render(request, 'login.html')
 
+# ----------------Advertisement (page view index-------------------
+def advertise_view(request):
+    if request.method == "POST":
+        name = request.POST.get("name", "").strip()
+        email = request.POST.get("email", "").strip()
+        phone = request.POST.get("phone", "").strip()
+        ad_position = request.POST.get("position", "")
+        ad_size = request.POST.get("size", "")
+        message = request.POST.get("message", "")
+
+        if not all([name, email, ad_position, ad_size]):
+            return JsonResponse({"ok": False, "msg": "All required fields must be filled."})
+
+        subject = f"📰 New Advertisement Request from {name}"
+        content = f"""
+New advertisement request received:
+
+👤 Name: {name}
+📧 Email: {email}
+📞 Phone: {phone or 'N/A'}
+
+📍 Position: {ad_position}
+📏 Size: {ad_size}
+
+💬 Message:
+{message or 'No message provided.'}
+"""
+
+        try:
+            send_mail(
+                subject,
+                content,
+                settings.DEFAULT_FROM_EMAIL,
+                ["loansaathihub@gmail.com"],
+                fail_silently=False,
+            )
+            logger.info(f"✅ Ad request email sent from {email}")
+            return JsonResponse({"ok": True, "msg": "Your advertisement request has been sent!"})
+        except Exception as e:
+            logger.exception("❌ Failed to send advertisement email")
+            return JsonResponse({"ok": False, "msg": f"Error sending email: {e}"})
+
+    return render(request, "advertise.html")
+
 

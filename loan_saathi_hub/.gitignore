@@ -27,6 +27,8 @@ media/
 .env
 .env.local
 .env.*.local
+local.py
+render.py
 
 # ------------------------
 # Static & Build

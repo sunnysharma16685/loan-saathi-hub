@@ -12,7 +12,7 @@ DEBUG = False
 ALLOWED_HOSTS = [
     "loansaathihub.in",
     "www.loansaathihub.in",
-    "loansaathi-hub.onrender.com",
+    "loan-saathi-hub.onrender.com",
 ]
 
 # =====================================================
@@ -42,12 +42,14 @@ CACHES = {
 # =====================================================
 # 🔹 EMAIL SETTINGS (Gmail SMTP for OTPs, Ads, etc.)
 # =====================================================
-EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"  # ✅ must be string
 EMAIL_HOST = "smtp.gmail.com"
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
+
 EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER", "loansaathihub@gmail.com")
-EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD", "Ridh@1637#sun113mayu")
+EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD", "vbik uaho dnfa jmtk")  # 🧠 load from Render env
+
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 
 # =====================================================
@@ -56,7 +58,7 @@ DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 CSRF_TRUSTED_ORIGINS = [
     "https://loansaathihub.in",
     "https://www.loansaathihub.in",
-    "https://loansaathi-hub.onrender.com",
+    "https://loan-saathi-hub.onrender.com",
 ]
 
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
@@ -69,7 +71,6 @@ SECURE_HSTS_PRELOAD = True
 SECURE_CONTENT_TYPE_NOSNIFF = True
 SECURE_BROWSER_XSS_FILTER = True
 REFERRER_POLICY = "strict-origin-when-cross-origin"
-
 X_FRAME_OPTIONS = "DENY"
 
 # =====================================================
@@ -84,15 +85,15 @@ LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
     "formatters": {
-        "verbose": {"format": "[{asctime}] {levelname} {name} | {message}", "style": "{"},
+        "verbose": {
+            "format": "[{asctime}] {levelname} {name} | {message}",
+            "style": "{",
+        },
     },
     "handlers": {
         "console": {"class": "logging.StreamHandler", "formatter": "verbose"},
     },
-    "root": {
-        "handlers": ["console"],
-        "level": "INFO",
-    },
+    "root": {"handlers": ["console"], "level": "INFO"},
 }
 
 # =====================================================

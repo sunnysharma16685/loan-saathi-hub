@@ -13,6 +13,7 @@ class SecurityMonitorMiddleware:
     • Detects and blocks obvious SQLi / XSS patterns.
     • Skips trusted routes (profile, dashboard, static files, payments).
     • Logs all suspicious requests safely in logs/security.log
+    • Never breaks normal POST/JSON views (safe body handling).
     """
 
     BLOCK_PATTERNS = re.compile(
@@ -22,7 +23,6 @@ class SecurityMonitorMiddleware:
         r")"
     )
 
-    # Paths that should NOT trigger blocking (normal user actions)
     SAFE_PATH_PREFIXES = (
         "/profile/",
         "/dashboard",
@@ -42,25 +42,27 @@ class SecurityMonitorMiddleware:
         try:
             path = request.path.lower()
 
-            # ✅ Skip scanning safe internal URLs
+            # ✅ Skip scanning for safe internal URLs
             if any(path.startswith(p) for p in self.SAFE_PATH_PREFIXES):
                 return self.get_response(request)
 
-            # Collect minimal request data
+            # Collect minimal request info
             query = str(request.GET).lower()
             form_data = str(request.POST).lower() if request.method == "POST" else ""
             payload = " ".join([path, query, form_data])
 
-            # ✅ Add JSON body if small and present
+            # ✅ Read small JSON body safely (no double-read crash)
             if request.content_type and "application/json" in request.content_type:
                 try:
-                    body_str = request.body.decode("utf-8", errors="ignore")
-                    if len(body_str) < 5000:  # prevent large body read
-                        payload += " " + body_str.lower()
-                except Exception:
-                    pass
+                    if not hasattr(request, "_body_read"):
+                        body_str = request.body.decode("utf-8", errors="ignore")
+                        request._body_read = True
+                        if len(body_str) < 5000:  # prevent heavy payload scanning
+                            payload += " " + body_str.lower()
+                except Exception as e:
+                    logger.debug(f"Body read skipped: {e}")
 
-            # ✅ Check for malicious signatures
+            # ✅ Detect suspicious patterns
             if self.BLOCK_PATTERNS.search(payload):
                 client_ip = (
                     request.META.get("HTTP_X_FORWARDED_FOR")
@@ -74,7 +76,7 @@ class SecurityMonitorMiddleware:
                 )
 
         except Exception as e:
-            # 🧩 Fail-safe: never block legitimate traffic if an error occurs
+            # 🧩 Fail-safe: never block legitimate traffic on internal errors
             logger.error(f"SecurityMonitorMiddleware error: {e}")
 
         return self.get_response(request)

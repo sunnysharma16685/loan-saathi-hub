@@ -3,6 +3,8 @@ from django.urls import path
 from django.views.generic import TemplateView
 from django.conf import settings
 from django.conf.urls.static import static
+from main.views import healthcheck_view
+
 
 # ✅ Import all your main app views
 from main import views
@@ -89,6 +91,9 @@ urlpatterns = [
 
     # ----------------Advertisement ---------------
     path("advertise/", views.advertise_view, name="advertise"),
+
+    # ----------------Healthcheck ---------------
+    path("status/", healthcheck_view, name="healthcheck"),
     
 ]
 

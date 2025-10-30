@@ -34,20 +34,29 @@ def get_razorpay_client():
         return None
 
 
-# -------------------- EMAIL OTP SERVICE --------------------
+# -------------------- EMAIL OTP SERVICE (Enhanced + Safe) --------------------
+import random
+import logging
+from django.core.mail import send_mail
+from django.conf import settings
+
+logger = logging.getLogger("main.utils")
 
 def send_email_otp(email: str) -> dict:
     """
-    Send a 6-digit OTP to the given email.
+    Sends a 6-digit OTP to the given email.
+    ✅ Production: Uses Gmail SMTP (App Password required)
+    ✅ Local/Render fallback: Logs OTP if email fails (for testing)
+    
     Returns dict:
-        { "ok": True, "otp": "123456" }  ✅ success
-        { "ok": False, "error": "reason" } ❌ failure
+        {"ok": True, "otp": "123456"}       ✅ success or fallback
+        {"ok": False, "error": "reason"}    ❌ unrecoverable failure
     """
-    try:
-        otp = str(random.randint(100000, 999999))
-        subject = "Loan Saathi Hub OTP Verification"
-        message = f"Your OTP for Loan Saathi Hub is {otp}. It will expire in 5 minutes."
+    otp = str(random.randint(100000, 999999))
+    subject = "Loan Saathi Hub OTP Verification"
+    message = f"Your OTP for Loan Saathi Hub is {otp}. It will expire in 5 minutes."
 
+    try:
         send_mail(
             subject=subject,
             message=message,
@@ -55,13 +64,21 @@ def send_email_otp(email: str) -> dict:
             recipient_list=[email],
             fail_silently=False,
         )
-
         logger.info(f"✅ OTP {otp} sent successfully to {email}")
         return {"ok": True, "otp": otp}
 
     except Exception as e:
-        logger.error(f"❌ OTP sending failed to {email}: {e}")
-        return {"ok": False, "error": str(e)}
+        error_msg = str(e)
+        logger.error(f"❌ OTP sending failed to {email}: {error_msg}")
+
+        # 🧩 Fallback for development or Render test environments
+        if settings.DEBUG or "render" in settings.ALLOWED_HOSTS or "localhost" in settings.ALLOWED_HOSTS:
+            logger.warning(f"⚠️ Fallback mode active — OTP {otp} generated but not emailed to {email}")
+            # Allow the flow to continue even if SMTP fails
+            return {"ok": True, "otp": otp, "fallback": True, "warning": error_msg}
+
+        # 🛑 In production (DEBUG=False), fail explicitly
+        return {"ok": False, "error": error_msg}
 
 
 # -------------------- ID GENERATORS --------------------

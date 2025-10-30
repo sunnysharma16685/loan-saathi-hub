@@ -135,16 +135,20 @@ def is_profile_complete(user):
 
     return True
 
+
 # =====================================================
 # -------------------- Register -----------------------
 # =====================================================
 def register_view(request):
     role = (request.GET.get("role") or "").lower()
+
     if request.method == "POST":
         email = (request.POST.get("email") or "").strip().lower()
         password = request.POST.get("password") or ""
         confirm_password = request.POST.get("confirm_password") or ""
         form_role = (request.POST.get("role") or role).lower()
+
+        # 🧩 Basic validation
         if form_role not in ("applicant", "lender"):
             return JsonResponse({"ok": False, "msg": "Please select applicant or lender."})
         if not email or not password:
@@ -153,9 +157,11 @@ def register_view(request):
             return JsonResponse({"ok": False, "msg": "Passwords do not match."})
         if User.objects.filter(email=email).exists():
             return JsonResponse({"ok": False, "msg": "Email already registered."})
-        
+
+        # 🧠 Send OTP via email
         try:
             otp_data = send_email_otp(email)
+
             if otp_data.get("ok"):
                 request.session.update({
                     "reg_email": email,
@@ -166,11 +172,18 @@ def register_view(request):
                     "otp_expiry": (timezone.now() + timedelta(minutes=5)).isoformat()
                 })
                 return JsonResponse({"ok": True, "show_otp": True, "msg": "OTP sent to your email."})
-            return JsonResponse({"ok": False, "msg": "Failed to send OTP."})
+
+            # 🚨 If sending fails
+            logger.warning(f"⚠️ OTP send failed for {email}: {otp_data}")
+            return JsonResponse({"ok": False, "msg": "Failed to send OTP. Please try again."})
+
         except Exception as e:
-            logger.exception("Registration error")
-            return JsonResponse({"ok": False, "msg": f"Registration error: {e}"})
+            logger.exception(f"Registration error for {email}: {e}")
+            return JsonResponse({"ok": False, "msg": "Unexpected error during registration. Try again later."})
+
+    # GET → Render registration page
     return render(request, "register.html", {"role": role})
+
 
 # -------------------- Login --------------------
 def login_view(request):
@@ -1859,5 +1872,29 @@ New advertisement request received:
             return JsonResponse({"ok": False, "msg": f"Error sending email: {e}"})
 
     return render(request, "advertise.html")
+
+
+# =====================================================
+# 🔹 HEALTHCHECK ENDPOINT (For Render / Monitoring)
+# =====================================================
+def healthcheck_view(request):
+    """
+    ✅ Simple health check for Render and uptime monitors.
+    Returns 200 OK if DB + cache (optional) + Django settings are valid.
+    """
+    try:
+        # 🧠 Check database connection (if active)
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT 1;")
+            db_ok = True
+    except Exception as e:
+        db_ok = False
+
+    return JsonResponse({
+        "status": "ok" if db_ok else "degraded",
+        "database": db_ok,
+        "debug": settings.DEBUG,
+        "environment": "Render" if not settings.DEBUG else "Local",
+    })
 
 

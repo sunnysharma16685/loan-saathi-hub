@@ -59,6 +59,7 @@ CSRF_TRUSTED_ORIGINS = [
     "https://loansaathihub.in",
     "https://www.loansaathihub.in",
     "https://loan-saathi-hub.onrender.com",
+    "loan-saathi-hub-staging.onrender.com",
 ]
 
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")

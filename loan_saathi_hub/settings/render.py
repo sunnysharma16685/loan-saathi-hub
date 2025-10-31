@@ -8,11 +8,16 @@ import dj_database_url
 
 DEBUG = False
 
-# ✅ Allow only your live domains
+# ✅ Allow live domains + Render subdomains
 ALLOWED_HOSTS = [
     "loansaathihub.in",
     "www.loansaathihub.in",
     "loan-saathi-hub.onrender.com",
+    # ✅ Automatically trust all Render environments (staging, preview, etc.)
+    ".onrender.com",
+    # ✅ Local dev fallback
+    "127.0.0.1",
+    "localhost",
 ]
 
 # ✅ Auto-detect Render host dynamically (works for staging, preview, etc.)
@@ -23,6 +28,10 @@ if render_host:
     render_host = render_host.replace("https://", "").replace("http://", "").strip("/")
     if render_host not in ALLOWED_HOSTS:
         ALLOWED_HOSTS.append(render_host)
+
+print(f"✅ Detected Render Host: {render_host}")
+print(f"✅ ALLOWED_HOSTS: {ALLOWED_HOSTS}")
+
 
 # =====================================================
 # 🔹 DATABASE (PostgreSQL via Render DATABASE_URL)

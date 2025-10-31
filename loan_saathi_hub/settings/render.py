@@ -15,6 +15,15 @@ ALLOWED_HOSTS = [
     "loan-saathi-hub.onrender.com",
 ]
 
+# ✅ Auto-detect Render host dynamically (works for staging, preview, etc.)
+render_host = os.getenv("RENDER_EXTERNAL_HOSTNAME") or os.getenv("RENDER_EXTERNAL_URL")
+
+# 🧩 Normalize host (remove scheme if present)
+if render_host:
+    render_host = render_host.replace("https://", "").replace("http://", "").strip("/")
+    if render_host not in ALLOWED_HOSTS:
+        ALLOWED_HOSTS.append(render_host)
+
 # =====================================================
 # 🔹 DATABASE (PostgreSQL via Render DATABASE_URL)
 # =====================================================
@@ -49,7 +58,6 @@ EMAIL_USE_TLS = True
 
 EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER", "loansaathihub@gmail.com")
 EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD", "vbik uaho dnfa jmtk")  # 🧠 load from Render env
-
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 
 # =====================================================
@@ -59,8 +67,11 @@ CSRF_TRUSTED_ORIGINS = [
     "https://loansaathihub.in",
     "https://www.loansaathihub.in",
     "https://loan-saathi-hub.onrender.com",
-    "loan-saathi-hub-staging.onrender.com",
 ]
+
+# ✅ Auto-trust staging/previews too
+if render_host:
+    CSRF_TRUSTED_ORIGINS.append(f"https://{render_host}")
 
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 SECURE_SSL_REDIRECT = True
@@ -100,4 +111,8 @@ LOGGING = {
 # =====================================================
 # 🔹 INFO
 # =====================================================
-print("✅ Loaded Render Production Settings (PostgreSQL + Redis + Gmail SMTP)")
+env_label = "STAGING" if render_host and "staging" in render_host else "PRODUCTION"
+print(f"✅ Loaded Render {env_label} Settings (PostgreSQL + Redis + Gmail SMTP)")
+print(f"✅ Detected Render Host: {render_host}")
+print(f"✅ ALLOWED_HOSTS: {ALLOWED_HOSTS}")
+print(f"✅ CSRF_TRUSTED_ORIGINS: {CSRF_TRUSTED_ORIGINS}")

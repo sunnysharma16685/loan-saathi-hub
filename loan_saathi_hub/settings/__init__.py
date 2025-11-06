@@ -1,8 +1,21 @@
 import os
 
-IS_RENDER = os.getenv("RENDER", "").lower() == "true"
+# =====================================================
+# 🌍 Detect current environment
+# =====================================================
+env = os.getenv("DJANGO_ENV", "local").lower()  # 👈 define 'env' safely
 
-if IS_RENDER:
+# =====================================================
+# 🧩 Load settings file based on environment
+# =====================================================
+if env == "production":
     from .render import *
+elif env == "staging":
+    from .staging import *
 else:
     from .local import *
+
+# =====================================================
+# ✅ Optional Debug Info (only prints in console)
+# =====================================================
+print(f"🔧 Django Environment loaded: {env.upper()}")

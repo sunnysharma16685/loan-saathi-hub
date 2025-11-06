@@ -37,6 +37,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "django_ratelimit",
     "main.apps.MainConfig",
+    "django_extensions",
 ]
 
 # =====================================================
@@ -81,7 +82,7 @@ TEMPLATES = [
 WSGI_APPLICATION = "loan_saathi_hub.wsgi.application"
 
 # =====================================================
-# 🔹 DEFAULT DATABASE (override in local/render)
+# 🔹 DATABASE (Default fallback – overridden in local/render)
 # =====================================================
 DATABASES = {
     "default": {
@@ -107,6 +108,20 @@ AUTH_USER_MODEL = "main.User"
 LOGIN_URL = "/login/"
 LOGIN_REDIRECT_URL = "/dashboard/"
 LOGOUT_REDIRECT_URL = "/"
+
+# =====================================================
+# 🔹 SAFE CACHE + SESSION + MESSAGE DEFAULTS
+# =====================================================
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+        "LOCATION": "loan-saathi-hub-cache",
+    }
+}
+SESSION_ENGINE = "django.contrib.sessions.backends.db"
+MESSAGE_STORAGE = "django.contrib.messages.storage.session.SessionStorage"
+RATELIMIT_USE_CACHE = "default"
+RATELIMIT_CACHE = "default"
 
 # =====================================================
 # 🔹 DEFAULT AUTO FIELD

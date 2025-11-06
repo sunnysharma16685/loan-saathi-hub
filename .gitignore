@@ -75,5 +75,11 @@ render.yaml
 # ------------------------
 createprodadmin.py
 
+# Local HTTPS certificates (django-extensions)
+cert.pem
+key.pem
+*.crt
+*.key
+*.pem
 
 

@@ -24,6 +24,8 @@ class SecurityMonitorMiddleware:
     )
 
     SAFE_PATH_PREFIXES = (
+        "/login/",
+        "/register/"
         "/profile/",
         "/dashboard",
         "/loan",

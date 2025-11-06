@@ -82,4 +82,32 @@ key.pem
 *.key
 *.pem
 
+# 🔒 Security & Environment
+*.pem
+*.key
+*.crt
+*.env
+.env.*
+secrets.json
+config/private/
+
+# 🔧 Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# 🗂️ Cache & system files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.DS_Store
+Thumbs.db
+"@ | Out-File -Encoding utf8 -FilePath .gitignore
+
+git add .gitignore
+git commit -m "✅ Secure .gitignore added (ignore keys, envs, and venvs)"
+git push origin main
+
 

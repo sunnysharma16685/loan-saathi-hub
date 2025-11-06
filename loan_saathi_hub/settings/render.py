@@ -1,29 +1,44 @@
 from .base import *
 import os
+import sys
+import builtins
+import logging
 import dj_database_url
+
+# =====================================================
+# 🚫 HARD DISABLE REDIS IMPORTS (before anything else)
+# =====================================================
+print("🔥 Using render.py — Redis forcibly blocked at import level")
+
+# Completely block any attempt to import or use django_redis
+sys.modules["django_redis"] = None
+builtins.__import_original__ = builtins.__import__
+
+
+def safe_import(name, *args, **kwargs):
+    if name.startswith("django_redis"):
+        raise ImportError("🚫 django_redis forcibly disabled on Render")
+    return builtins.__import_original__(name, *args, **kwargs)
+
+
+builtins.__import__ = safe_import
 
 # =====================================================
 # 🌐 RENDER PRODUCTION SETTINGS
 # =====================================================
-
 DEBUG = False
 
-# ✅ Allow live domains + Render subdomains
 ALLOWED_HOSTS = [
     "loansaathihub.in",
     "www.loansaathihub.in",
     "loan-saathi-hub.onrender.com",
-    # ✅ Automatically trust all Render environments (staging, preview, etc.)
     ".onrender.com",
-    # ✅ Local dev fallback
     "127.0.0.1",
     "localhost",
 ]
 
-# ✅ Auto-detect Render host dynamically (works for staging, preview, etc.)
+# Auto-detect Render host dynamically
 render_host = os.getenv("RENDER_EXTERNAL_HOSTNAME") or os.getenv("RENDER_EXTERNAL_URL")
-
-# 🧩 Normalize host (remove scheme if present)
 if render_host:
     render_host = render_host.replace("https://", "").replace("http://", "").strip("/")
     if render_host not in ALLOWED_HOSTS:
@@ -32,9 +47,8 @@ if render_host:
 print(f"✅ Detected Render Host: {render_host}")
 print(f"✅ ALLOWED_HOSTS: {ALLOWED_HOSTS}")
 
-
 # =====================================================
-# 🔹 DATABASE (PostgreSQL via Render DATABASE_URL)
+# 🔹 DATABASE (PostgreSQL via Render)
 # =====================================================
 DATABASES = {
     "default": dj_database_url.parse(
@@ -45,32 +59,36 @@ DATABASES = {
 }
 
 # =====================================================
-# 🔹 CACHING (Redis – Shared across all processes)
+# 🔹 CACHING — Redis Disabled, Use LocMemCache
 # =====================================================
+logging.warning("⚠️ Running on Render — Redis is fully disabled, using LocMemCache only.")
+os.environ["DJANGO_REDIS_IGNORE_EXCEPTIONS"] = "True"
+
 CACHES = {
     "default": {
-        "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": os.getenv("REDIS_URL", "redis://127.0.0.1:6379/1"),
-        "OPTIONS": {
-            "CLIENT_CLASS": "django_redis.client.DefaultClient",
-        },
+        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+        "LOCATION": "loan-saathi-render-cache",
     }
 }
 
+SESSION_ENGINE = "django.contrib.sessions.backends.db"
+MESSAGE_STORAGE = "django.contrib.messages.storage.session.SessionStorage"
+RATELIMIT_USE_CACHE = "default"
+RATELIMIT_CACHE = "default"
+
 # =====================================================
-# 🔹 EMAIL SETTINGS (Gmail SMTP for OTPs, Ads, etc.)
+# 🔹 EMAIL SETTINGS (Gmail SMTP)
 # =====================================================
-EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"  # ✅ must be string
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
 EMAIL_HOST = "smtp.gmail.com"
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
-
 EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER", "loansaathihub@gmail.com")
-EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD", "vbik uaho dnfa jmtk")  # 🧠 load from Render env
+EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD", "vbik uaho dnfa jmtk")
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 
 # =====================================================
-# 🔹 CSRF / SECURITY / SSL
+# 🔹 SECURITY & CSRF / SSL
 # =====================================================
 CSRF_TRUSTED_ORIGINS = [
     "https://loansaathihub.in",
@@ -78,7 +96,6 @@ CSRF_TRUSTED_ORIGINS = [
     "https://loan-saathi-hub.onrender.com",
 ]
 
-# ✅ Auto-trust staging/previews too
 if render_host:
     CSRF_TRUSTED_ORIGINS.append(f"https://{render_host}")
 
@@ -95,12 +112,12 @@ REFERRER_POLICY = "strict-origin-when-cross-origin"
 X_FRAME_OPTIONS = "DENY"
 
 # =====================================================
-# 🔹 STATIC FILES (Optimized for Render)
+# 🔹 STATIC FILES (Whitenoise)
 # =====================================================
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
 # =====================================================
-# 🔹 LOGGING (Minimal, Safe for Production)
+# 🔹 LOGGING
 # =====================================================
 LOGGING = {
     "version": 1,
@@ -118,10 +135,8 @@ LOGGING = {
 }
 
 # =====================================================
-# 🔹 INFO
+# 🔹 ENVIRONMENT INFO
 # =====================================================
-env_label = "STAGING" if render_host and "staging" in render_host else "PRODUCTION"
-print(f"✅ Loaded Render {env_label} Settings (PostgreSQL + Redis + Gmail SMTP)")
-print(f"✅ Detected Render Host: {render_host}")
-print(f"✅ ALLOWED_HOSTS: {ALLOWED_HOSTS}")
+env_label = "PRODUCTION"
+print(f"✅ Loaded Render {env_label} Settings (PostgreSQL + LocMemCache + Gmail SMTP)")
 print(f"✅ CSRF_TRUSTED_ORIGINS: {CSRF_TRUSTED_ORIGINS}")

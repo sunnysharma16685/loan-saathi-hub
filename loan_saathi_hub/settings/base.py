@@ -21,8 +21,8 @@ if env_path.exists():
 # =====================================================
 SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "dev-secret-key")
 DEBUG = os.getenv("DJANGO_DEBUG", "1").strip().lower() in ("1", "true", "yes")
-
 ALLOWED_HOSTS = []
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
 # =====================================================
 # 🔹 APPLICATIONS
@@ -124,6 +124,15 @@ RATELIMIT_USE_CACHE = "default"
 RATELIMIT_CACHE = "default"
 
 # =====================================================
+# 🔹 LANGUAGE & TIMEZONE
+# =====================================================
+LANGUAGE_CODE = "en-us"
+TIME_ZONE = "Asia/Kolkata"
+USE_I18N = True
+USE_L10N = True
+USE_TZ = True
+
+# =====================================================
 # 🔹 DEFAULT AUTO FIELD
 # =====================================================
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
@@ -137,3 +146,8 @@ LOGGING = {
     "handlers": {"console": {"class": "logging.StreamHandler"}},
     "root": {"handlers": ["console"], "level": "INFO"},
 }
+
+# =====================================================
+# 🔹 SILENCE RATELIMIT WARNINGS
+# =====================================================
+SILENCED_SYSTEM_CHECKS = ["django_ratelimit.E003", "django_ratelimit.W001"]

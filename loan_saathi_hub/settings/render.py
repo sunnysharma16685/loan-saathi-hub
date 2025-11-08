@@ -6,22 +6,19 @@ import logging
 import dj_database_url
 
 # =====================================================
-# 🚫 HARD DISABLE REDIS IMPORTS (before anything else)
+# 🔹 Redis Hard Disabled Everywhere
 # =====================================================
-print("🔥 Using render.py — Redis forcibly blocked at import level")
-
-# Completely block any attempt to import or use django_redis
+import sys, builtins
 sys.modules["django_redis"] = None
-builtins.__import_original__ = builtins.__import__
 
+def _block_redis_import(name, *args, **kwargs):
+    if name.startswith("django_redis") or name.startswith("redis"):
+        raise ImportError("🚫 Redis forcibly disabled in Render environment.")
+    return builtins.__import__(name, *args, **kwargs)
 
-def safe_import(name, *args, **kwargs):
-    if name.startswith("django_redis"):
-        raise ImportError("🚫 django_redis forcibly disabled on Render")
-    return builtins.__import_original__(name, *args, **kwargs)
+builtins.__import__ = _block_redis_import
 
-
-builtins.__import__ = safe_import
+print("🚫 Redis forcibly disabled at import level (Render safe mode).")
 
 # =====================================================
 # 🌐 RENDER PRODUCTION SETTINGS

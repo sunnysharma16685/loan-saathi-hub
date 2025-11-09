@@ -1,3 +1,16 @@
+# 🚫 Block redis imports on Render
+import sys, builtins, logging
+sys.modules["django_redis"] = None
+sys.modules["redis"] = None
+_orig_import = builtins.__import__
+def _no_redis(name, *a, **k):
+    if name.startswith(("django_redis", "redis")):
+        raise ImportError("Redis disabled on Render")
+    return _orig_import(name, *a, **k)
+builtins.__import__ = _no_redis
+logging.warning("🚫 Redis forcibly disabled (Render safe mode)")
+
+
 from .base import *
 import os
 import sys
@@ -72,6 +85,7 @@ SESSION_ENGINE = "django.contrib.sessions.backends.db"
 MESSAGE_STORAGE = "django.contrib.messages.storage.session.SessionStorage"
 RATELIMIT_USE_CACHE = "default"
 RATELIMIT_CACHE = "default"
+SILENCED_SYSTEM_CHECKS = ["django_ratelimit.E003","django_ratelimit.W001"]
 
 # =====================================================
 # 🔹 EMAIL SETTINGS (Gmail SMTP)
@@ -137,3 +151,9 @@ LOGGING = {
 env_label = "PRODUCTION"
 print(f"✅ Loaded Render {env_label} Settings (PostgreSQL + LocMemCache + Gmail SMTP)")
 print(f"✅ CSRF_TRUSTED_ORIGINS: {CSRF_TRUSTED_ORIGINS}")
+
+
+LANGUAGE_CODE = "en-us"
+TIME_ZONE = "Asia/Kolkata"
+USE_I18N = True
+USE_TZ = True

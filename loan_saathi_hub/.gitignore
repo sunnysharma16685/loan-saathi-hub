@@ -56,3 +56,15 @@ Thumbs.db
 *.bak
 *.tmp
 *.old
+
+.venv*/
+venv/
+env/
+*.pem
+*.key
+*.crt
+*.env
+.env.*
+__pycache__/
+*.pyc
+

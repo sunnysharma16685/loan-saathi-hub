@@ -110,4 +110,15 @@ git add .gitignore
 git commit -m "✅ Secure .gitignore added (ignore keys, envs, and venvs)"
 git push origin main
 
+.venv*/
+venv/
+env/
+*.pem
+*.key
+*.crt
+*.env
+.env.*
+__pycache__/
+*.pyc
+
 

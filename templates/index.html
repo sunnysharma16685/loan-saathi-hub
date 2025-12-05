@@ -8,100 +8,66 @@
 <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
 
 <style>
-  body { font-family: 'Inter', sans-serif; color: #1e293b; background-color: #f9fafb; }
-  h1, h2, h3, h4, h5, h6 { font-family: 'Manrope', sans-serif; font-weight: 700; }
+  body { font-family:'Inter',sans-serif; color:#1e293b; background:#f9fafb; }
+  h1,h2,h3,h4,h5,h6 { font-family:'Manrope',sans-serif; font-weight:700; }
 
   /* === HERO === */
   .hero {
-    background: linear-gradient(125deg, #0a2342 0%, #155e75 50%, #0f766e 100%);
-    color: #fff;
-    text-align: center;
-    padding: 110px 20px;
-    border-radius: 0 0 40px 40px;
-    box-shadow: 0 12px 40px rgba(0,0,0,0.25);
+    margin-top:85px!important;
+    background:linear-gradient(125deg,#0a2342 0%,#155e75 50%,#0f766e 100%);
+    color:#fff; text-align:center; padding:110px 20px;
+    border-radius:0 0 40px 40px; box-shadow:0 12px 40px rgba(0,0,0,0.25);
   }
-  .hero h1 {
-    font-size: 2.8rem;
-    font-weight: 800;
-    letter-spacing: -0.5px;
-  }
-  .hero p {
-    font-size: 1.1rem;
-    opacity: 0.9;
-  }
+  .hero h1 { font-size:2.8rem; font-weight:800; letter-spacing:-0.5px; }
+  .hero p { font-size:1.1rem; opacity:.9; }
 
+  /* === BUTTONS === */
   .btn-finance {
-    background: linear-gradient(90deg, #22d3ee, #0ea5e9);
-    color: #fff; font-weight: 600; border: none;
-    padding: 12px 28px; border-radius: 50px;
-    transition: all 0.3s ease;
-    box-shadow: 0 4px 14px rgba(14,165,233,0.35);
+    background:linear-gradient(90deg,#22d3ee,#0ea5e9); color:#fff; font-weight:600;
+    padding:12px 28px; border-radius:50px; border:none; transition:.3s;
+    box-shadow:0 4px 14px rgba(14,165,233,0.35);
   }
-  .btn-finance:hover { transform: translateY(-3px); background: linear-gradient(90deg, #0ea5e9, #0284c7); }
+  .btn-finance:hover { transform:translateY(-3px); background:linear-gradient(90deg,#0ea5e9,#0284c7); }
 
   .btn-outline-finance {
-    border: 2px solid rgba(255,255,255,0.6);
-    color: #fff; border-radius: 50px;
-    padding: 12px 28px; transition: all 0.3s;
+    border:2px solid rgba(255,255,255,0.6); color:#fff; border-radius:50px;
+    padding:12px 28px; transition:.3s;
   }
-  .btn-outline-finance:hover { background: rgba(255,255,255,0.15); }
+  .btn-outline-finance:hover { background:rgba(255,255,255,0.15); }
 
-  /* === CARD STYLING === */
+  /* === CARDS === */
   .pro-card {
-    background: #fff;
-    border-radius: 16px;
-    padding: 30px 24px;
-    box-shadow: 0 4px 24px rgba(0,0,0,0.06);
-    transition: all 0.3s ease;
+    background:#fff; border-radius:16px; padding:30px 24px;
+    box-shadow:0 4px 24px rgba(0,0,0,0.06); transition:.3s;
   }
-  .pro-card:hover { transform: translateY(-6px); box-shadow: 0 8px 28px rgba(0,0,0,0.08); }
+  .pro-card:hover { transform:translateY(-6px); box-shadow:0 8px 28px rgba(0,0,0,0.08); }
+  .pro-icon { font-size:2.5rem; color:#0ea5e9; }
 
-  .pro-icon {
-    font-size: 2.5rem;
-    color: #0ea5e9;
-  }
-
-  /* === SECTIONS === */
-  section { padding: 70px 0; }
-  section h3 { font-weight: 700; color: #0f172a; }
-
-  /* === EMI / ELIGIBILITY === */
+  /* === INPUTS === */
   .input-control {
-    border-radius: 10px;
-    border: 1px solid #e2e8f0;
-    padding: 10px 14px;
-    font-size: 0.95rem;
+    border-radius:10px; border:1px solid #e2e8f0; padding:10px 14px; font-size:.95rem;
   }
-  .input-control:focus {
-    border-color: #0ea5e9;
-    box-shadow: 0 0 0 2px rgba(14,165,233,0.25);
-    outline: none;
-  }
+  .input-control:focus { border-color:#0ea5e9; box-shadow:0 0 0 2px rgba(14,165,233,0.25); outline:none; }
 
-  /* === TESTIMONIAL === */
   .testimonial {
-    background: #fff;
-    border-radius: 16px;
-    padding: 30px;
-    box-shadow: 0 6px 28px rgba(0,0,0,0.05);
+    background:#fff; border-radius:16px; padding:30px;
+    box-shadow:0 6px 28px rgba(0,0,0,0.05);
   }
 
-  /* === FAQ === */
-  .accordion-button:not(.collapsed) {
-    background-color: #e0f2fe;
-    color: #0f172a;
-  }
-
-  /* === CTA === */
   .cta {
-    background: linear-gradient(120deg, #0f766e, #155e75);
-    color: #fff;
-    text-align: center;
-    padding: 80px 20px;
-    border-radius: 24px;
+    background:linear-gradient(120deg,#0f766e,#155e75);
+    color:#fff; text-align:center; padding:80px 20px; border-radius:24px;
+  }
+
+  /* 📱 Responsive */
+  @media(max-width:768px){
+    .hero{ padding:80px 20px; border-radius:0 0 25px 25px;}
+    .hero h1{ font-size:2.2rem; }
+    .pro-card{ padding:22px 18px; }
   }
 </style>
 {% endblock %}
+
 
 {% block content %}
 
@@ -110,10 +76,13 @@
   <div class="container">
     <h1>Smart Loans, Simple Process</h1>
     <p class="mt-3 mb-4">Your trusted partner for smarter, faster, and secure loan approvals.</p>
-    <div class="d-flex justify-content-center gap-3">
+
+    <div class="d-flex justify-content-center gap-3 flex-wrap">
       <a href="{% url 'register' %}?role=applicant" class="btn-finance"><i class="bi bi-person me-2"></i> Apply Now</a>
       <a href="{% url 'register' %}?role=lender" class="btn-outline-finance"><i class="bi bi-bank me-2"></i> Join as Lender</a>
     </div>
+
+    <p class="mt-4 small opacity-75">🔐 100% Secure &nbsp; ⚡ Fast Approval &nbsp; ☑️ RBI Verified Lenders</p>
   </div>
 </section>
 
@@ -130,26 +99,27 @@
       </div>
       <div class="col-md-4" data-aos="fade-up" data-aos-delay="100">
         <div class="pro-card">
-          <i class="bi bi-shield-lock-fill pro-icon text-teal-500"></i>
+          <i class="bi bi-shield-lock-fill pro-icon"></i>
           <h5 class="mt-3">Secure Processing</h5>
-          <p class="text-muted small">End-to-end encrypted, ensuring your personal and financial data stays safe.</p>
+          <p class="text-muted small">End-to-end encrypted to keep your financial data safe.</p>
         </div>
       </div>
       <div class="col-md-4" data-aos="fade-up" data-aos-delay="200">
         <div class="pro-card">
-          <i class="bi bi-bar-chart-line-fill pro-icon text-indigo-500"></i>
+          <i class="bi bi-bar-chart-line-fill pro-icon"></i>
           <h5 class="mt-3">Smart Comparison</h5>
-          <p class="text-muted small">Compare top lenders and choose the one that fits your needs perfectly.</p>
+          <p class="text-muted small">Compare lenders and choose the best deal tailored to you.</p>
         </div>
       </div>
     </div>
   </div>
 </section>
 
-<!-- EMI + ELIGIBILITY -->
+<!-- EMI & ELIGIBILITY -->
 <section class="bg-white">
   <div class="container">
     <div class="row g-5 align-items-center">
+
       <div class="col-md-6" data-aos="fade-right">
         <div class="pro-card">
           <h5><i class="bi bi-calculator me-2"></i>EMI Calculator</h5>
@@ -170,6 +140,7 @@
           <p class="mt-3 mb-0"><strong>Eligible Loan: </strong><span id="eligibilityResult">--</span></p>
         </div>
       </div>
+
     </div>
   </div>
 </section>
@@ -177,25 +148,25 @@
 <!-- TESTIMONIALS -->
 <section class="bg-gray-50">
   <div class="container text-center">
-    <h3 class="mb-5 text-gray-900 fw-bold">What Our Clients Say</h3>
+    <h3 class="mb-5 fw-bold">What Our Clients Say</h3>
     <div class="row g-4">
       <div class="col-md-4" data-aos="fade-right">
         <div class="testimonial">
-          <p>“Super professional! Loan Saathi Hub got my approval within 2 days. Transparent and easy to use.”</p>
+          <p>“Super professional! Loan Saathi Hub got my approval within 2 days.”</p>
           <div class="text-warning mt-2">★★★★★</div>
           <small>- Rahul Sharma</small>
         </div>
       </div>
       <div class="col-md-4" data-aos="fade-up">
         <div class="testimonial">
-          <p>“Best loan comparison experience ever. The interface feels premium and easy to navigate.”</p>
+          <p>“Best experience ever. The interface feels premium & easy.”</p>
           <div class="text-warning mt-2">★★★★☆</div>
           <small>- Priya Verma</small>
         </div>
       </div>
       <div class="col-md-4" data-aos="fade-left">
         <div class="testimonial">
-          <p>“Professional, quick, and secure. Highly recommended for business loan seekers.”</p>
+          <p>“Professional, quick & secure. Highly recommended!”</p>
           <div class="text-warning mt-2">★★★★★</div>
           <small>- Ankit Mehta</small>
         </div>
@@ -208,33 +179,38 @@
 <section class="cta" data-aos="zoom-in">
   <div class="container">
     <h2>Ready to Start Your Financial Journey?</h2>
-    <p class="mb-4 mt-2 opacity-90">Get personalized loan options in just minutes — 100% paperless, 100% secure.</p>
+    <p class="mb-4 mt-2 opacity-90">Get personalized loan options — instant, secure & paperless.</p>
     <a href="{% url 'register' %}" class="btn-finance">Get Started</a>
   </div>
 </section>
 
 {% endblock %}
 
+
 {% block extra_js %}
 <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
 <script>
-  AOS.init({ duration: 900, once: true });
-  function calculateEMI() {
+  AOS.init({ duration:900, once:true });
+
+  // EMI Calculator
+  function calculateEMI(){
     const P = parseFloat(document.getElementById("loanAmount")?.value) || 0;
     const R = (parseFloat(document.getElementById("interestRate")?.value) || 0) / 12 / 100;
     const N = parseFloat(document.getElementById("loanTenure")?.value) || 0;
-    if (P && R && N) {
-      const emi = (P * R * Math.pow(1 + R, N)) / (Math.pow(1 + R, N) - 1);
-      document.getElementById("emiResult").innerText = "₹" + emi.toFixed(2);
-    } else document.getElementById("emiResult").innerText = "--";
+    if(P&&R&&N){ 
+      const emi = (P*R*Math.pow(1+R,N))/(Math.pow(1+R,N)-1);
+      document.getElementById("emiResult").innerText="₹"+emi.toFixed(2);
+    } else document.getElementById("emiResult").innerText="--";
   }
-  function checkEligibility() {
+
+  // Eligibility Calculator
+  function checkEligibility(){
     const income = parseFloat(document.getElementById("income")?.value) || 0;
     const emi = parseFloat(document.getElementById("existingEmi")?.value) || 0;
-    if (income) {
-      const eligible = (income - emi) * 60;
-      document.getElementById("eligibilityResult").innerText = "₹" + eligible.toFixed(0);
-    } else document.getElementById("eligibilityResult").innerText = "--";
+    if(income){
+      const eligible = (income-emi)*60;
+      document.getElementById("eligibilityResult").innerText="₹"+eligible.toFixed(0);
+    } else document.getElementById("eligibilityResult").innerText="--";
   }
 </script>
 {% endblock %}

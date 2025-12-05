@@ -5,6 +5,27 @@ from django.conf import settings
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin, BaseUserManager
 from django.db.models.signals import post_save
 from django.dispatch import receiver
+from django.contrib.auth.models import User
+
+
+# =====================================================
+# Profile
+# =====================================================
+class Profile(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+
+    # NEW SMART CREDIT FIELDS
+    monthly_income = models.PositiveIntegerField(null=True, blank=True)
+    existing_emi = models.PositiveIntegerField(default=0)
+    employment_type = models.CharField(
+        max_length=15,
+        choices=[('salaried','Salaried'),('self','Self Employed')],
+        null=True, blank=True
+    )
+    age = models.PositiveIntegerField(null=True, blank=True)
+    city = models.CharField(max_length=50, null=True, blank=True)
+    credit_score = models.PositiveIntegerField(null=True, blank=True)
+
 
 # =====================================================
 # USER MANAGER

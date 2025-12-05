@@ -103,6 +103,7 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "main.middleware.profile_check.ProfileCompletionMiddleware",
     "main.middleware.security_monitor.SecurityMonitorMiddleware",
+    "main.middleware.seo_headers.RemoveServerHeaderMiddleware",
 
 
     # 🔥 Exception logging middleware (last)

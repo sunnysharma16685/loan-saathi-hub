@@ -138,3 +138,28 @@ def generate_loan_id():
     except Exception as e:
         logger.warning(f"⚠️ Loan ID generation fallback: {e}")
         return f"LSH{random.randint(1000, 9999)}"
+
+
+def calculate_credit_health(profile):
+    score = 50
+
+    if profile.monthly_income:
+        if profile.monthly_income > 60000: score += 20
+        elif profile.monthly_income > 30000: score += 10
+
+    if profile.existing_emi == 0: score += 10
+    elif profile.existing_emi < 5000: score += 5
+
+    if profile.credit_score:
+        if profile.credit_score > 750: score += 15
+        elif profile.credit_score > 650: score += 8
+
+    if profile.employment_type == "salaried": score += 5
+
+    return min(score, 100)
+
+
+def loan_capacity(profile):
+    if not profile.monthly_income:
+        return 0
+    return (profile.monthly_income - profile.existing_emi) * 10  # safe EMI rule

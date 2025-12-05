@@ -13,6 +13,38 @@
     font-weight: 700;
   }
 
+  /* 🔥 Smart Dashboard Cards */
+  .smart-card {
+    border-radius: 14px;
+    padding: 16px 14px;
+    color: #fff;
+    min-height: 110px;
+    box-shadow: 0 5px 16px rgba(0,0,0,0.15);
+    display: flex;
+    gap: 12px;
+    align-items: center;
+  }
+  .smart-card i {
+    font-size: 32px;
+    opacity: .9;
+  }
+  .smart-card h6 {
+    margin: 0;
+    font-size: 14px;
+    opacity: .9;
+    font-weight: 600;
+  }
+  .smart-card h3 {
+    margin: 0;
+    font-size: 22px;
+    font-weight: 700;
+  }
+
+  .bg-loan { background: linear-gradient(45deg,#0575E6,#021B79); }
+  .bg-avg  { background: linear-gradient(45deg,#1D976C,#93F9B9); }
+  .bg-rate { background: linear-gradient(45deg,#F7971E,#FFD200);color:#111; }
+  .bg-bank { background: linear-gradient(45deg,#654EA3,#EA6060); }
+
   .btn-request {
     border: 2px solid #0d6efd;
     background: linear-gradient(90deg,#ff9933,#ffb84d);
@@ -28,6 +60,7 @@
     color: #fff;
     border-color: #0b5ed7;
   }
+
   .btn-accept { background: #28a745; color:#fff; }
   .btn-accept:hover { background:#218838; }
   .btn-info { background:#0dcaf0; color:#212529; }
@@ -69,9 +102,10 @@
 {% endblock %}
 
 {% block content %}
+
 <h1>Applicant Dashboard</h1>
 
-<!-- ✅ Messages -->
+<!-- 🔔 Messages -->
 {% if messages %}
   {% for message in messages %}
     <div class="alert alert-{{ message.tags }} alert-dismissible fade show">
@@ -81,7 +115,73 @@
   {% endfor %}
 {% endif %}
 
-<!-- ✅ Action Row -->
+<!-- 🌟 SMART DASHBOARD CARDS -->
+<div class="row px-3 g-3 mb-4">
+  <div class="col-md-3">
+    <div class="smart-card bg-loan">
+      <i class="bi bi-journal-check"></i>
+      <div>
+        <h6>Total Loans</h6>
+        <h3>{{ loans|length }}</h3>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-3">
+    <div class="smart-card bg-avg">
+      <i class="bi bi-cash-coin"></i>
+      <div>
+        <h6>Average Amount</h6>
+        <h3>
+          {% with total=0 %}
+            {% for l in loans %}{% widthratio l.amount_requested 1 1 as val %}{% with total=val|add:total %}{% endwith %}{% endfor %}
+            {% if loans|length > 0 %}₹{{ total|divisibleby:loans|length|default:0 }}{% else %}₹0{% endif %}
+          {% endwith %}
+        </h3>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-3">
+    <div class="smart-card bg-rate">
+      <i class="bi bi-graph-up-arrow"></i>
+      <div>
+        <h6>Best Rate</h6>
+        <h3>
+          {% with min_rate=None %}
+            {% for l in loans %}
+              {% if min_rate == None or l.interest_rate < min_rate %}
+                {% with min_rate=l.interest_rate %}{% endwith %}
+              {% endif %}
+            {% endfor %}
+            {% if min_rate %}{{ min_rate }}%{% else %}-{% endif %}
+          {% endwith %}
+        </h3>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-3">
+    <div class="smart-card bg-bank">
+      <i class="bi bi-building-check"></i>
+      <div>
+        <h6>Recent Lender</h6>
+        <h3>
+          {% with found=None %}
+            {% for l in loans %}
+              {% if l.accepted_lender %}
+                {% with found=l.accepted_lender.lender_details.bank_firm_name %}
+                {% endwith %}
+              {% endif %}
+            {% endfor %}
+            {{ found|default:"—" }}
+          {% endwith %}
+        </h3>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- 🎯 Action Row -->
 <div class="d-flex justify-content-between align-items-center mb-3 px-3">
   <a href="{% url 'loan_request' %}" class="btn btn-request">+ New Loan Request</a>
   <div>
@@ -90,7 +190,7 @@
   </div>
 </div>
 
-<!-- ✅ Stats -->
+<!-- 📊 Status Filter Cards -->
 <div class="row mb-4 px-3 g-3">
   <div class="col-md-3">
     <div class="card text-center bg-primary text-white filter-box" data-filter="today">
@@ -122,7 +222,7 @@
   </div>
 </div>
 
-<!-- ✅ Loan Table -->
+<!-- 📋 Loan Table -->
 <table class="table table-striped rounded">
   <thead>
     <tr>
@@ -170,14 +270,14 @@
       </td>
     </tr>
 
-    <!-- ✅ Feedback Row -->
+    <!-- 🔍 Feedback Row -->
     <tr class="collapse" id="lenderFeedback{{loan.id}}">
       <td colspan="10">
 
         {% if loan.global_status in "Approved ComparePending" %}
-        <div class="alert alert-info mb-2 small text-center">
-          💡 Tip: You can compare lender offers and choose one to finalise your loan.
-        </div>
+          <div class="alert alert-info mb-2 small text-center">
+            💡 Tip: You can compare lender offers and choose one to finalise your loan.
+          </div>
         {% endif %}
 
         <table class="table table-sm table-bordered mb-0">
@@ -217,7 +317,7 @@
               </tr>
 
               {% if fb.status == "Approved" %}
-              <!-- ✅ Modal -->
+              <!-- 📌 Modal — Lender Contact & Finalise -->
               <div class="modal fade" id="lenderContacts{{fb.id}}" tabindex="-1" aria-hidden="true">
                 <div class="modal-dialog modal-md modal-dialog-scrollable">
                   <div class="modal-content">
@@ -226,6 +326,7 @@
                       <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                     </div>
                     <div class="modal-body text-start">
+
                       {% if loan.status == "Finalised" %}
                         {% if loan.accepted_lender.id == fb.lender.id %}
                           <div class="alert alert-success">🎉 Congratulations! This lender is selected.</div>
@@ -243,12 +344,14 @@
                         <p><strong>Mobile:</strong> {{ fb.lender.profile.mobile|default:"N/A" }}</p>
                         <p><strong>Bank/Firm:</strong> {{ fb.lender.lender_details.bank_firm_name|default:"N/A" }}</p>
                         <p><strong>Branch:</strong> {{ fb.lender.lender_details.branch_name|default:"N/A" }}</p>
+
                         <form class="ajax-accept-form" data-loan-id="{{ loan.id }}" data-lender-id="{{ fb.lender.id }}">
                           {% csrf_token %}
-                          <button type="submit" class="btn btn-accept w-100 mt-3">Accept</button>
+                          <button type="submit" class="btn btn-accept w-100 mt-3">Accept Lender & Finalise Loan</button>
                         </form>
                         <p class="text-muted mt-2 small">⚠ Once accepted, other lenders will be disabled.</p>
                       {% endif %}
+
                     </div>
                   </div>
                 </div>
@@ -262,6 +365,7 @@
         </table>
       </td>
     </tr>
+
     {% empty %}
     <tr><td colspan="10" class="text-center text-muted">No loan requests found.</td></tr>
     {% endfor %}
@@ -276,7 +380,7 @@ document.addEventListener("DOMContentLoaded", function () {
   const filterBoxes = document.querySelectorAll(".filter-box");
   const rows = document.querySelectorAll("table tbody tr[data-status]");
 
-  // ✅ Filter Function
+  /* 🎯 FILTER HANDLING */
   function applyFilter(kind) {
     const todayISO = new Date().toISOString().split("T")[0];
     rows.forEach(row => {
@@ -291,7 +395,7 @@ document.addEventListener("DOMContentLoaded", function () {
   }
   filterBoxes.forEach(box => box.addEventListener("click", () => applyFilter(box.dataset.filter)));
 
-  // ✅ AJAX Accept Loan Finalisation
+  /* ⚡ AJAX ACCEPT FINALISATION */
   document.querySelectorAll(".ajax-accept-form").forEach(form => {
     form.addEventListener("submit", async function(e) {
       e.preventDefault();
@@ -299,7 +403,7 @@ document.addEventListener("DOMContentLoaded", function () {
       const loanId = this.dataset.loanId;
       const lenderId = this.dataset.lenderId;
       const csrfToken = this.querySelector('[name=csrfmiddlewaretoken]').value;
-      const url = `/applicant/accept-loan/${loanId}/${lenderId}/`;
+      const url = `/applicant/accept/${loanId}/${lenderId}/`;
 
       try {
         const res = await fetch(url, {
@@ -310,31 +414,25 @@ document.addEventListener("DOMContentLoaded", function () {
           },
         });
 
-        // 🧩 Validate JSON response properly
         const text = await res.text();
         let data;
         try { data = JSON.parse(text); }
         catch { throw new Error("Invalid server response."); }
 
         if (data.ok) {
-          Swal.fire({
-            icon: "success",
-            title: "Loan Finalised!",
-            text: data.msg,
-            timer: 2500,
-            showConfirmButton: false,
-          });
+          Swal.fire({ icon:"success", title:"Loan Finalised!", text:data.msg, timer:2500, showConfirmButton:false });
 
-          // ✅ Update table badge
-          const badge = document.querySelector(
-            `[data-bs-target="#lenderFeedback${loanId}"]`
-          )?.closest("tr")?.querySelector("td span.badge");
-          if (badge) {
-            badge.className = "badge bg-info text-dark";
-            badge.textContent = "Finalised by You";
-          }
+          /* 🏷 Update Badge of Table Row */
+          document.querySelectorAll(`[data-bs-target="#lenderFeedback${loanId}"]`)
+            .forEach(btn => {
+              let badge = btn.closest("tr").querySelector("span.badge");
+              if (badge) {
+                badge.className = "badge bg-info text-dark";
+                badge.textContent = "Finalised by You";
+              }
+            });
 
-          // ✅ Disable all accept buttons for this loan
+          /* 🔐 Disable Other Accept Buttons */
           document.querySelectorAll(`#lenderFeedback${loanId} .btn-accept`).forEach(btn => {
             btn.textContent = "Locked";
             btn.disabled = true;
@@ -342,25 +440,17 @@ document.addEventListener("DOMContentLoaded", function () {
             btn.classList.add("btn-secondary");
           });
 
-          // ✅ Close the modal
+          /* 🔒 Close Modal */
           const modalEl = this.closest(".modal");
           const activeModal = bootstrap.Modal.getInstance(modalEl);
           if (activeModal) activeModal.hide();
 
         } else {
-          Swal.fire({
-            icon: "warning",
-            title: "Oops!",
-            text: data.msg || "Something went wrong.",
-          });
+          Swal.fire({ icon:"warning", title:"Oops!", text:data.msg || "Something went wrong." });
         }
 
       } catch (err) {
-        Swal.fire({
-          icon: "error",
-          title: "Error",
-          text: err.message || "Unexpected error occurred.",
-        });
+        Swal.fire({ icon:"error", title:"Error", text:err.message || "Unexpected error occurred." });
       }
     });
   });

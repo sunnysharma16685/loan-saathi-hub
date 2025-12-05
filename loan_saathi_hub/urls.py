@@ -3,16 +3,20 @@ from django.urls import path
 from django.views.generic import TemplateView
 from django.conf import settings
 from django.conf.urls.static import static
+
+from django.contrib.sitemaps.views import sitemap
+from main.sitemaps import StaticViewSitemap
+from main import views
 from main.views import healthcheck_view
 
-
-# ✅ Import all your main app views
-from main import views
-
+# 🌐 Sitemaps dictionary
+sitemaps = {
+    "static": StaticViewSitemap,
+}
 
 urlpatterns = [
     # ---------------- Home ----------------
-    path("", views.index, name="index"),
+    path("", views.index, name="home"),
 
     # ---------------- Auth ----------------
     path("register/", views.register_view, name="register"),
@@ -36,14 +40,12 @@ urlpatterns = [
     path("dashboard/lender/", views.dashboard_lender, name="dashboard_lender"),
     path("dashboard/", views.dashboard_router, name="dashboard_router"),
 
-  
     # ---------------------- Payment Gateway ---------------------
     path("payment/initiate/", views.initiate_payment, name="initiate_payment"),
     path("payment/callback/", views.payment_callback, name="payment_callback"),
     path("payment/success/", views.payment_success, name="payment_success"),
     path("payment/failure/", views.payment_failure, name="payment_failure"),
     path("payment/invoice/", views.invoice_view, name="invoice"),
-
 
     # ---------------- Email OTP ----------------
     path("verify-email-otp/", views.verify_email_otp_view, name="verify_email_otp"),
@@ -53,8 +55,6 @@ urlpatterns = [
     path("loan/request/", views.loan_request, name="loan_request"),
     path("dashboard/lender/reject/<uuid:loan_id>/", views.reject_loan, name="reject_loan"),
     path("dashboard/lender/approve/<uuid:loan_id>/", views.approve_loan, name="approve_loan"),
-
-    # ---------------- Applicant Loan Actions ----------------
     path("applicant/accept/<uuid:loan_id>/<uuid:lender_id>/", views.applicant_accept_loan, name="applicant_accept_loan"),
 
     # ---------------- Custom Admin ----------------
@@ -80,21 +80,26 @@ urlpatterns = [
     path("faq/", TemplateView.as_view(template_name="faq.html"), name="faq"),
     path("contact/", TemplateView.as_view(template_name="contact.html"), name="contact"),
 
-    # ---------------- Django Admin (keep this at bottom) ----------------
-    path("admin/", admin.site.urls),
+    # ---------------- Sitemap ----------------
+    path("sitemap.xml", sitemap, {"sitemaps": sitemaps}, name="sitemap"),
 
-    # ---------------- logo and images ---------------
-    path('manifest.json', TemplateView.as_view(template_name='manifest.json', content_type='application/json')),
+    # ---------------- Robots ----------------
+    path("robots.txt", TemplateView.as_view(template_name="robots.txt", content_type="text/plain")),
 
-    # ----------------Offline fallback message ---------------
+    # ---------------- Manifest ----------------
+    path("manifest.json", TemplateView.as_view(template_name="manifest.json", content_type="application/json")),
+
+    # ---------------- Offline ----------------
     path("offline/", views.offline_page, name="offline_page"),
 
-    # ----------------Advertisement ---------------
+    # ---------------- Advertisement ----------------
     path("advertise/", views.advertise_view, name="advertise"),
 
-    # ----------------Healthcheck ---------------
+    # ---------------- Healthcheck ----------------
     path("status/", healthcheck_view, name="healthcheck"),
-    
+
+    # ---------------- Admin Panel ----------------
+    path("admin/", admin.site.urls),
 ]
 
 
